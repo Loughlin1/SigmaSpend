@@ -12,10 +12,13 @@ from app.models.expense import Expense
 class StatementParserService:
     
     @staticmethod
-    def load_bank_config() -> dict:
+    def load_bank_config(bank_profile: str = None) -> dict:
         """
         Loads the configuration YAML and returns the ruleset for the 
         currently active bank/account profile.
+        
+        Args:
+            bank_profile: Specific profile to load. If None, loads the active_bank.
         """
         config_path = Path(__file__).parent.parent / "core" / "config.yaml"
         
@@ -33,14 +36,15 @@ class StatementParserService:
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=f"Failed to parse config.yaml syntax: {str(e)}"
                 )
-            
-        active_bank = config_data.get("active_bank")
+        
+        # Use provided profile or fall back to active_bank
+        active_bank = bank_profile or config_data.get("active_bank")
         bank_rules = config_data.get("banks", {}).get(active_bank)
         
         if not bank_rules:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Active bank profile '{active_bank}' is not defined in config.yaml."
+                detail=f"Bank profile '{active_bank}' is not defined in config.yaml."
             )
             
         return bank_rules
@@ -59,14 +63,23 @@ class StatementParserService:
         return hashlib.md5(base_signature.encode("utf-8")).hexdigest()
 
     @classmethod
-    def process_csv(cls, file_contents: str, db: Session) -> dict:
+    def process_csv(cls, file_contents: str, db: Session, account_id: str = None, bank_profile: str = None) -> dict:
         """
         Parses a raw statement CSV, normalizes financial directionality layouts, 
         and securely passes items through the sequential deduplication counter.
-        """
-        bank_config = cls.load_bank_config()
         
-        account_id = bank_config["account_id"]
+        Args:
+            file_contents: Raw CSV file content
+            db: Database session
+            account_id: Bank account ID (if None, loads from config)
+            bank_profile: Bank profile name from config.yaml (if None, uses active_bank)
+        """
+        bank_config = cls.load_bank_config(bank_profile)
+        
+        # Use provided account_id or fall back to config
+        if account_id is None:
+            account_id = bank_config["account_id"]
+        
         amount_style = bank_config.get("amount_style", "single_column")
         mappings = bank_config["mappings"]
         

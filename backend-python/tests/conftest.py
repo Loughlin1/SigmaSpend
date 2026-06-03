@@ -100,6 +100,42 @@ def sample_split_column_config() -> dict:
 
 @pytest.fixture
 def sample_csv_data() -> str:
+    """Create sample CSV data for testing file uploads."""
+    return """Date,Description,Amount
+2024-01-01,Grocery Store,-50.00
+2024-01-02,Salary,3000.00
+2024-01-03,Utilities,-120.00
+"""
+
+
+@pytest.fixture
+def sample_expense_data() -> dict:
+    """Create sample expense data for testing."""
+    return {
+        "amount": 75.50,
+        "is_income": False,
+        "category": "Food & Dining",
+        "description": "Restaurant dinner",
+        "date": "2024-01-15",
+        "account_id": "test_account_001",
+    }
+
+
+@pytest.fixture
+def sample_income_data() -> dict:
+    """Create sample income data for testing."""
+    return {
+        "amount": 3000.00,
+        "is_income": True,
+        "category": "Salary",
+        "description": "Monthly salary",
+        "date": "2024-01-01",
+        "account_id": "test_account_001",
+    }
+
+
+@pytest.fixture
+def sample_csv_data() -> str:
     """Create sample CSV data for testing."""
     return """Date,Description,Amount
 2024-01-01,Grocery Store,-50.00

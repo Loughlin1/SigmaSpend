@@ -1,12 +1,17 @@
 // src/App.jsx
 import React, { useState, useEffect } from 'react';
-import { expenseApi } from './api/client';
+import { expenseApi, ingestionApi } from './api/client';
 import ExpenseForm from './components/ExpenseForm';
 import StatementUpload from './components/StatementUpload';
 import ExpenseChart from './components/ExpenseChart';
+import BankAccountList from './components/BankAccountList';
+import BankAccountForm from './components/BankAccountForm';
 
 function App() {
   const [expenses, setExpenses] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [accountsError, setAccountsError] = useState('');
 
   const fetchExpenses = async () => {
     try {
@@ -14,6 +19,20 @@ function App() {
       setExpenses(data);
     } catch (err) {
       console.error("Failed fetching ledger data", err);
+    }
+  };
+
+  const fetchAccounts = async () => {
+    setAccountsLoading(true);
+    try {
+      const data = await ingestionApi.getAccounts({ active_only: true });
+      setAccounts(data);
+      setAccountsError('');
+    } catch (err) {
+      console.error("Failed fetching bank accounts", err);
+      setAccountsError('Unable to load bank accounts at this time.');
+    } finally {
+      setAccountsLoading(false);
     }
   };
 
@@ -37,6 +56,7 @@ function App() {
 
   useEffect(() => {
     fetchExpenses();
+    fetchAccounts();
   }, []);
 
   return (
@@ -44,9 +64,15 @@ function App() {
       <h1>Σ SigmaSpend Dashboard</h1>
       <hr />
       
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '2rem' }}>
-        <StatementUpload onUploadSuccess={fetchExpenses} />
-        <ExpenseForm onExpenseAdded={handleCreateExpense} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <StatementUpload onUploadSuccess={fetchExpenses} />
+          <ExpenseForm onExpenseAdded={handleCreateExpense} />
+        </div>
+        <div style={{ display: 'grid', gap: '1.5rem' }}>
+          <BankAccountForm onAccountCreated={fetchAccounts} />
+          <BankAccountList accounts={accounts} loading={accountsLoading} error={accountsError} />
+        </div>
       </div>
 
       <ExpenseChart expenses={expenses} />

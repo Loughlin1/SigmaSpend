@@ -8,6 +8,7 @@ class ExpenseBase(BaseModel):
     category: Optional[str] = "Uncategorized"
     description: str
     date: str
+    account_id: str
 
 # Properties received via API on manual creation
 class ExpenseCreate(ExpenseBase):

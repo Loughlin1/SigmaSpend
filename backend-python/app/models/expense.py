@@ -5,6 +5,7 @@ class Expense(Base):
     __tablename__ = "expenses"
 
     id = Column(Integer, primary_key=True, index=True)
+    account_id = Column(String, index=True, nullable=False)
     date = Column(String, index=True, nullable=False)
     amount = Column(Float, nullable=False)
     is_income = Column(Boolean, default=False, nullable=False)

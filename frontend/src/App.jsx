@@ -1,6 +1,7 @@
 // src/App.jsx
 import React, { useState, useEffect } from 'react';
 import { expenseApi, ingestionApi } from './api/client';
+import DescriptionSection from './components/Description';
 import ExpenseForm from './components/ExpenseForm';
 import StatementUpload from './components/StatementUpload';
 import ExpenseChart from './components/ExpenseChart';
@@ -79,10 +80,11 @@ function App() {
       <h1>Σ SigmaSpend Dashboard</h1>
       <hr />
 
+          <div style={{ display: 'flex', gap: '2rem', paddingBottom: '2rem'}}>
+            <DescriptionSection></DescriptionSection>
+            <StatementUpload accounts={accounts} onUploadSuccess={fetchExpenses} />
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-              <StatementUpload accounts={accounts} onUploadSuccess={fetchExpenses} />
-            </div>
             <div style={{ padding: '1rem', border: '1px solid #ccc', borderRadius: '8px', background: '#fff', display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                 <h3 style={{ margin: 0 }}>Bank Accounts</h3>
@@ -98,7 +100,7 @@ function App() {
                 <BankAccountForm onAccountCreated={handleAccountCreated} />
               )}
 
-              <BankAccountList accounts={accounts} loading={accountsLoading} error={accountsError} />
+              <BankAccountList accounts={accounts} loading={accountsLoading} error={accountsError} onAccountUpdated={fetchAccounts} />
             </div>
           </div>
 

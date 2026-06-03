@@ -4,6 +4,7 @@ from typing import Optional
 # Properties shared across all states
 class ExpenseBase(BaseModel):
     amount: float
+    is_income: bool
     category: Optional[str] = "Uncategorized"
     description: str
     date: str

@@ -1,58 +1,161 @@
 import csv
+import yaml
+import hashlib
 from io import StringIO
+from pathlib import Path
 from collections import defaultdict
 from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
+
 from app.models.expense import Expense
-from app.core.security import generate_transaction_hash
 
 class StatementParserService:
+    
     @staticmethod
-    def process_csv(file_contents: str, db: Session) -> dict:
+    def load_bank_config() -> dict:
         """
-        Parses raw standard CSV contents, dynamically tracking duplicate counts.
+        Loads the configuration YAML and returns the ruleset for the 
+        currently active bank/account profile.
         """
+        config_path = Path(__file__).parent.parent / "core" / "config.yaml"
+        
+        if not config_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Configuration file missing at expected path: {config_path}"
+            )
+            
+        with open(config_path, "r", encoding="utf-8") as file:
+            try:
+                config_data = yaml.safe_load(file)
+            except yaml.YAMLError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to parse config.yaml syntax: {str(e)}"
+                )
+            
+        active_bank = config_data.get("active_bank")
+        bank_rules = config_data.get("banks", {}).get(active_bank)
+        
+        if not bank_rules:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Active bank profile '{active_bank}' is not defined in config.yaml."
+            )
+            
+        return bank_rules
+
+    @staticmethod
+    def generate_transaction_hash(
+        account_id: str, date: str, amount: float, is_income: bool, description: str, occurrence: int
+    ) -> str:
+        """
+        Generates a deterministic unique MD5 hash for a transaction line item.
+        Baking the account_id and is_income status alongside the transaction occurrence
+        guarantees isolation across card boundaries and identical sequence items.
+        """
+        normalized_desc = description.strip().lower()
+        base_signature = f"{account_id}_{date}_{amount}_{is_income}_{normalized_desc}_occ{occurrence}"
+        return hashlib.md5(base_signature.encode("utf-8")).hexdigest()
+
+    @classmethod
+    def process_csv(cls, file_contents: str, db: Session) -> dict:
+        """
+        Parses a raw statement CSV, normalizes financial directionality layouts, 
+        and securely passes items through the sequential deduplication counter.
+        """
+        bank_config = cls.load_bank_config()
+        
+        account_id = bank_config["account_id"]
+        amount_style = bank_config.get("amount_style", "single_column")
+        mappings = bank_config["mappings"]
+        
         csv_file = StringIO(file_contents)
         reader = csv.DictReader(csv_file)
         
+        # Memory structure to track sequence weights within this specific file parsing thread
         seen_combinations = defaultdict(int)
+        
         added_count = 0
         skipped_count = 0
 
-        for row in reader:
+        for row_num, row in enumerate(reader, start=1):
             try:
-                # Target layout config matching common bank exports (e.g. Date, Amount, Description)
-                # Tweak string lookup parameters depending on your specific bank export naming conventions
-                date = row["Date"]
-                amount = float(row["Amount"])
-                description = row["Description"]
+                # 1. Check for specific card/account filters if configured in the YAML profile
+                if "filter_column" in bank_config and "filter_value" in bank_config:
+                    file_val = row.get(mappings["filter_column"], "").strip()
+                    if file_val != str(bank_config["filter_value"]):
+                        continue # Belongs to a different card profile in a shared statement export
+
+                # 2. Extract baseline details dynamically mapped via YAML profile keys
+                raw_date = row[mappings["date_column"]].strip()
+                description = row[mappings["description_column"]].strip()
                 
-                # 1. Determine key baseline parameters to discover occurrence volume
-                base_sig = f"{date}_{amount}_{description.strip().lower()}"
+                amount = 0.0
+                is_income = False
+
+                # 3. Standardize monetary direction based on bank format variations
+                if amount_style == "single_column":
+                    raw_amount = float(row[mappings["amount_column"]].replace(",", ""))
+                    if raw_amount >= 0:
+                        amount = raw_amount
+                        is_income = True
+                    else:
+                        amount = abs(raw_amount) # Store normalized positive value
+                        is_income = False
+
+                elif amount_style == "split_columns":
+                    raw_out = row.get(mappings["amount_out_column"], "").strip().replace(",", "")
+                    raw_in = row.get(mappings["amount_in_column"], "").strip().replace(",", "")
+                    
+                    if raw_out and float(raw_out) > 0:
+                        amount = float(raw_out)
+                        is_income = False
+                    elif raw_in and float(raw_in) > 0:
+                        amount = float(raw_in)
+                        is_income = True
+                    else:
+                        continue # Row does not contain financial data (e.g., pending placeholder rows)
+
+                # 4. Occurrence Strategy Optimization
+                # The base signature mirrors parameters required to confirm valid transaction identical twins
+                base_sig = f"{account_id}_{raw_date}_{amount}_{is_income}_{description.lower()}"
                 seen_combinations[base_sig] += 1
                 occurrence = seen_combinations[base_sig]
                 
-                # 2. Derive permanent static hash
-                tx_hash = generate_transaction_hash(date, amount, description, occurrence)
+                # 5. Build unique structural constraint fingerprint
+                tx_hash = cls.generate_transaction_hash(
+                    account_id=account_id,
+                    date=raw_date,
+                    amount=amount,
+                    is_income=is_income,
+                    description=description,
+                    occurrence=occurrence
+                )
                 
-                # 3. Assess local database records
+                # 6. Database Lookup validation check
                 exists = db.query(Expense).filter(Expense.transaction_hash == tx_hash).first()
                 if exists:
                     skipped_count += 1
                     continue
                 
-                # 4. Generate entity state
-                expense = Expense(
-                    date=date,
+                # 7. Commit new record to database state
+                new_expense = Expense(
+                    account_id=account_id,
+                    date=raw_date,
                     amount=amount,
+                    is_income=is_income,
                     description=description,
-                    transaction_hash=tx_hash
+                    transaction_hash=tx_hash,
+                    category="Uncategorized"
                 )
-                db.add(expense)
+                db.add(new_expense)
                 added_count += 1
                 
-            except (KeyError, ValueError):
-                # Safely skips broken header configurations or invalid empty file rows
+            except (KeyError, ValueError, TypeError):
+                # Gracefully catch empty formatting rows or corrupted strings on custom line boundaries
                 continue
                 
+        # Flush the transaction data blocks to SQLite memory safely
         db.commit()
         return {"added": added_count, "skipped": skipped_count}

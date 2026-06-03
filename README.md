@@ -36,7 +36,6 @@ sigmaspend/
 │   │   ├── core/
 │   │   │   ├── __init__.py
 │   │   │   ├── config.py           # Environment variables and app configurations
-│   │   │   └── security.py         # Hashing utilities (Deduplication engine)
 │   │   ├── database/
 │   │   │   ├── __init__.py
 │   │   │   ├── session.py          # SQLAlchemy engine and session initialization

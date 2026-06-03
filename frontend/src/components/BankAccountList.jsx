@@ -3,7 +3,6 @@ import React from 'react';
 export default function BankAccountList({ accounts, loading, error }) {
   return (
     <div className="account-list" style={{ padding: '1rem', border: '1px solid #ccc', borderRadius: '8px', background: '#fff' }}>
-      <h3>Bank Accounts</h3>
       {error ? (
         <div style={{ color: '#cc0000', marginBottom: '1rem' }}>
           {error}

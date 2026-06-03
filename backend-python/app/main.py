@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.database.session import engine, Base
-from app.api.endpoints import ingestion
+from app.api.endpoints import ingestion, expenses
 
 # Bootstraps local tables on initialization if they are missing
 Base.metadata.create_all(bind=engine)
@@ -20,6 +20,7 @@ app.add_middleware(
 
 # Bind router endpoints
 app.include_router(ingestion.router, prefix=settings.API_V1_STR, tags=["Ingestion Module"])
+app.include_router(expenses.router, prefix=settings.API_V1_STR, tags=["Expenses Module"])
 
 @app.get("/")
 def read_root():

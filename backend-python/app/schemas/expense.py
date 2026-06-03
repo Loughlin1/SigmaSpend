@@ -13,6 +13,9 @@ class ExpenseBase(BaseModel):
 class ExpenseCreate(ExpenseBase):
     pass
 
+class ExpenseUpdate(ExpenseBase):
+    pass
+
 # Properties returned to the React frontend client
 class ExpenseResponse(ExpenseBase):
     id: int

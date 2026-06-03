@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.database.session import engine, Base
 from app.api.endpoints import ingestion, expenses
+# Import models to ensure they're registered with Base.metadata
+from app.models.bank_account import BankAccount
+from app.models.expense import Expense
 
 # Bootstraps local tables on initialization if they are missing
 Base.metadata.create_all(bind=engine)
@@ -18,10 +21,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Bind router endpoints
-app.include_router(ingestion.router, prefix=settings.API_V1_STR, tags=["Ingestion Module"])
-app.include_router(expenses.router, prefix=settings.API_V1_STR, tags=["Expenses Module"])
-
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the SigmaSpend Backend API. Visit /docs for OpenAPI specs."}
+
+# Bind router endpoints
+app.include_router(ingestion.router, prefix=settings.API_V1_STR, tags=["Ingestion Module"])
+app.include_router(expenses.router, prefix=f"{settings.API_V1_STR}/expenses", tags=["Expenses Module"])

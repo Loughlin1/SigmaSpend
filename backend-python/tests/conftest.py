@@ -135,6 +135,28 @@ def sample_income_data() -> dict:
 
 
 @pytest.fixture
+def test_bank_account(client) -> dict:
+    """Create a test bank account and return its details."""
+    account_data = {
+        "account_id": "test_account_001",
+        "account_name": "Test Checking",
+        "bank_name": "Test Bank",
+        "bank_profile": "test_bank"
+    }
+    
+    response = client.post("/api/v1/accounts", json=account_data)
+    
+    if response.status_code != 201:
+        # Account might already exist, try to retrieve it
+        get_response = client.get(f"/api/v1/accounts/{account_data['account_id']}")
+        if get_response.status_code == 200:
+            return get_response.json()
+        raise Exception(f"Failed to create/get test account: {response.text}")
+    
+    return response.json()
+
+
+@pytest.fixture
 def sample_csv_data() -> str:
     """Create sample CSV data for testing."""
     return """Date,Description,Amount

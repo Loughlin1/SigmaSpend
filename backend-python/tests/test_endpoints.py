@@ -3,7 +3,6 @@ Tests for the FastAPI endpoints.
 """
 import io
 from urllib.parse import quote
-from unittest.mock import patch
 
 import pytest
 from fastapi import status
@@ -23,21 +22,10 @@ class TestIngestionEndpoints:
         """Test successful CSV upload."""
         csv_file = ("test.csv", sample_csv_data, "text/csv")
         
-        with patch('app.services.parser.StatementParserService.load_bank_config') as mock_config:
-            mock_config.return_value = {
-                "account_id": test_bank_account["account_id"],
-                "amount_style": "single_column",
-                "mappings": {
-                    "date_column": "Date",
-                    "description_column": "Description",
-                    "amount_column": "Amount",
-                }
-            }
-            
-            response = client.post(
-                f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
-                files={"file": csv_file}
-            )
+        response = client.post(
+            f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
+            files={"file": csv_file}
+        )
         
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json()["status"] == "success"
@@ -91,21 +79,10 @@ class TestIngestionEndpoints:
         """Test upload with empty CSV file."""
         csv_file = ("empty.csv", "", "text/csv")
         
-        with patch('app.services.parser.StatementParserService.load_bank_config') as mock_config:
-            mock_config.return_value = {
-                "account_id": test_bank_account["account_id"],
-                "amount_style": "single_column",
-                "mappings": {
-                    "date_column": "Date",
-                    "description_column": "Description",
-                    "amount_column": "Amount",
-                }
-            }
-            
-            response = client.post(
-                f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
-                files={"file": csv_file}
-            )
+        response = client.post(
+            f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
+            files={"file": csv_file}
+        )
         
         # Should handle gracefully - either 201 with 0 added or handle error
         assert response.status_code in [status.HTTP_201_CREATED, status.HTTP_500_INTERNAL_SERVER_ERROR]
@@ -115,21 +92,10 @@ class TestIngestionEndpoints:
         # CSV with missing columns
         csv_file = ("bad.csv", "Date,Description\n2024-01-01,Test", "text/csv")
         
-        with patch('app.services.parser.StatementParserService.load_bank_config') as mock_config:
-            mock_config.return_value = {
-                "account_id": test_bank_account["account_id"],
-                "amount_style": "single_column",
-                "mappings": {
-                    "date_column": "Date",
-                    "description_column": "Description",
-                    "amount_column": "Amount",  # This column is missing
-                }
-            }
-            
-            response = client.post(
-                f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
-                files={"file": csv_file}
-            )
+        response = client.post(
+            f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
+            files={"file": csv_file}
+        )
         
         # Parser gracefully skips rows with missing columns, so it returns 201 with 0 added
         assert response.status_code == status.HTTP_201_CREATED
@@ -143,21 +109,10 @@ class TestIngestionEndpoints:
 """
         csv_file = ("special.csv", csv_data, "text/csv")
         
-        with patch('app.services.parser.StatementParserService.load_bank_config') as mock_config:
-            mock_config.return_value = {
-                "account_id": test_bank_account["account_id"],
-                "amount_style": "single_column",
-                "mappings": {
-                    "date_column": "Date",
-                    "description_column": "Description",
-                    "amount_column": "Amount",
-                }
-            }
-            
-            response = client.post(
-                f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
-                files={"file": csv_file}
-            )
+        response = client.post(
+            f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
+            files={"file": csv_file}
+        )
         
         assert response.status_code == status.HTTP_201_CREATED
     
@@ -169,21 +124,10 @@ class TestIngestionEndpoints:
 """
         csv_file = ("formatted.csv", csv_data, "text/csv")
         
-        with patch('app.services.parser.StatementParserService.load_bank_config') as mock_config:
-            mock_config.return_value = {
-                "account_id": test_bank_account["account_id"],
-                "amount_style": "single_column",
-                "mappings": {
-                    "date_column": "Date",
-                    "description_column": "Description",
-                    "amount_column": "Amount",
-                }
-            }
-            
-            response = client.post(
-                f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
-                files={"file": csv_file}
-            )
+        response = client.post(
+            f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
+            files={"file": csv_file}
+        )
         
         assert response.status_code == status.HTTP_201_CREATED
 
@@ -197,7 +141,12 @@ class TestBankAccountEndpoints:
             "account_id": "new_account_001",
             "account_name": "New Checking Account",
             "bank_name": "Chase Bank",
-            "bank_profile": "chase_checking"
+            "amount_style": "single_column",
+            "mappings": {
+                "date_column": "Date",
+                "description_column": "Description",
+                "amount_column": "Amount",
+            }
         }
         
         response = client.post("/api/v1/accounts", json=account_data)
@@ -214,7 +163,12 @@ class TestBankAccountEndpoints:
             "account_id": test_bank_account["account_id"],
             "account_name": "Another Name",
             "bank_name": "Different Bank",
-            "bank_profile": "different_profile"
+            "amount_style": "single_column",
+            "mappings": {
+                "date_column": "Date",
+                "description_column": "Description",
+                "amount_column": "Amount",
+            }
         }
         
         response = client.post("/api/v1/accounts", json=account_data)

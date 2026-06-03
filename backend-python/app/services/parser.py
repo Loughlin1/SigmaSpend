@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from app.models.expense import Expense
+from app.models.bank_account import BankAccount
 
 class StatementParserService:
     
@@ -49,6 +50,30 @@ class StatementParserService:
             
         return bank_rules
 
+    @classmethod
+    def get_account_bank_config(cls, db: Session, account_id: str, bank_profile: str = None) -> dict:
+        account = db.query(BankAccount).filter(BankAccount.account_id == account_id).first()
+        if not account:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Bank account '{account_id}' not found. Create it first via POST /accounts"
+            )
+
+        if account.mappings:
+            return {
+                "account_id": account.account_id,
+                "amount_style": account.amount_style or "single_column",
+                "mappings": account.mappings,
+            }
+
+        if bank_profile:
+            return cls.load_bank_config(bank_profile)
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Bank configuration for account '{account_id}' is missing. Set mappings when creating the account."
+        )
+
     @staticmethod
     def generate_transaction_hash(
         account_id: str, date: str, amount: float, is_income: bool, description: str, occurrence: int
@@ -74,7 +99,10 @@ class StatementParserService:
             account_id: Bank account ID (if None, loads from config)
             bank_profile: Bank profile name from config.yaml (if None, uses active_bank)
         """
-        bank_config = cls.load_bank_config(bank_profile)
+        if account_id:
+            bank_config = cls.get_account_bank_config(db, account_id, bank_profile)
+        else:
+            bank_config = cls.load_bank_config(bank_profile)
         
         # Use provided account_id or fall back to config
         if account_id is None:

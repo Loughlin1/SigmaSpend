@@ -141,7 +141,12 @@ def test_bank_account(client) -> dict:
         "account_id": "test_account_001",
         "account_name": "Test Checking",
         "bank_name": "Test Bank",
-        "bank_profile": "test_bank"
+        "amount_style": "single_column",
+        "mappings": {
+            "date_column": "Date",
+            "description_column": "Description",
+            "amount_column": "Amount",
+        }
     }
     
     response = client.post("/api/v1/accounts", json=account_data)

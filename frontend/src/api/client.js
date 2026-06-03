@@ -22,4 +22,6 @@ export const ingestionApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).then(res => res.data);
   },
+  getAccounts: (params) => apiClient.get('/accounts', { params }).then(res => res.data),
+  createAccount: (data) => apiClient.post('/accounts', data).then(res => res.data),
 };

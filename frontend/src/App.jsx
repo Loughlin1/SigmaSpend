@@ -12,6 +12,7 @@ function App() {
   const [accounts, setAccounts] = useState([]);
   const [accountsLoading, setAccountsLoading] = useState(true);
   const [accountsError, setAccountsError] = useState('');
+  const [showAccountForm, setShowAccountForm] = useState(false);
 
   const fetchExpenses = async () => {
     try {
@@ -54,6 +55,11 @@ function App() {
     }
   };
 
+  const handleAccountCreated = async () => {
+    await fetchAccounts();
+    setShowAccountForm(false);
+  };
+
   useEffect(() => {
     fetchExpenses();
     fetchAccounts();
@@ -63,47 +69,60 @@ function App() {
     <div className="app-container" style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
       <h1>Σ SigmaSpend Dashboard</h1>
       <hr />
-      
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <StatementUpload accounts={accounts} onUploadSuccess={fetchExpenses} />
-          <ExpenseForm onExpenseAdded={handleCreateExpense} />
-        </div>
-        <div style={{ display: 'grid', gap: '1.5rem' }}>
-          <BankAccountForm onAccountCreated={fetchAccounts} />
-          <BankAccountList accounts={accounts} loading={accountsLoading} error={accountsError} />
-        </div>
-      </div>
 
-      <ExpenseChart expenses={expenses} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              <StatementUpload accounts={accounts} onUploadSuccess={fetchExpenses} />
+              <ExpenseForm onExpenseAdded={handleCreateExpense} />
+            </div>
+            <div style={{ padding: '1rem', border: '1px solid #ccc', borderRadius: '8px', background: '#fff', display: 'grid', gap: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <h3 style={{ margin: 0 }}>Bank Accounts</h3>
+                <button
+                  onClick={() => setShowAccountForm((prev) => !prev)}
+                  style={{ padding: '0.75rem 1rem' }}
+                >
+                  {showAccountForm ? 'Hide Form' : 'Create New Bank Account'}
+                </button>
+              </div>
 
-      <h3>Transaction Ledger</h3>
-      <table border="1" cellPadding="10" style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Description</th>
-            <th>Category</th>
-            <th>Type</th>
-            <th>Amount</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {expenses.map((exp) => (
-            <tr key={exp.id}>
-              <td>{exp.date}</td>
-              <td>{exp.description}</td>
-              <td>{exp.category}</td>
-              <td>{exp.is_income ? 'Income' : 'Expense'}</td>
-              <td>£{exp.amount.toFixed(2)}</td>
-              <td>
-                <button onClick={() => handleDeleteExpense(exp.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              {showAccountForm && (
+                <BankAccountForm onAccountCreated={handleAccountCreated} />
+              )}
+
+              <BankAccountList accounts={accounts} loading={accountsLoading} error={accountsError} />
+            </div>
+          </div>
+
+          <ExpenseChart expenses={expenses} />
+
+          <h3>Transaction Ledger</h3>
+          <table border="1" cellPadding="10" style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {expenses.map((exp) => (
+                <tr key={exp.id}>
+                  <td>{exp.date}</td>
+                  <td>{exp.description}</td>
+                  <td>{exp.category}</td>
+                  <td>{exp.is_income ? 'Income' : 'Expense'}</td>
+                  <td>£{exp.amount.toFixed(2)}</td>
+                  <td>
+                    <button onClick={() => handleDeleteExpense(exp.id)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
     </div>
   );
 }

@@ -24,7 +24,9 @@ def create_bank_account(
     - **account_id**: Unique identifier (e.g., 'checking_001')
     - **account_name**: Display name (e.g., 'My Checking Account')
     - **bank_name**: Bank name (e.g., 'Chase')
-    - **bank_profile**: Maps to a profile in config.yaml (e.g., 'chase_checking')
+    - **amount_style**: CSV amount layout, either 'single_column' or 'split_columns'
+    - **mappings**: Column mappings to parse the uploaded bank CSV
+    - **bank_profile**: Optional legacy reference to a profile in config.yaml
     """
     # Check if account already exists
     existing = db.query(BankAccount).filter(BankAccount.account_id == account_in.account_id).first()

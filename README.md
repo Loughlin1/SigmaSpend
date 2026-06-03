@@ -63,6 +63,16 @@ When a user uploads a statement, the system reads it, extracts individual lines,
                                                               ▲
                                                     (Checks Existing Hashes)
 
+## Bank Account Configuration
+SigmaSpend now stores bank-specific parser configuration on every bank account record instead of depending on bank profiles in `backend-python/app/core/config.yaml`.
+
+Each account includes:
+- `account_id`: unique identifier used for uploads
+- `bank_name`: visible bank display name
+- `amount_style`: either `single_column` or `split_columns`
+- `mappings`: CSV header mappings such as `date_column`, `description_column`, `amount_column`, `amount_in_column`, and `amount_out_column`
+
+The frontend account form collects these settings during account creation. When a statement is uploaded, the selected account's configuration is used to parse the CSV and deduplicate transactions.
 
 ## Transaction Deduplication Strategy
 

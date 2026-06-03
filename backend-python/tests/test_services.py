@@ -9,6 +9,7 @@ import yaml
 
 from app.services.parser import StatementParserService
 from app.models.expense import Expense
+from app.models.bank_account import BankAccount
 from fastapi import HTTPException
 
 
@@ -146,20 +147,22 @@ class TestStatementParserService:
         assert exc_info.value.status_code == 400
         assert "not defined in config.yaml" in exc_info.value.detail
     
-    @patch('app.services.parser.StatementParserService.load_bank_config')
-    def test_process_csv_single_column_format(self, mock_load_config, db_session, sample_csv_data):
+    def test_process_csv_single_column_format(self, db_session, sample_csv_data):
         """Test CSV processing with single column amount format."""
-        mock_load_config.return_value = {
-            "account_id": "test_account",
-            "amount_style": "single_column",
-            "mappings": {
+        db_session.add(BankAccount(
+            account_id="test_account",
+            account_name="Test Account",
+            bank_name="Test Bank",
+            amount_style="single_column",
+            mappings={
                 "date_column": "Date",
                 "description_column": "Description",
                 "amount_column": "Amount",
             }
-        }
+        ))
+        db_session.commit()
         
-        result = StatementParserService.process_csv(sample_csv_data, db_session)
+        result = StatementParserService.process_csv(sample_csv_data, db_session, account_id="test_account")
         
         assert result['added'] == 3
         assert result['skipped'] == 0
@@ -174,60 +177,66 @@ class TestStatementParserService:
         assert expense.amount == 50.00
         assert expense.is_income is False
     
-    @patch('app.services.parser.StatementParserService.load_bank_config')
-    def test_process_csv_split_column_format(self, mock_load_config, db_session, sample_split_column_csv_data):
+    def test_process_csv_split_column_format(self, db_session, sample_split_column_csv_data):
         """Test CSV processing with split column amount format."""
-        mock_load_config.return_value = {
-            "account_id": "split_account",
-            "amount_style": "split_columns",
-            "mappings": {
+        db_session.add(BankAccount(
+            account_id="split_account",
+            account_name="Split Account",
+            bank_name="Test Bank",
+            amount_style="split_columns",
+            mappings={
                 "date_column": "Date",
                 "description_column": "Description",
                 "amount_out_column": "Debit",
                 "amount_in_column": "Credit",
             }
-        }
+        ))
+        db_session.commit()
         
-        result = StatementParserService.process_csv(sample_split_column_csv_data, db_session)
+        result = StatementParserService.process_csv(sample_split_column_csv_data, db_session, account_id="split_account")
         
         assert result['added'] == 3
         expenses = db_session.query(Expense).all()
         assert len(expenses) == 3
     
-    @patch('app.services.parser.StatementParserService.load_bank_config')
-    def test_process_csv_duplicate_detection(self, mock_load_config, db_session, sample_csv_data):
+    def test_process_csv_duplicate_detection(self, db_session, sample_csv_data):
         """Test that duplicate transactions are skipped."""
-        mock_load_config.return_value = {
-            "account_id": "test_account",
-            "amount_style": "single_column",
-            "mappings": {
+        db_session.add(BankAccount(
+            account_id="test_account",
+            account_name="Test Account",
+            bank_name="Test Bank",
+            amount_style="single_column",
+            mappings={
                 "date_column": "Date",
                 "description_column": "Description",
                 "amount_column": "Amount",
             }
-        }
+        ))
+        db_session.commit()
         
         # Process CSV first time
-        result1 = StatementParserService.process_csv(sample_csv_data, db_session)
+        result1 = StatementParserService.process_csv(sample_csv_data, db_session, account_id="test_account")
         assert result1['added'] == 3
         
         # Process same CSV again - all should be skipped
-        result2 = StatementParserService.process_csv(sample_csv_data, db_session)
+        result2 = StatementParserService.process_csv(sample_csv_data, db_session, account_id="test_account")
         assert result2['added'] == 0
         assert result2['skipped'] == 3
     
-    @patch('app.services.parser.StatementParserService.load_bank_config')
-    def test_process_csv_identical_twins(self, mock_load_config, db_session):
+    def test_process_csv_identical_twins(self, db_session):
         """Test handling of identical transaction twins (same date/amount/description)."""
-        mock_load_config.return_value = {
-            "account_id": "test_account",
-            "amount_style": "single_column",
-            "mappings": {
+        db_session.add(BankAccount(
+            account_id="test_account",
+            account_name="Test Account",
+            bank_name="Test Bank",
+            amount_style="single_column",
+            mappings={
                 "date_column": "Date",
                 "description_column": "Description",
                 "amount_column": "Amount",
             }
-        }
+        ))
+        db_session.commit()
         
         # CSV with identical transactions
         csv_data = """Date,Description,Amount
@@ -235,7 +244,7 @@ class TestStatementParserService:
 2024-01-01,Same Store,-50.00
 """
         
-        result = StatementParserService.process_csv(csv_data, db_session)
+        result = StatementParserService.process_csv(csv_data, db_session, account_id="test_account")
         
         # Both should be added with different occurrence numbers
         assert result['added'] == 2

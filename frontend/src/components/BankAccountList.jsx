@@ -19,6 +19,8 @@ export default function BankAccountList({ accounts, loading, error }) {
             <tr>
               <th style={{ textAlign: 'left', borderBottom: '1px solid #ddd', padding: '0.5rem' }}>Account ID</th>
               <th style={{ textAlign: 'left', borderBottom: '1px solid #ddd', padding: '0.5rem' }}>Account Name</th>
+              <th style={{ textAlign: 'left', borderBottom: '1px solid #ddd', padding: '0.5rem' }}>Bank</th>
+              <th style={{ textAlign: 'left', borderBottom: '1px solid #ddd', padding: '0.5rem' }}>Format</th>
             </tr>
           </thead>
           <tbody>
@@ -26,6 +28,8 @@ export default function BankAccountList({ accounts, loading, error }) {
               <tr key={account.account_id}>
                 <td style={{ padding: '0.5rem', borderBottom: '1px solid #f0f0f0' }}>{account.account_id}</td>
                 <td style={{ padding: '0.5rem', borderBottom: '1px solid #f0f0f0' }}>{account.account_name}</td>
+                <td style={{ padding: '0.5rem', borderBottom: '1px solid #f0f0f0' }}>{account.bank_name}</td>
+                <td style={{ padding: '0.5rem', borderBottom: '1px solid #f0f0f0' }}>{account.amount_style}</td>
               </tr>
             ))}
           </tbody>

@@ -66,7 +66,7 @@ function App() {
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <StatementUpload onUploadSuccess={fetchExpenses} />
+          <StatementUpload accounts={accounts} onUploadSuccess={fetchExpenses} />
           <ExpenseForm onExpenseAdded={handleCreateExpense} />
         </div>
         <div style={{ display: 'grid', gap: '1.5rem' }}>

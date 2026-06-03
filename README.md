@@ -91,8 +91,13 @@ To make identical transactions uniquely identifiable while remaining completely 
 
 
 ## API Backend
+The FastAPI backend exposes the main ingestion endpoints used by the frontend:
 
+- `POST /api/v1/accounts` — create a new bank account record with parser settings
+- `GET /api/v1/accounts` — list existing bank accounts
+- `POST /api/v1/upload/csv?account_id=...` — upload a CSV statement for a selected account
 
+Bank-specific parsing information is now stored on every bank account in the database. This allows the parser to use per-account `amount_style` and `mappings` when ingesting statements.
 
 
 ## License

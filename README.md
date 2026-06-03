@@ -12,3 +12,21 @@ The name draws inspiration from the mathematical summation symbol ($\\Sigma$), r
 
 To ensure a seamless transition between backend languages, the project strictly adheres to an **API-First Design**. The React frontend communicates with an identical API contract, meaning the backend can be swapped simply by changing an environment port variable.
 
+## Project Structure
+
+sigmaspend/
+├── frontend/               # React (Vite) Application
+│   ├── src/
+│   │   ├── components/     # UI Components (Form, History, Chart)
+│   │   ├── api/            # Centralised API client logic
+│   │   └── App.jsx
+│   └── package.json
+│
+├── backend-python/         # Phase 1: FastAPI Backend
+│   ├── app/
+│   │   ├── main.py         # App entry point & routes
+│   │   └── models.py       # Pydantic schemas & DB models
+│   └── requirements.txt
+│
+└── backend-java/           # Phase 2: Spring Boot Backend (Upcoming)
+    └── src/

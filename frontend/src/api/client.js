@@ -18,7 +18,7 @@ export const ingestionApi = {
   uploadStatement: (file, accountId) => {
     const formData = new FormData();
     formData.append('file', file);
-    return apiClient.post(`/ingestion/upload/csv?account_id=${encodeURIComponent(accountId)}`, formData, {
+    return apiClient.post(`/upload/csv?account_id=${encodeURIComponent(accountId)}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).then(res => res.data);
   },

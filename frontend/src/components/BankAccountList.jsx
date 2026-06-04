@@ -106,7 +106,7 @@ export default function BankAccountList({ accounts, loading, error, onAccountUpd
               <table className="bank-account-table">
                 <thead>
                   <tr>
-                    <th className="table-header-cell">Account ID</th>
+                    {/* <th className="table-header-cell">Account ID</th> */}
                     <th className="table-header-cell">Account Name</th>
                     <th className="table-header-cell">Bank</th>
                     <th className="table-header-cell">Format</th>
@@ -117,7 +117,7 @@ export default function BankAccountList({ accounts, loading, error, onAccountUpd
                 <tbody>
                   {accounts.map((account) => (
                     <tr key={account.account_id}>
-                      <td>{account.account_id}</td>
+                      {/* <td>{account.account_id}</td> */}
                       <td>
                         {editingAccountId === account.account_id ? (
                           <input

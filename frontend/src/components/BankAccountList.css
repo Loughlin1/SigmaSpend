@@ -32,6 +32,21 @@
   font-weight: 600;
 }
 
+.bank-account-table th:last-child,
+.bank-account-table td:last-child {
+  width: 120px;            /* Set the exact size you want */
+  max-width: 120px;
+  text-align: center;      /* Keeps the layout clean */
+  white-space: nowrap;     /* Prevents the Save/Cancel buttons from breaking onto two lines */
+}
+
+/* Ensure the table doesn't force columns to expand evenly */
+.bank-account-table {
+  width: 100%;
+  table-layout: auto;       /* Allows columns with explicit widths to stay fixed */
+  border-collapse: collapse;
+}
+
 .mapping-cell {
   white-space: normal;
 }
@@ -39,6 +54,26 @@
 .mapping-details {
   display: grid;
   gap: 0.5rem;
+}
+
+.mapping-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Adds clean spacing between fields */
+  min-width: 200px; /* Ensures the column expands to fit the form */
+}
+
+.mapping-inputs label {
+  display: flex;
+  flex-direction: column; /* Puts the input text box underneath the label title */
+  align-items: flex-start;
+  font-size: 0.85rem;
+}
+
+.mapping-inputs input {
+  width: 100%; /* Spans the full width of the cell column */
+  box-sizing: border-box;
+  padding: 4px;
 }
 
 .mapping-row {

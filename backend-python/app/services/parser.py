@@ -6,6 +6,7 @@ from pathlib import Path
 from collections import defaultdict
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
+from dateutil import parser as date_parser
 
 from app.models.expense import Expense
 from app.models.bank_account import BankAccount
@@ -131,7 +132,8 @@ class StatementParserService:
                 # 2. Extract baseline details dynamically mapped via YAML profile keys
                 raw_date = row[mappings["date_column"]].strip()
                 description = row[mappings["description_column"]].strip()
-                
+                parsed_date = date_parser.parse(raw_date, dayfirst=True).date()
+
                 amount = 0.0
                 is_income = False
 
@@ -183,7 +185,7 @@ class StatementParserService:
                 # 7. Commit new record to database state
                 new_expense = Expense(
                     account_id=account_id,
-                    date=raw_date,
+                    date=parsed_date,
                     amount=amount,
                     is_income=is_income,
                     description=description,

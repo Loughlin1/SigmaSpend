@@ -1,3 +1,6 @@
+from datetime import date
+from dateutil import parser
+from dateutil.parser import ParserError
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -7,7 +10,18 @@ from app.api import deps
 from app.models.expense import Expense as ExpenseModel
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate, ExpenseResponse
 
+
 router = APIRouter()
+
+def parse_uk_date(date_str: Optional[str]) -> Optional[date]:
+    try:
+        # Automatically processes YYYY-MM-DD and prioritises DD/MM/YYYY text streams
+        return parser.parse(date_str, dayfirst=True).date()
+    except (ParserError, TypeError):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid date format: '{date_str}'. Please provide a readable date layout."
+        )
 
 
 @router.get("/", response_model=List[ExpenseResponse])
@@ -34,9 +48,11 @@ def read_expenses(
     if is_income is not None:
         query = query.filter(ExpenseModel.is_income == is_income)
     if start_date:
-        query = query.filter(ExpenseModel.date >= start_date)
+        db_start_date = parse_uk_date(start_date)
+        query = query.filter(ExpenseModel.date >= db_start_date)
     if end_date:
-        query = query.filter(ExpenseModel.date <= end_date)
+        db_end_date = parse_uk_date(end_date)
+        query = query.filter(ExpenseModel.date <= db_end_date)
         
     # Order by date descending so the newest items hit the React History view first
     expenses = query.order_by(ExpenseModel.date.desc()).offset(skip).limit(limit).all()

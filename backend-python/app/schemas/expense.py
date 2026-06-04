@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from typing import Optional
+from datetime import date
 
 # Properties shared across all states
 class ExpenseBase(BaseModel):
@@ -7,8 +8,13 @@ class ExpenseBase(BaseModel):
     is_income: bool
     category: Optional[str] = "Uncategorized"
     description: str
-    date: str
+    date: date
     account_id: str
+
+    # Converts Python date objects directly to UK format strings for JSON payloads
+    @field_serializer('date')
+    def serialize_date(self, dt: date, _info) -> str:
+        return dt.strftime("%d/%m/%Y")  # Outputs: "04/06/2026"
 
 # Properties received via API on manual creation
 class ExpenseCreate(ExpenseBase):
@@ -16,6 +22,7 @@ class ExpenseCreate(ExpenseBase):
 
 class ExpenseUpdate(ExpenseBase):
     pass
+
 
 # Properties returned to the React frontend client
 class ExpenseResponse(ExpenseBase):

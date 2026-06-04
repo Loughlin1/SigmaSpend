@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ingestionApi } from '../api/client';
+import './BankAccountForm.css';
 
 export default function BankAccountForm({ onAccountCreated }) {
   const [accountId, setAccountId] = useState('');
@@ -85,157 +86,109 @@ export default function BankAccountForm({ onAccountCreated }) {
     }
   };
 
-  const fieldWrapperStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '0.25rem',
-    width: '100%',
-  };
-
-  const inputStyle = {
-    width: '100%',
-    maxWidth: '100%',
-    padding: '0.5rem',
-    marginTop: '0.25rem',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    boxSizing: 'border-box',
-  };
-
-  const buttonStyle = {
-    width: '100%',
-    maxWidth: '240px',
-    padding: '0.75rem 1rem',
-    alignSelf: 'center',
-  };
-
   return (
-    <section
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        width: '100%',
-        maxWidth: '700px',
-        margin: '0 auto',
-        padding: '1rem',
-        border: '1px solid #ccc',
-        borderRadius: '8px',
-        background: '#fff',
-        boxSizing: 'border-box',
-      }}
-    >
+    <section className="bank-account-form">
       <h3>Create New Bank Account</h3>
-      {error && <div style={{ color: '#cc0000', marginBottom: '0.75rem' }}>{error}</div>}
-      {successMessage && <div style={{ color: '#006600', marginBottom: '0.75rem' }}>{successMessage}</div>}
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: 'grid',
-          gap: '1rem',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          alignItems: 'start',
-          width: '100%',
-        }}
-      >
-        <label style={fieldWrapperStyle}>
+      {error && <div className="bank-account-form__error">{error}</div>}
+      {successMessage && <div className="bank-account-form__success">{successMessage}</div>}
+      <form onSubmit={handleSubmit} className="bank-account-form__grid">
+        <label className="field-wrapper">
           Account ID
           <input
             type="text"
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             placeholder="e.g. checking_001"
-            style={inputStyle}
+            className="inline-input"
           />
         </label>
-        <label style={fieldWrapperStyle}>
+        <label className="field-wrapper">
           Account Name
           <input
             type="text"
             value={accountName}
             onChange={(e) => setAccountName(e.target.value)}
             placeholder="e.g. My Checking Account"
-            style={inputStyle}
+            className="inline-input"
           />
         </label>
-        <label style={fieldWrapperStyle}>
+        <label className="field-wrapper">
           Bank Name
           <input
             type="text"
             value={bankName}
             onChange={(e) => setBankName(e.target.value)}
             placeholder="e.g. Chase Bank"
-            style={inputStyle}
+            className="inline-input"
           />
         </label>
-        <label style={fieldWrapperStyle}>
+        <label className="field-wrapper">
           Statement Format
           <select
             value={amountStyle}
             onChange={(e) => setAmountStyle(e.target.value)}
-            style={inputStyle}
+            className="inline-input"
           >
             <option value="single_column">Single Column</option>
             <option value="split_columns">Split Columns</option>
           </select>
         </label>
-        <label style={fieldWrapperStyle}>
+        <label className="field-wrapper">
           Date Column
           <input
             type="text"
             value={dateColumn}
             onChange={(e) => setDateColumn(e.target.value)}
             placeholder="e.g. Date"
-            style={inputStyle}
+            className="inline-input"
           />
         </label>
-        <label style={fieldWrapperStyle}>
+        <label className="field-wrapper">
           Description Column
           <input
             type="text"
             value={descriptionColumn}
             onChange={(e) => setDescriptionColumn(e.target.value)}
             placeholder="e.g. Description"
-            style={inputStyle}
+            className="inline-input"
           />
         </label>
         {amountStyle === 'single_column' ? (
-          <label style={fieldWrapperStyle}>
+          <label className="field-wrapper">
             Amount Column
             <input
               type="text"
               value={amountColumn}
               onChange={(e) => setAmountColumn(e.target.value)}
               placeholder="e.g. Amount"
-              style={inputStyle}
+              className="inline-input"
             />
           </label>
         ) : (
           <>
-            <label style={fieldWrapperStyle}>
+            <label className="field-wrapper">
               Debit Column
               <input
                 type="text"
                 value={amountOutColumn}
                 onChange={(e) => setAmountOutColumn(e.target.value)}
                 placeholder="e.g. Debit"
-                style={inputStyle}
+                className="inline-input"
               />
             </label>
-            <label style={fieldWrapperStyle}>
+            <label className="field-wrapper">
               Credit Column
               <input
                 type="text"
                 value={amountInColumn}
                 onChange={(e) => setAmountInColumn(e.target.value)}
                 placeholder="e.g. Credit"
-                style={inputStyle}
+                className="inline-input"
               />
             </label>
           </>
         )}
-        <button type="submit" disabled={loading} style={buttonStyle}>
+        <button type="submit" disabled={loading} className="inlineButton bank-account-form__submit">
           {loading ? 'Saving...' : 'Add Bank Account'}
         </button>
       </form>

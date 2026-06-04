@@ -1,6 +1,7 @@
 // src/components/StatementUpload.jsx
 import React, { useState } from 'react';
 import { ingestionApi } from '../api/client';
+import './StatementUpload.css';
 
 export default function StatementUpload({ accounts, onUploadSuccess }) {
   const [file, setFile] = useState(null);
@@ -30,18 +31,18 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
   };
 
   return (
-    <div className="upload-box" style={{ padding: '1rem', border: '1px solid #ccc', borderRadius: '8px', background: '#fff' }}>
+    <div className="upload-box sectionCard">
       <h3>Import Bank Statement</h3>
-      {error && <div style={{ color: '#cc0000', marginBottom: '0.75rem' }}>{error}</div>}
-      <div style={{ display: 'flex'}}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <label style={{ marginRight: '12px'}}>
-          Select Bank Account
-          <select
-            value={selectedAccount}
-            onChange={(e) => setSelectedAccount(e.target.value)}
-            style={{ width: '80%', padding: '0.5rem', marginTop: '0.25rem', borderRadius: '4px', border: '1px solid #ccc' }}
-          >
+      {error && <div className="upload-box__error">{error}</div>}
+      <div className="upload-box__row">
+        <div className="upload-box__field">
+          <label className="upload-box__label">
+            Select Bank Account
+            <select
+              value={selectedAccount}
+              onChange={(e) => setSelectedAccount(e.target.value)}
+              className="upload-box__select"
+            >
             <option value="">Choose an account</option>
             {accounts.map((account) => (
               <option key={account.account_id} value={account.account_id}>
@@ -51,14 +52,14 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
           </select>
         </label>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'center'}}>
+        <div className="upload-box__actions">
           <input
             type="file"
             accept=".csv"
             onChange={(e) => setFile(e.target.files[0])}
-            style={{ marginTop: '0.75rem' }}
+            className="upload-box__file-input"
           />
-          <button onClick={handleUpload} disabled={!file || !selectedAccount || loading} style={{ marginTop: '0.75rem', padding: '0.75rem 0.25rem' }}>
+          <button onClick={handleUpload} disabled={!file || !selectedAccount || loading} className="inlineButton upload-box__button">
             {loading ? 'Processing...' : 'Upload'}
           </button>
         </div>

@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { ingestionApi } from '../api/client';
+import './BankAccountList.css';
 
-const formatDate = (value) => {
-  if (!value) return '-';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
-};
 
 export default function BankAccountList({ accounts, loading, error, onAccountUpdated }) {
   const [editingAccountId, setEditingAccountId] = useState(null);
@@ -82,31 +78,25 @@ export default function BankAccountList({ accounts, loading, error, onAccountUpd
   };
 
   return (
-    <div className="account-list" style={{ padding: '1rem', border: '1px solid #ccc', borderRadius: '8px', background: '#fff' }}>
+    <div className="account-list">
       {error ? (
-        <div style={{ color: '#cc0000', marginBottom: '1rem' }}>{error}</div>
+        <div className="account-list__error">{error}</div>
       ) : null}
       {loading ? (
         <div>Loading accounts...</div>
       ) : accounts.length === 0 ? (
         <div>No bank accounts found in the database.</div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div className="account-list__wrapper">
+          <table className="bank-account-table">
           <thead>
             <tr>
-              <th style={headerCell}>Account ID</th>
-              <th style={headerCell}>Account Name</th>
-              <th style={headerCell}>Bank</th>
-              <th style={headerCell}>Format</th>
-              <th style={headerCell}>Profile</th>
-              <th style={headerCell}>Active</th>
-              <th style={headerCell}>Created</th>
-              <th style={headerCell}>Date Column</th>
-              <th style={headerCell}>Description Column</th>
-              <th style={headerCell}>Amount Column</th>
-              <th style={headerCell}>Debit Column</th>
-              <th style={headerCell}>Credit Column</th>
-              <th style={headerCell}>Actions</th>
+              <th className="table-header-cell">Account ID</th>
+              <th className="table-header-cell">Account Name</th>
+              <th className="table-header-cell">Bank</th>
+              <th className="table-header-cell">Format</th>
+              <th className="table-header-cell">Mappings</th>
+              <th className="table-header-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -120,97 +110,103 @@ export default function BankAccountList({ accounts, loading, error, onAccountUpd
               const amountInColumn = mappings.amount_in_column || '-';
               return (
                 <tr key={account.account_id}>
-                  <td style={bodyCell}>{account.account_id}</td>
-                  <td style={bodyCell}>
+                  <td className="table-cell">{account.account_id}</td>
+                  <td className="table-cell">
                     {isEditing ? (
                       <input
                         type="text"
                         value={draftName}
                         onChange={(e) => setDraftName(e.target.value)}
-                        style={{ width: '100%', padding: '0.35rem', borderRadius: '4px', border: '1px solid #ccc' }}
+                        className="inline-input"
                       />
                     ) : (
                       account.account_name
                     )}
                   </td>
-                  <td style={bodyCell}>{account.bank_name}</td>
-                  <td style={bodyCell}>{account.amount_style}</td>
-                  <td style={bodyCell}>{account.bank_profile || '-'}</td>
-                  <td style={bodyCell}>{account.is_active ? 'Yes' : 'No'}</td>
-                  <td style={bodyCell}>{formatDate(account.created_at)}</td>
-                  <td style={bodyCell}>
+                  <td className="table-cell">{account.bank_name}</td>
+                  <td className="table-cell">{account.amount_style}</td>
+                  <td className="table-cell mapping-cell">
                     {isEditing ? (
-                      <input
-                        type="text"
-                        value={draftDateColumn}
-                        onChange={(e) => setDraftDateColumn(e.target.value)}
-                        style={{ width: '100%', padding: '0.35rem', borderRadius: '4px', border: '1px solid #ccc' }}
-                      />
-                    ) : (
-                      dateColumn
-                    )}
-                  </td>
-                  <td style={bodyCell}>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={draftDescriptionColumn}
-                        onChange={(e) => setDraftDescriptionColumn(e.target.value)}
-                        style={{ width: '100%', padding: '0.35rem', borderRadius: '4px', border: '1px solid #ccc' }}
-                      />
-                    ) : (
-                      descriptionColumn
-                    )}
-                  </td>
-                  <td style={bodyCell}>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={draftAmountColumn}
-                        onChange={(e) => setDraftAmountColumn(e.target.value)}
-                        style={{ width: '100%', padding: '0.35rem', borderRadius: '4px', border: '1px solid #ccc' }}
-                      />
-                    ) : (
-                      account.amount_style === 'single_column' ? amountColumn : '-'
-                    )}
-                  </td>
-                  <td style={bodyCell}>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={draftAmountOutColumn}
-                        onChange={(e) => setDraftAmountOutColumn(e.target.value)}
-                        style={{ width: '100%', padding: '0.35rem', borderRadius: '4px', border: '1px solid #ccc' }}
-                      />
-                    ) : (
-                      account.amount_style === 'split_columns' ? amountOutColumn : '-'
-                    )}
-                  </td>
-                  <td style={bodyCell}>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={draftAmountInColumn}
-                        onChange={(e) => setDraftAmountInColumn(e.target.value)}
-                        style={{ width: '100%', padding: '0.35rem', borderRadius: '4px', border: '1px solid #ccc' }}
-                      />
-                    ) : (
-                      account.amount_style === 'split_columns' ? amountInColumn : '-'
-                    )}
-                  </td>
-                  <td style={bodyCell}>
-                    {isEditing ? (
-                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <button type="button" onClick={saveAccount} disabled={saving} style={{ padding: '0.35rem 0.75rem' }}>
-                          {saving ? 'Saving...' : 'Save'}
-                        </button>
-                        <button type="button" onClick={cancelEditing} disabled={saving} style={{ padding: '0.35rem 0.75rem' }}>
-                          Cancel
-                        </button>
-                        {saveError && <div style={{ color: '#cc0000', marginTop: '0.25rem' }}>{saveError}</div>}
+                      <div className="mapping-details">
+                        <div className="mapping-row">
+                          <label>Date</label>
+                          <input
+                            type="text"
+                            value={draftDateColumn}
+                            onChange={(e) => setDraftDateColumn(e.target.value)}
+                            className="inline-input"
+                          />
+                        </div>
+                        <div className="mapping-row">
+                          <label>Desc</label>
+                          <input
+                            type="text"
+                            value={draftDescriptionColumn}
+                            onChange={(e) => setDraftDescriptionColumn(e.target.value)}
+                            className="inline-input"
+                          />
+                        </div>
+                        {account.amount_style === 'single_column' ? (
+                          <div className="mapping-row">
+                            <label>Amount</label>
+                            <input
+                              type="text"
+                              value={draftAmountColumn}
+                              onChange={(e) => setDraftAmountColumn(e.target.value)}
+                              className="inline-input"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <div className="mapping-row">
+                              <label>Debit</label>
+                              <input
+                                type="text"
+                                value={draftAmountOutColumn}
+                                onChange={(e) => setDraftAmountOutColumn(e.target.value)}
+                                className="inline-input"
+                              />
+                            </div>
+                            <div className="mapping-row">
+                              <label>Credit</label>
+                              <input
+                                type="text"
+                                value={draftAmountInColumn}
+                                onChange={(e) => setDraftAmountInColumn(e.target.value)}
+                                className="inline-input"
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
                     ) : (
-                      <button type="button" onClick={() => startEditing(account)} style={{ padding: '0.35rem 0.75rem' }}>
+                      <div className="mapping-details">
+                        <div><strong>Date:</strong> {dateColumn}</div>
+                        <div><strong>Desc:</strong> {descriptionColumn}</div>
+                        {account.amount_style === 'single_column' ? (
+                          <div><strong>Amount:</strong> {amountColumn}</div>
+                        ) : (
+                          <>
+                            <div><strong>Debit:</strong> {amountOutColumn}</div>
+                            <div><strong>Credit:</strong> {amountInColumn}</div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                  <td className="table-cell actions-cell">
+                    {isEditing ? (
+                      <div className="action-buttons">
+                        <button type="button" onClick={saveAccount} disabled={saving} className="inlineButton">
+                          {saving ? 'Saving...' : 'Save'}
+                        </button>
+                        <button type="button" onClick={cancelEditing} disabled={saving} className="inlineButton">
+                          Cancel
+                        </button>
+                        {saveError && <div className="error-text">{saveError}</div>}
+                      </div>
+                    ) : (
+                      <button type="button" onClick={() => startEditing(account)} className="inlineButton">
                         Edit
                       </button>
                     )}
@@ -219,20 +215,10 @@ export default function BankAccountList({ accounts, loading, error, onAccountUpd
               );
             })}
           </tbody>
-        </table>
+          </table>
+        </div>
       )}
     </div>
   );
 }
 
-const headerCell = {
-  textAlign: 'left',
-  borderBottom: '1px solid #ddd',
-  padding: '0.5rem',
-};
-
-const bodyCell = {
-  padding: '0.5rem',
-  borderBottom: '1px solid #f0f0f0',
-  verticalAlign: 'top',
-};

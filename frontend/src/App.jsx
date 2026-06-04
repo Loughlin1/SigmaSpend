@@ -58,25 +58,23 @@ function App() {
         <StatementUpload accounts={accounts} onUploadSuccess={fetchExpenses} />
       </div>
 
-      <div className="gridTwoColumns">
-        <section className="sectionCard">
-          <div className="headingRow">
-            <h3 style={{ margin: 0 }}>Bank Accounts</h3>
-            <button type="button" onClick={() => setShowAccountForm((prev) => !prev)} className="button">
-              {showAccountForm ? 'Hide Form' : 'Create New Bank Account'}
-            </button>
-          </div>
+      <section className="sectionCard">
+        <div className="headingRow">
+          <h3 style={{ margin: 0 }}>Bank Accounts</h3>
+          <button type="button" onClick={() => setShowAccountForm((prev) => !prev)} className="button">
+            {showAccountForm ? 'Hide Form' : 'Create New Bank Account'}
+          </button>
+        </div>
 
-          {showAccountForm && <BankAccountForm onAccountCreated={handleAccountCreated} />}
+        {showAccountForm && <BankAccountForm onAccountCreated={handleAccountCreated} />}
 
-          <BankAccountList
-            accounts={accounts}
-            loading={accountsLoading}
-            error={accountsError}
-            onAccountUpdated={fetchAccounts}
-          />
-        </section>
-      </div>
+        <BankAccountList
+          accounts={accounts}
+          loading={accountsLoading}
+          error={accountsError}
+          onAccountUpdated={fetchAccounts}
+        />
+      </section>
 
       <div style={{ marginBottom: '5rem' }}>
         <ExpenseChart expenses={expenses} accounts={accounts} />

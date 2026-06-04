@@ -119,13 +119,6 @@
   align-items: flex-start;
 }
 
-.gridTwoColumns {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
 .sectionCard {
   padding: 1rem;
   border: 1px solid #ccc;
@@ -133,6 +126,7 @@
   background: #fff;
   display: block;
   gap: 1rem;
+  width: 100%;
 }
 
 .headingRow {
@@ -160,7 +154,7 @@
 
 .inlineButton {
   padding: 0.45rem 0.7rem;
-  background: #f0f0f0;
+  background: var(--accent, #2b6cb0);
   border: 1px solid #ddd;
   border-radius: 6px;
   cursor: pointer;

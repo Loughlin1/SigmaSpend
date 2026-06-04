@@ -14,6 +14,7 @@ To ensure a seamless transition between backend languages, the project strictly 
 
 ## Project Structure
 
+```
 sigmaspend/
 ├── frontend/               # React (Vite) Application
 │   ├── src/
@@ -55,6 +56,7 @@ sigmaspend/
 │
 └── backend-java/           # Phase 2: Spring Boot Backend (Upcoming)
     └── src/
+```
 
 ## Data Flow
 When a user uploads a statement, the system reads it, extracts individual lines, runs them through a deduplication engine, and saves only the new records to the database.

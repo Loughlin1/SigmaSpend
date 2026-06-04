@@ -1,7 +1,7 @@
 // src/App.jsx
 import './App.css';
 import React, { useState, useEffect, useMemo } from 'react';
-import { ingestionApi } from './api/client';
+import logo from './assets/logo.png';
 import DescriptionSection from './components/Description';
 import ExpenseForm from './components/ExpenseForm';
 import StatementUpload from './components/StatementUpload';
@@ -50,7 +50,10 @@ function App() {
 
   return (
     <div className="page">
-      <h1>Σ SigmaSpend Dashboard</h1>
+      <div className="logo-container">
+        <img src={logo} alt="SigmaSpend Logo" width="64" className='logo'/>
+        <h1>SigmaSpend Dashboard</h1>
+      </div>
       <hr />
 
       <div className="splitSection">

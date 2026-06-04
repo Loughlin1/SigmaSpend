@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { ingestionApi } from '../api/client';
+import BankAccountForm from './BankAccountForm';
+
 import './BankAccountList.css';
 
 
-export default function BankAccountList({ accounts, loading, error, onAccountUpdated }) {
+export default function BankAccountList({ accounts, loading, error, onAccountUpdated, onAccountCreated, showAccountForm, setShowAccountForm}) {
   const [editingAccountId, setEditingAccountId] = useState(null);
   const [draftName, setDraftName] = useState('');
   const [draftDateColumn, setDraftDateColumn] = useState('');
@@ -13,6 +15,11 @@ export default function BankAccountList({ accounts, loading, error, onAccountUpd
   const [draftAmountInColumn, setDraftAmountInColumn] = useState('');
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true); // New state for collapsibility
+
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
 
   const startEditing = (account) => {
     setEditingAccountId(account.account_id);
@@ -79,144 +86,112 @@ export default function BankAccountList({ accounts, loading, error, onAccountUpd
 
   return (
     <div className="account-list">
-      {error ? (
-        <div className="account-list__error">{error}</div>
-      ) : null}
-      {loading ? (
-        <div>Loading accounts...</div>
-      ) : accounts.length === 0 ? (
-        <div>No bank accounts found in the database.</div>
-      ) : (
-        <div className="account-list__wrapper">
-          <table className="bank-account-table">
-          <thead>
-            <tr>
-              <th className="table-header-cell">Account ID</th>
-              <th className="table-header-cell">Account Name</th>
-              <th className="table-header-cell">Bank</th>
-              <th className="table-header-cell">Format</th>
-              <th className="table-header-cell">Mappings</th>
-              <th className="table-header-cell">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {accounts.map((account) => {
-              const isEditing = editingAccountId === account.account_id;
-              const mappings = account.mappings || {};
-              const dateColumn = mappings.date_column || '-';
-              const descriptionColumn = mappings.description_column || '-';
-              const amountColumn = mappings.amount_column || '-';
-              const amountOutColumn = mappings.amount_out_column || '-';
-              const amountInColumn = mappings.amount_in_column || '-';
-              return (
-                <tr key={account.account_id}>
-                  <td className="table-cell">{account.account_id}</td>
-                  <td className="table-cell">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={draftName}
-                        onChange={(e) => setDraftName(e.target.value)}
-                        className="inline-input"
-                      />
-                    ) : (
-                      account.account_name
-                    )}
-                  </td>
-                  <td className="table-cell">{account.bank_name}</td>
-                  <td className="table-cell">{account.amount_style}</td>
-                  <td className="table-cell mapping-cell">
-                    {isEditing ? (
-                      <div className="mapping-details">
-                        <div className="mapping-row">
-                          <label>Date</label>
+      <div className="account-list__header" onClick={toggleCollapse}>
+        <h3>Bank Accounts ({accounts.length})</h3>
+        <button className="collapse-button">
+          {isCollapsed ? 'Show' : 'Hide'}
+        </button>
+      </div>
+      {!isCollapsed && ( // Conditionally render content
+        <>
+          {error ? (
+            <div className="account-list__error">{error}</div>
+          ) : null}
+          {loading ? (
+            <div>Loading accounts...</div>
+          ) : accounts.length === 0 ? (
+            <div>No bank accounts found in the database.</div>
+          ) : (
+            <div className="account-list__wrapper">
+              <table className="bank-account-table">
+                <thead>
+                  <tr>
+                    <th className="table-header-cell">Account ID</th>
+                    <th className="table-header-cell">Account Name</th>
+                    <th className="table-header-cell">Bank</th>
+                    <th className="table-header-cell">Format</th>
+                    <th className="table-header-cell">Mappings</th>
+                    <th className="table-header-cell">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accounts.map((account) => (
+                    <tr key={account.account_id}>
+                      <td>{account.account_id}</td>
+                      <td>
+                        {editingAccountId === account.account_id ? (
                           <input
                             type="text"
-                            value={draftDateColumn}
-                            onChange={(e) => setDraftDateColumn(e.target.value)}
-                            className="inline-input"
+                            value={draftName}
+                            onChange={(e) => setDraftName(e.target.value)}
                           />
-                        </div>
-                        <div className="mapping-row">
-                          <label>Desc</label>
-                          <input
-                            type="text"
-                            value={draftDescriptionColumn}
-                            onChange={(e) => setDraftDescriptionColumn(e.target.value)}
-                            className="inline-input"
-                          />
-                        </div>
-                        {account.amount_style === 'single_column' ? (
-                          <div className="mapping-row">
-                            <label>Amount</label>
-                            <input
-                              type="text"
-                              value={draftAmountColumn}
-                              onChange={(e) => setDraftAmountColumn(e.target.value)}
-                              className="inline-input"
-                            />
+                        ) : (
+                          account.account_name
+                        )}
+                      </td>
+                      <td>{account.bank_name}</td>
+                      <td>{account.amount_style}</td>
+                      <td>
+                        {editingAccountId === account.account_id ? (
+                          <div className="mapping-inputs">
+                            <label>Date Column: <input type="text" value={draftDateColumn} onChange={(e) => setDraftDateColumn(e.target.value)} /></label>
+                            <label>Description Column: <input type="text" value={draftDescriptionColumn} onChange={(e) => setDraftDescriptionColumn(e.target.value)} /></label>
+                            {account.amount_style === 'single_column' ? (
+                              <label>Amount Column: <input type="text" value={draftAmountColumn} onChange={(e) => setDraftAmountColumn(e.target.value)} /></label>
+                            ) : (
+                              <>
+                                <label>Credit Column: <input type="text" value={draftAmountInColumn} onChange={(e) => setDraftAmountInColumn(e.target.value)} /></label>
+                                <label>Debit Column: <input type="text" value={draftAmountOutColumn} onChange={(e) => setDraftAmountOutColumn(e.target.value)} /></label>
+                              </>
+                            )}
                           </div>
                         ) : (
                           <>
-                            <div className="mapping-row">
-                              <label>Debit</label>
-                              <input
-                                type="text"
-                                value={draftAmountOutColumn}
-                                onChange={(e) => setDraftAmountOutColumn(e.target.value)}
-                                className="inline-input"
-                              />
-                            </div>
-                            <div className="mapping-row">
-                              <label>Credit</label>
-                              <input
-                                type="text"
-                                value={draftAmountInColumn}
-                                onChange={(e) => setDraftAmountInColumn(e.target.value)}
-                                className="inline-input"
-                              />
-                            </div>
+                            <div>Date: {account.mappings?.date_column}</div>
+                            <div>Description: {account.mappings?.description_column}</div>
+                            {account.amount_style === 'single_column' ? (
+                              <div>Amount: {account.mappings?.amount_column}</div>
+                            ) : (
+                              <>
+                                <div>Credit: {account.mappings?.amount_in_column}</div>
+                                <div>Debit: {account.mappings?.amount_out_column}</div>
+                              </>
+                            )}
                           </>
                         )}
-                      </div>
-                    ) : (
-                      <div className="mapping-details">
-                        <div><strong>Date:</strong> {dateColumn}</div>
-                        <div><strong>Desc:</strong> {descriptionColumn}</div>
-                        {account.amount_style === 'single_column' ? (
-                          <div><strong>Amount:</strong> {amountColumn}</div>
-                        ) : (
+                      </td>
+                      <td>
+                        {editingAccountId === account.account_id ? (
                           <>
-                            <div><strong>Debit:</strong> {amountOutColumn}</div>
-                            <div><strong>Credit:</strong> {amountInColumn}</div>
+                            <button onClick={saveAccount} disabled={saving}>Save</button>
+                            <button onClick={cancelEditing} disabled={saving}>Cancel</button>
+                            {saveError && <div className="save-error">{saveError}</div>}
                           </>
+                        ) : (
+                          <button onClick={() => startEditing(account)}>Edit</button>
                         )}
-                      </div>
-                    )}
-                  </td>
-                  <td className="table-cell actions-cell">
-                    {isEditing ? (
-                      <div className="action-buttons">
-                        <button type="button" onClick={saveAccount} disabled={saving} className="inlineButton">
-                          {saving ? 'Saving...' : 'Save'}
-                        </button>
-                        <button type="button" onClick={cancelEditing} disabled={saving} className="inlineButton">
-                          Cancel
-                        </button>
-                        {saveError && <div className="error-text">{saveError}</div>}
-                      </div>
-                    ) : (
-                      <button type="button" onClick={() => startEditing(account)} className="inlineButton">
-                        Edit
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-          </table>
-        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="account-list__creation-zone" style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px dashed #ccc' }}>
+            <button 
+              type="button" 
+              onClick={() => setShowAccountForm((prev) => !prev)} 
+              className="button"
+              style={{ marginBottom: '15px' }}
+            >
+              {showAccountForm ? 'Hide Form' : 'Create New Bank Account'}
+            </button>
+            
+            {showAccountForm && (
+              <BankAccountForm onAccountCreated={onAccountCreated} />
+            )}
+          </div>
+        </>
       )}
     </div>
   );

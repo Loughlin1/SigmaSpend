@@ -1,110 +1,46 @@
 // src/App.jsx
 import './App.css';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { expenseApi, ingestionApi } from './api/client';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ingestionApi } from './api/client';
 import DescriptionSection from './components/Description';
 import ExpenseForm from './components/ExpenseForm';
 import StatementUpload from './components/StatementUpload';
 import ExpenseChart from './components/ExpenseChart';
 import BankAccountList from './components/BankAccountList';
 import BankAccountForm from './components/BankAccountForm';
+import useExpenses from './hooks/useExpenses';
+import useAccounts from './hooks/useAccounts';
+import useExpenseForm from './hooks/useExpenseForm';
+import LedgerTable from './components/LedgerTable';
 
 
 function App() {
-  const [expenses, setExpenses] = useState([]);
-  const [accounts, setAccounts] = useState([]);
-  const [accountsLoading, setAccountsLoading] = useState(true);
-  const [accountsError, setAccountsError] = useState('');
+  const { expenses, fetchExpenses, createExpense, updateExpense, deleteExpense } = useExpenses();
+  const { accounts, loading: accountsLoading, error: accountsError, fetchAccounts, accountNameMap } = useAccounts();
+  const { showExpenseForm, actionSelect, editingExpense, closeExpenseForm, openEditExpense, handleActionChange } =
+    useExpenseForm();
   const [showAccountForm, setShowAccountForm] = useState(false);
-  const [showExpenseForm, setShowExpenseForm] = useState(false);
-  const [actionSelect, setActionSelect] = useState('none');
-  const [editingExpense, setEditingExpense] = useState(null);
 
-  const accountNameMap = useMemo(
-    () =>
-      accounts.reduce((map, account) => {
-        map[account.account_id] = account.account_name;
-        return map;
-      }, {}),
-    [accounts]
-  );
-
-  const fetchExpenses = useCallback(async () => {
-    try {
-      const data = await expenseApi.getAll({ limit: 100 });
-      setExpenses(data);
-    } catch (err) {
-      console.error('Failed fetching ledger data', err);
-    }
-  }, []);
-
-  const fetchAccounts = useCallback(async () => {
-    setAccountsLoading(true);
-
-    try {
-      const data = await ingestionApi.getAccounts({ active_only: true });
-      setAccounts(data);
-      setAccountsError('');
-    } catch (err) {
-      console.error('Failed fetching bank accounts', err);
-      setAccountsError('Unable to load bank accounts at this time.');
-    } finally {
-      setAccountsLoading(false);
-    }
-  }, []);
+  // accountNameMap provided by useAccounts
 
   useEffect(() => {
     fetchExpenses();
     fetchAccounts();
   }, [fetchExpenses, fetchAccounts]);
 
-  const handleCreateExpense = async (newExpense) => {
-    try {
-      await expenseApi.create(newExpense);
-      await fetchExpenses();
-    } catch (err) {
-      console.error('Failed creating record', err);
-    }
-  };
-
-  const handleDeleteExpense = async (id) => {
-    try {
-      await expenseApi.delete(id);
-      await fetchExpenses();
-    } catch (err) {
-      console.error('Failed deleting record', err);
-    }
-  };
+  // expense CRUD delegated to `useExpenses` hook: createExpense, updateExpense, deleteExpense
 
   const handleAccountCreated = async () => {
     await fetchAccounts();
     setShowAccountForm(false);
   };
 
-  const closeExpenseForm = () => {
-    setEditingExpense(null);
-    setShowExpenseForm(false);
-    setActionSelect('none');
-  };
-
-  const handleEditExpense = (expense) => {
-    setEditingExpense(expense);
-    setShowExpenseForm(true);
-    setActionSelect('none');
-  };
-
-  const handleActionChange = (value) => {
-    setActionSelect(value);
-    setShowExpenseForm(value === 'add_manual');
-    if (value !== 'add_manual') {
-      setEditingExpense(null);
-    }
-  };
+  // expense form state/hooks provided by useExpenseForm
+  const handleEditExpense = (expense) => openEditExpense(expense);
 
   const handleSaveExpense = async (payload) => {
     try {
-      await expenseApi.update(payload.id, payload);
-      await fetchExpenses();
+      await updateExpense(payload.id, payload);
     } catch (err) {
       console.error('Failed updating record', err);
     } finally {
@@ -166,8 +102,8 @@ function App() {
           <div className="formPanel">
             <ExpenseForm
               initialData={editingExpense}
-              onExpenseAdded={(data) => {
-                handleCreateExpense(data);
+              onExpenseAdded={async (data) => {
+                await createExpense(data);
                 closeExpenseForm();
               }}
               onExpenseSaved={handleSaveExpense}
@@ -176,39 +112,14 @@ function App() {
           </div>
         )}
 
-        <table border="1" cellPadding="10" className="table">
-          <thead className="tableHeader">
-            <tr>
-              <th>Date</th>
-              <th>Description</th>
-              <th>Account</th>
-              <th>Category</th>
-              <th>Type</th>
-              <th>Amount</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {expenses.map((exp) => (
-              <tr key={exp.id}>
-                <td>{exp.date}</td>
-                <td>{exp.description}</td>
-                <td>{accountNameMap[exp.account_id] || exp.account_id}</td>
-                <td>{exp.category}</td>
-                <td>{exp.is_income ? 'Income' : 'Expense'}</td>
-                <td>£{Number(exp.amount).toFixed(2)}</td>
-                <td>
-                  <button type="button" onClick={() => handleEditExpense(exp)}>
-                    Edit
-                  </button>
-                  <button type="button" onClick={() => handleDeleteExpense(exp.id)} style={{ marginLeft: '0.5rem' }}>
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <LedgerTable
+          expenses={expenses}
+          accountNameMap={accountNameMap}
+          onEdit={handleEditExpense}
+          onDelete={async (id) => {
+            await deleteExpense(id);
+          }}
+        />
       </section>
     </div>
   );

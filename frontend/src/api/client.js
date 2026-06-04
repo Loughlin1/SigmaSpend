@@ -15,9 +15,13 @@ export const expenseApi = {
 };
 
 export const ingestionApi = {
-  uploadStatement: (file, accountId) => {
+  uploadStatement: (files, accountId) => {
     const formData = new FormData();
-    formData.append('file', file);
+    if (Array.isArray(files)) {
+      files.forEach((file) => formData.append('files', file));
+    } else {
+      formData.append('files', files);
+    }
     return apiClient.post(`/upload/csv?account_id=${encodeURIComponent(accountId)}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).then(res => res.data);

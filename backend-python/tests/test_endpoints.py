@@ -24,21 +24,36 @@ class TestIngestionEndpoints:
         
         response = client.post(
             f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
-            files={"file": csv_file}
+            files=[("files", csv_file)]
         )
         
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json()["status"] == "success"
         assert "summary" in response.json()
         assert response.json()["account_id"] == test_bank_account["account_id"]
-    
+
+    def test_upload_csv_multiple_files(self, client, test_bank_account, sample_csv_data):
+        """Test upload of multiple CSV files in one request."""
+        csv_file1 = ("test1.csv", sample_csv_data, "text/csv")
+        csv_file2 = ("test2.csv", "Date,Description,Amount\n2024-02-01,Book,-20.00\n", "text/csv")
+
+        response = client.post(
+            f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
+            files=[("files", csv_file1), ("files", csv_file2)]
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json()["status"] == "success"
+        assert response.json()["files_processed"] == 2
+        assert response.json()["summary"]["added"] >= 1
+
     def test_upload_csv_invalid_file_format(self, client, test_bank_account):
         """Test upload with invalid file format."""
         txt_file = ("test.txt", "some text", "text/plain")
         
         response = client.post(
             f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
-            files={"file": txt_file}
+            files=[("files", txt_file)]
         )
         
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -58,7 +73,7 @@ class TestIngestionEndpoints:
         
         response = client.post(
             "/api/v1/upload/csv",
-            files={"file": csv_file}
+            files=[("files", csv_file)]
         )
         
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -69,7 +84,7 @@ class TestIngestionEndpoints:
         
         response = client.post(
             "/api/v1/upload/csv?account_id=nonexistent_account",
-            files={"file": csv_file}
+            files=[("files", csv_file)]
         )
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -81,7 +96,7 @@ class TestIngestionEndpoints:
         
         response = client.post(
             f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
-            files={"file": csv_file}
+            files=[("files", csv_file)]
         )
         
         # Should handle gracefully - either 201 with 0 added or handle error
@@ -94,7 +109,7 @@ class TestIngestionEndpoints:
         
         response = client.post(
             f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
-            files={"file": csv_file}
+            files=[("files", csv_file)]
         )
         
         # Parser gracefully skips rows with missing columns, so it returns 201 with 0 added
@@ -111,7 +126,7 @@ class TestIngestionEndpoints:
         
         response = client.post(
             f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
-            files={"file": csv_file}
+            files=[("files", csv_file)]
         )
         
         assert response.status_code == status.HTTP_201_CREATED
@@ -126,7 +141,7 @@ class TestIngestionEndpoints:
         
         response = client.post(
             f"/api/v1/upload/csv?account_id={test_bank_account['account_id']}",
-            files={"file": csv_file}
+            files=[("files", csv_file)]
         )
         
         assert response.status_code == status.HTTP_201_CREATED

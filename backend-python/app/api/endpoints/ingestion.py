@@ -105,23 +105,29 @@ def update_bank_account(
 
 @router.post("/upload/csv", status_code=status.HTTP_201_CREATED)
 async def upload_csv_statement(
-    file: UploadFile = File(...),
+    files: List[UploadFile] = File(..., description="CSV files to upload"),
     account_id: str = Query(..., description="Bank account ID to associate with this import"),
     db: Session = Depends(get_db)
 ):
     """
-    Upload and process a CSV bank statement.
+    Upload and process one or more CSV bank statements.
     
     **Parameters:**
-    - **file**: CSV file to upload
+    - **files**: CSV files to upload
     - **account_id**: Target bank account (must exist or create first via POST /accounts)
     """
-    # Validate file format
-    if file.filename and not file.filename.endswith('.csv'):
+    if not files:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="Invalid file format. Only CSV files are supported."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No files uploaded. Attach one or more CSV files."
         )
+
+    for file in files:
+        if file.filename and not file.filename.lower().endswith('.csv'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid file format. Only CSV files are supported."
+            )
     
     # Verify account exists
     account = db.query(BankAccount).filter(BankAccount.account_id == account_id).first()
@@ -138,23 +144,32 @@ async def upload_csv_statement(
         )
     
     try:
-        contents = await file.read()
-        decoded_contents = contents.decode("utf-8")
-        
-        # Pass account info to parser
-        result = StatementParserService.process_csv(
-            decoded_contents, 
-            db,
-            account_id=account_id,
-            bank_profile=account.bank_profile
-        )
+        total_added = 0
+        total_skipped = 0
+
+        for file in files:
+            contents = await file.read()
+            decoded_contents = contents.decode("utf-8")
+            result = StatementParserService.process_csv(
+                decoded_contents,
+                db,
+                account_id=account_id,
+                bank_profile=account.bank_profile
+            )
+            total_added += result.get("added", 0)
+            total_skipped += result.get("skipped", 0)
+
         return {
             "status": "success",
             "account_id": account_id,
-            "summary": result
+            "summary": {
+                "added": total_added,
+                "skipped": total_skipped,
+            },
+            "files_processed": len(files)
         }
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while handling the file: {str(e)}"
+            detail=f"An error occurred while handling the files: {str(e)}"
         )

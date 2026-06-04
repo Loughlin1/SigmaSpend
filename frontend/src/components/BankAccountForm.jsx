@@ -114,13 +114,45 @@ export default function BankAccountForm({ onAccountCreated }) {
         </label>
         <label className="field-wrapper">
           Bank Name
-          <input
-            type="text"
+          <select
             value={bankName}
             onChange={(e) => setBankName(e.target.value)}
-            placeholder="e.g. Chase Bank"
+            required
+            aria-label="Bank Name"
             className="inline-input"
-          />
+          >
+            <option value="" disabled>Select a bank</option>
+            <option value="Lloyds Bank">Lloyds Bank</option>
+            <option value="Halifax">Halifax</option>
+            <option value="Bank of Scotland">Bank of Scotland</option>
+            <option value="NatWest">NatWest</option>
+            <option value="Royal Bank of Scotland (RBS)">Royal Bank of Scotland (RBS)</option>
+            <option value="Ulster Bank">Ulster Bank</option>
+            <option value="Barclays">Barclays</option>
+            <option value="HSBC">HSBC</option>
+            <option value="First Direct">First Direct</option>
+            <option value="Nationwide Building Society">Nationwide Building Society</option>
+            <option value="Santander">Santander</option>
+            <option value="Cater Allen">Cater Allen</option>
+            <option value="Virgin Money">Virgin Money</option>
+            <option value="Clydesdale Bank">Clydesdale Bank</option>
+            <option value="Yorkshire Bank">Yorkshire Bank</option>
+            <option value="TSB">TSB</option>
+            <option value="The Co-operative Bank">The Co-operative Bank</option>
+            <option value="Metro Bank">Metro Bank</option>
+            <option value="Monzo">Monzo</option>
+            <option value="Starling Bank">Starling Bank</option>
+            <option value="Revolut">Revolut</option>
+            <option value="Chase UK">Chase UK</option>
+            <option value="Kroo">Kroo</option>
+            <option value="Atom Bank">Atom Bank</option>
+            <option value="Zopa">Zopa</option>
+            <option value="Tesco Bank">Tesco Bank</option>
+            <option value="M&S Bank">M&S Bank</option>
+            <option value="Danske Bank">Danske Bank</option>
+            <option value="Bank of Ireland UK">Bank of Ireland UK</option>
+            <option value="Allied Irish Bank (GB)">Allied Irish Bank (GB)</option>
+          </select>
         </label>
         <label className="field-wrapper">
           Statement Format

@@ -85,109 +85,157 @@ export default function BankAccountForm({ onAccountCreated }) {
     }
   };
 
+  const fieldWrapperStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '0.25rem',
+    width: '100%',
+  };
+
+  const inputStyle = {
+    width: '100%',
+    maxWidth: '100%',
+    padding: '0.5rem',
+    marginTop: '0.25rem',
+    borderRadius: '4px',
+    border: '1px solid #ccc',
+    boxSizing: 'border-box',
+  };
+
+  const buttonStyle = {
+    width: '100%',
+    maxWidth: '240px',
+    padding: '0.75rem 1rem',
+    alignSelf: 'center',
+  };
+
   return (
-    <section style={{ padding: '1rem', border: '1px solid #ccc', borderRadius: '8px', background: '#fff' }}>
+    <section
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        width: '100%',
+        maxWidth: '700px',
+        margin: '0 auto',
+        padding: '1rem',
+        border: '1px solid #ccc',
+        borderRadius: '8px',
+        background: '#fff',
+        boxSizing: 'border-box',
+      }}
+    >
       <h3>Create New Bank Account</h3>
       {error && <div style={{ color: '#cc0000', marginBottom: '0.75rem' }}>{error}</div>}
       {successMessage && <div style={{ color: '#006600', marginBottom: '0.75rem' }}>{successMessage}</div>}
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.75rem' }}>
-        <label>
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          display: 'grid',
+          gap: '1rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          alignItems: 'start',
+          width: '100%',
+        }}
+      >
+        <label style={fieldWrapperStyle}>
           Account ID
           <input
             type="text"
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             placeholder="e.g. checking_001"
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem', borderRadius: '4px', border: '1px solid #ccc' }}
+            style={inputStyle}
           />
         </label>
-        <label>
+        <label style={fieldWrapperStyle}>
           Account Name
           <input
             type="text"
             value={accountName}
             onChange={(e) => setAccountName(e.target.value)}
             placeholder="e.g. My Checking Account"
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem', borderRadius: '4px', border: '1px solid #ccc' }}
+            style={inputStyle}
           />
         </label>
-        <label>
+        <label style={fieldWrapperStyle}>
           Bank Name
           <input
             type="text"
             value={bankName}
             onChange={(e) => setBankName(e.target.value)}
             placeholder="e.g. Chase Bank"
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem', borderRadius: '4px', border: '1px solid #ccc' }}
+            style={inputStyle}
           />
         </label>
-        <label>
+        <label style={fieldWrapperStyle}>
           Statement Format
           <select
             value={amountStyle}
             onChange={(e) => setAmountStyle(e.target.value)}
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem', borderRadius: '4px', border: '1px solid #ccc' }}
+            style={inputStyle}
           >
             <option value="single_column">Single Column</option>
             <option value="split_columns">Split Columns</option>
           </select>
         </label>
-        <label>
+        <label style={fieldWrapperStyle}>
           Date Column
           <input
             type="text"
             value={dateColumn}
             onChange={(e) => setDateColumn(e.target.value)}
             placeholder="e.g. Date"
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem', borderRadius: '4px', border: '1px solid #ccc' }}
+            style={inputStyle}
           />
         </label>
-        <label>
+        <label style={fieldWrapperStyle}>
           Description Column
           <input
             type="text"
             value={descriptionColumn}
             onChange={(e) => setDescriptionColumn(e.target.value)}
             placeholder="e.g. Description"
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem', borderRadius: '4px', border: '1px solid #ccc' }}
+            style={inputStyle}
           />
         </label>
         {amountStyle === 'single_column' ? (
-          <label>
+          <label style={fieldWrapperStyle}>
             Amount Column
             <input
               type="text"
               value={amountColumn}
               onChange={(e) => setAmountColumn(e.target.value)}
               placeholder="e.g. Amount"
-              style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem', borderRadius: '4px', border: '1px solid #ccc' }}
+              style={inputStyle}
             />
           </label>
         ) : (
           <>
-            <label>
+            <label style={fieldWrapperStyle}>
               Debit Column
               <input
                 type="text"
                 value={amountOutColumn}
                 onChange={(e) => setAmountOutColumn(e.target.value)}
                 placeholder="e.g. Debit"
-                style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem', borderRadius: '4px', border: '1px solid #ccc' }}
+                style={inputStyle}
               />
             </label>
-            <label>
+            <label style={fieldWrapperStyle}>
               Credit Column
               <input
                 type="text"
                 value={amountInColumn}
                 onChange={(e) => setAmountInColumn(e.target.value)}
                 placeholder="e.g. Credit"
-                style={{ width: '100%', padding: '0.5rem', marginTop: '0.25rem', borderRadius: '4px', border: '1px solid #ccc' }}
+                style={inputStyle}
               />
             </label>
           </>
         )}
-        <button type="submit" disabled={loading} style={{ padding: '0.75rem 1rem' }}>
+        <button type="submit" disabled={loading} style={buttonStyle}>
           {loading ? 'Saving...' : 'Add Bank Account'}
         </button>
       </form>

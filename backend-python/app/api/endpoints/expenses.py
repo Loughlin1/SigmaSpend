@@ -16,6 +16,8 @@ def read_expenses(
     skip: int = Query(0, ge=0, description="Number of records to skip for pagination"),
     limit: int = Query(100, ge=1, le=500, description="Max number of records to return"),
     category: Optional[str] = Query(None, description="Filter by expense category"),
+    account_id: Optional[str] = Query(None, description="Filter by specific bank account"),
+    is_income: Optional[bool] = Query(None, description="Filter by type: True for Income, False for Expense"),
     start_date: Optional[str] = Query(None, description="Filter expenses from this date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="Filter expenses up to this date (YYYY-MM-DD)")
 ):
@@ -24,9 +26,13 @@ def read_expenses(
     Returns ExpenseResponse containing the database id and transaction_hash.
     """
     query = db.query(ExpenseModel)
-    
+
     if category:
         query = query.filter(ExpenseModel.category == category)
+    if account_id:
+        query = query.filter(ExpenseModel.account_id == account_id)
+    if is_income is not None:
+        query = query.filter(ExpenseModel.is_income == is_income)
     if start_date:
         query = query.filter(ExpenseModel.date >= start_date)
     if end_date:

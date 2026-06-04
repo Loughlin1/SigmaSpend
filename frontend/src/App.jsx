@@ -1,46 +1,48 @@
 // src/App.jsx
 import './App.css';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import logo from './assets/logo.png';
 import DescriptionSection from './components/Description';
 import ExpenseForm from './components/ExpenseForm';
 import StatementUpload from './components/StatementUpload';
 import ExpenseChart from './components/ExpenseChart';
 import BankAccountList from './components/BankAccountList';
-import BankAccountForm from './components/BankAccountForm';
+import LedgerTable from './components/LedgerTable';
+import LedgerFilters from './components/LedgerFilters';
+
+// Custom Hooks
 import useExpenses from './hooks/useExpenses';
 import useAccounts from './hooks/useAccounts';
 import useExpenseForm from './hooks/useExpenseForm';
-import LedgerTable from './components/LedgerTable';
-
+import useExpenseFilters from './hooks/useExpenseFilters';
 
 function App() {
-  const { expenses, fetchExpenses, createExpense, updateExpense, deleteExpense } = useExpenses();
+  const { expenses, loading: expensesLoading, error: expensesError, fetchExpenses, createExpense, updateExpense, deleteExpense } = useExpenses();
   const { accounts, loading: accountsLoading, error: accountsError, fetchAccounts, accountNameMap } = useAccounts();
-  const { showExpenseForm, actionSelect, editingExpense, closeExpenseForm, openEditExpense, handleActionChange } =
-    useExpenseForm();
+  const { showExpenseForm, actionSelect, editingExpense, closeExpenseForm, openEditExpense, handleActionChange } = useExpenseForm();
+  const { filters, handleFilterChange } = useExpenseFilters();
   const [showAccountForm, setShowAccountForm] = useState(false);
 
-  // accountNameMap provided by useAccounts
-
+  // 1. Single Source of Truth for Ledger data fetching - reacts automatically to filter changes
   useEffect(() => {
-    fetchExpenses();
-    fetchAccounts();
-  }, [fetchExpenses, fetchAccounts]);
+    fetchExpenses(filters);
+  }, [fetchExpenses, filters]);
 
-  // expense CRUD delegated to `useExpenses` hook: createExpense, updateExpense, deleteExpense
+  // 2. Fetch Accounts on initial mount
+  useEffect(() => {
+    fetchAccounts();
+  }, [fetchAccounts]);
 
   const handleAccountCreated = async () => {
     await fetchAccounts();
     setShowAccountForm(false);
   };
 
-  // expense form state/hooks provided by useExpenseForm
-  const handleEditExpense = (expense) => openEditExpense(expense);
-
   const handleSaveExpense = async (payload) => {
     try {
       await updateExpense(payload.id, payload);
+      // Refresh the list maintaining the active filters
+      await fetchExpenses(filters);
     } catch (err) {
       console.error('Failed updating record', err);
     } finally {
@@ -51,14 +53,14 @@ function App() {
   return (
     <div className="page">
       <div className="logo-container">
-        <img src={logo} alt="SigmaSpend Logo" width="64" className='logo'/>
+        <img src={logo} alt="SigmaSpend Logo" width="64" className="logo"/>
         <h1>SigmaSpend Dashboard</h1>
       </div>
       <hr />
 
       <div className="splitSection">
         <DescriptionSection />
-        <StatementUpload accounts={accounts} onUploadSuccess={fetchExpenses} />
+        <StatementUpload accounts={accounts} onUploadSuccess={() => fetchExpenses(filters)} />
       </div>
 
       <section className="sectionCard">
@@ -78,7 +80,7 @@ function App() {
       </div>
 
       <section style={{ marginBottom: '1rem' }}>
-        <div className="headingRow">
+        <div className="headingRow" style={{ marginBottom: '1rem' }}>
           <h3 style={{ margin: 0 }}>Transaction Ledger</h3>
           <div className="actionsRow">
             <select value={actionSelect} onChange={(e) => handleActionChange(e.target.value)} className="inlineButton">
@@ -93,12 +95,20 @@ function App() {
           </div>
         </div>
 
+        {/* Dynamic Filter Controls */}
+        <LedgerFilters 
+          filters={filters} 
+          onFilterChange={handleFilterChange} 
+          accountNameMap={accountNameMap} 
+        />
+
         {showExpenseForm && (
           <div className="formPanel">
             <ExpenseForm
               initialData={editingExpense}
               onExpenseAdded={async (data) => {
                 await createExpense(data);
+                await fetchExpenses(filters);
                 closeExpenseForm();
               }}
               onExpenseSaved={handleSaveExpense}
@@ -107,14 +117,22 @@ function App() {
           </div>
         )}
 
-        <LedgerTable
-          expenses={expenses}
-          accountNameMap={accountNameMap}
-          onEdit={handleEditExpense}
-          onDelete={async (id) => {
-            await deleteExpense(id);
-          }}
-        />
+        {/* Error and Loading states for structural UX */}
+        {expensesError && <p className="errorText">Error loading ledger data: {expensesError.message}</p>}
+        
+        {expensesLoading ? (
+          <p>Loading ledger records...</p>
+        ) : (
+          <LedgerTable
+            expenses={expenses}
+            accountNameMap={accountNameMap}
+            onEdit={openEditExpense}
+            onDelete={async (id) => {
+              await deleteExpense(id);
+              await fetchExpenses(filters);
+            }}
+          />
+        )}
       </section>
     </div>
   );

@@ -8,8 +8,8 @@ const apiClient = axios.create({
 });
 
 export const expenseApi = {
-  getAll: (params) => apiClient.get('/expenses', { params }).then(res => res.data),
-  create: (data) => apiClient.post('/expenses', data).then(res => res.data),
+  getAll: (params) => apiClient.get('/expenses/', { params }).then(res => res.data),
+  create: (data) => apiClient.post('/expenses/', data).then(res => res.data),
   update: (id, data) => apiClient.put(`/expenses/${id}`, data).then(res => res.data),
   delete: (id) => apiClient.delete(`/expenses/${id}`).then(res => res.data),
 };

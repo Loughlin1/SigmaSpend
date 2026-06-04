@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { expenseApi } from '../api/client';
 
 export default function useExpenses() {
@@ -6,10 +6,21 @@ export default function useExpenses() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchExpenses = useCallback(async () => {
+  // Accept optional filter arguments from the UI layer
+  const fetchExpenses = useCallback(async (filters = {}) => {
     setLoading(true);
     try {
-      const data = await expenseApi.getAll({ limit: 100 });
+      // Clean up empty strings or null values so they don't pollute query params
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+      );
+
+      // Merge defaults with the active filter state
+      const data = await expenseApi.getAll({ 
+        limit: 100, 
+        ...cleanFilters 
+      });
+      
       setExpenses(data);
       setError(null);
     } catch (err) {
@@ -20,14 +31,11 @@ export default function useExpenses() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchExpenses();
-  }, [fetchExpenses]);
-
   const createExpense = useCallback(
     async (payload) => {
       try {
         await expenseApi.create(payload);
+        // Fallback fetch if called without explicit filter updates downstream
         await fetchExpenses();
       } catch (err) {
         console.error('Failed creating record', err);

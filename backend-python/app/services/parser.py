@@ -10,6 +10,10 @@ from dateutil import parser as date_parser
 
 from app.models.expense import Expense
 from app.models.bank_account import BankAccount
+from app.services.classifier import match_rule_based_category, classify_description_with_ai
+from app.models.category_rules import CategoryRule
+from app.models.category import Category
+
 
 class StatementParserService:
     
@@ -111,7 +115,17 @@ class StatementParserService:
         
         amount_style = bank_config.get("amount_style", "single_column")
         mappings = bank_config["mappings"]
-        
+        all_rules = db.query(CategoryRule).all()
+        # Flattening out nested subcategories to present the AI with all options
+        flat_categories = []
+        db_categories = db.query(Category).all()
+        for cat in db_categories:
+            flat_categories.append(cat.name)
+            for sub in cat.subcategories:
+                flat_categories.append(sub.name)
+        # Remove duplicates to keep the array clean
+        flat_categories = list(set(flat_categories))
+
         csv_file = StringIO(file_contents)
         reader = csv.DictReader(csv_file)
         
@@ -182,7 +196,12 @@ class StatementParserService:
                     skipped_count += 1
                     continue
                 
-                # 7. Commit new record to database state
+                # 7. Categorise expense (rules-based first then AI if not)
+                assigned_cat = match_rule_based_category(description, all_rules)
+                if not assigned_cat:
+                    assigned_cat = classify_description_with_ai(description, flat_categories)
+
+                # 8. Commit new record to database state
                 new_expense = Expense(
                     account_id=account_id,
                     date=parsed_date,
@@ -190,7 +209,7 @@ class StatementParserService:
                     is_income=is_income,
                     description=description,
                     transaction_hash=tx_hash,
-                    category="Uncategorized"
+                    category=assigned_cat
                 )
                 db.add(new_expense)
                 added_count += 1

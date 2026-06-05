@@ -34,6 +34,7 @@ sigmaspend/
 │   │   │       ├── __init__.py
 │   │   │       ├── expenses.py     # HTTP routes for standard expense CRUD
 │   │   │       └── ingestion.py    # HTTP routes for CSV/PDF uploads
+│   │   │       └── rules.py        # HTTP routes to create/delete explicit rules
 │   │   ├── core/
 │   │   │   ├── __init__.py
 │   │   │   ├── config.py           # Environment variables and app configurations
@@ -43,13 +44,20 @@ sigmaspend/
 │   │   │   └── base_class.py       # Declarative base for models
 │   │   ├── models/
 │   │   │   ├── __init__.py
+│   │   │   └── bank_account.py     # SQLAlchemy database tables
+│   │   │   └── category_rules.py   # SQLAlchemy database tables
+│   │   │   └── category.py         # SQLAlchemy database tables
 │   │   │   └── expense.py          # SQLAlchemy database tables
 │   │   ├── schemas/
 │   │   │   ├── __init__.py
+│   │   │   └── bank_account.py     # Pydantic data validation schemas
+│   │   │   └── category_rules.py   # Pydantic data validation schemas
+│   │   │   └── category.py         # Pydantic data validation schemas
 │   │   │   └── expense.py          # Pydantic data validation schemas
 │   │   └── services/
 │   │       ├── __init__.py
 │   │       └── parser.py           # Core business logic for processing CSV/PDF statements
+│   │       └── classifier.py       # Core categorization worker engine (Rules + Ollama)
 │   ├── requirements.txt
 │   └── sigmaspend.db               # SQLite database file (generated automatically)
 
@@ -61,7 +69,7 @@ sigmaspend/
 ## Data Flow
 When a user uploads a statement, the system reads it, extracts individual lines, runs them through a deduplication engine, and saves only the new records to the database.
 
-[ Upload Statement (CSV/PDF) ] ──► [ Parse File ] ──► [ Deduplication Engine ] ──► [ SQLite DB ]
+[ Upload Statement (CSV/PDF) ] ──► [ Parse File ] ──► [ Deduplication Engine ] ──► [Categorisation]  ──► [ SQLite DB ]
                                                               ▲
                                                     (Checks Existing Hashes)
 
@@ -86,10 +94,23 @@ We cannot rely on a simple string combination of `Date + Amount + Description` t
 
 To make identical transactions uniquely identifiable while remaining completely deterministic across different file uploads, **SigmaSpend** implements an sequential occurrence tracking algorithm during file ingestion.
 
-## Handling CSV and PDF files
+### Categorisation of transactions
+[ Raw CSV Row ] 
+       │
+       ▼
+ ┌───────────┐         Matches?
+ │ Rule-Based│ ──────────────────────► [ Auto-Categorised ]
+ │  Engine   │                                 │
+ └───────────┘                                 │ No
+       │                                       ▼
+       │                          ┌─────────────────────────┐
+       │                          │   Ollama AI Fallback    │
+       └────────────────────────► │ (Llama 3 / Mistral)     │
+                                  └─────────────────────────┘
+                                               │
+                                               ▼
+                                       [ AI-Categorised ]
 
-
-## Database Schema
 
 
 ## API Backend

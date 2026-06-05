@@ -9,6 +9,7 @@ import ExpenseChart from './components/ExpenseChart';
 import BankAccountList from './components/BankAccountList';
 import LedgerTable from './components/LedgerTable';
 import LedgerFilters from './components/LedgerFilters';
+import CategoryManager from './components/CategoryManager';
 
 // Custom Hooks
 import useExpenses from './hooks/useExpenses';
@@ -22,6 +23,7 @@ function App() {
   const { accounts, loading: accountsLoading, error: accountsError, fetchAccounts, accountNameMap } = useAccounts();
   const { showExpenseForm, actionSelect, editingExpense, closeExpenseForm, openEditExpense, handleActionChange } = useExpenseForm();
   const { filters, handleFilterChange } = useExpenseFilters();
+  const { categories, loading: categoriesLoading, error: categoriesError, fetchCategories, createCategory } = useCategories();
   const [showAccountForm, setShowAccountForm] = useState(false);
 
   // 1. Single Source of Truth for Ledger data fetching - reacts automatically to filter changes
@@ -32,7 +34,8 @@ function App() {
   // 2. Fetch Accounts on initial mount
   useEffect(() => {
     fetchAccounts();
-  }, [fetchAccounts]);
+    fetchCategories();
+  }, [fetchAccounts, fetchCategories]);
 
   const handleAccountCreated = async () => {
     await fetchAccounts();
@@ -42,19 +45,13 @@ function App() {
   const handleSaveExpense = async (payload) => {
     try {
       await updateExpense(payload.id, payload);
-      // Refresh the list maintaining the active filters
-      await fetchExpenses(filters);
+      await fetchExpenses(filters); // Refresh current filter views
     } catch (err) {
       console.error('Failed updating record', err);
     } finally {
       closeExpenseForm();
     }
   };
-
-  const { categories, fetchCategories, createCategory } = useCategories();
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
 
   return (
     <div className="page">
@@ -78,6 +75,15 @@ function App() {
           onAccountCreated={handleAccountCreated}
           showAccountForm={showAccountForm}
           setShowAccountForm={setShowAccountForm}
+        />
+      </section>
+
+      <section className="sectionCard">
+        <CategoryManager
+          categories={categories}
+          onCreateCategory={createCategory}
+          loading={categoriesLoading}
+          error={categoriesError}
         />
       </section>
 

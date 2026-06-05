@@ -1,55 +1,123 @@
-// src/components/CategoryManager.jsx
 import React, { useState } from 'react';
+import './BankAccountList.css'; // Reusing your exact style configurations
 
-export default function CategoryManager({ categories, onCreateCategory }) {
+export default function CategoryManager({ categories = [], onCreateCategory, loading, error }) {
   const [newCategory, setNewCategory] = useState('');
-  const [error, setError] = useState('');
+  const [showCreationForm, setShowCreationForm] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    if (!newCategory.trim()) return;
+    setSaveError('');
+    if (!newCategory.trim()) {
+      setSaveError('Category name cannot be empty.');
+      return;
+    }
 
+    setSaving(true);
     try {
-      await onCreateCategory(newCategory);
+      await onCreateCategory(newCategory.trim());
       setNewCategory('');
+      setShowCreationForm(false);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to save category');
+      console.error('Failed creating category', err);
+      setSaveError(err.response?.data?.detail || 'Unable to save category.');
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <div className="sectionCard" style={{ padding: '1rem', marginBottom: '1.5rem' }}>
-      <h4>Manage Expense Categories</h4>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-        <input
-          type="text"
-          placeholder="New category name (e.g., Utilities)"
-          value={newCategory}
-          onChange={(e) => setNewCategory(e.target.value)}
-          style={{ flex: 1, padding: '0.4rem' }}
-        />
-        <button type="submit" className="inlineButton">Add</button>
-      </form>
-      
-      {error && <p style={{ color: 'red', fontSize: '0.85rem' }}>{error}</p>}
-
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-        {categories.map((cat) => (
-          <span
-            key={cat.id}
-            style={{
-              background: '#e0e0e0',
-              padding: '0.2rem 0.6rem',
-              borderRadius: '4px',
-              fontSize: '0.85rem',
-              color: '#333'
-            }}
-          >
-            {cat.name}
-          </span>
-        ))}
+    <div className="account-list">
+      {/* Header element to toggle collapse view */}
+      <div className="account-list__header" onClick={toggleCollapse}>
+        <h3>Expense Categories ({categories.length})</h3>
+        <button className="collapse-button" type="button">
+          {isCollapsed ? 'Show' : 'Hide'}
+        </button>
       </div>
+
+      {!isCollapsed && (
+        <>
+          {error ? (
+            <div className="account-list__error">{error}</div>
+          ) : null}
+
+          {loading ? (
+            <div>Loading categories...</div>
+          ) : categories.length === 0 ? (
+            <div>No categories found in the database.</div>
+          ) : (
+            <div className="account-list__wrapper">
+              <table className="bank-account-table">
+                <thead>
+                  <tr>
+                    <th className="table-header-cell">ID</th>
+                    <th className="table-header-cell">Category Name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {categories.map((cat) => (
+                    <tr key={cat.id}>
+                      <td>{cat.id}</td>
+                      <td>{cat.name}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div 
+            className="account-list__creation-zone" 
+            style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px dashed #ccc' }}
+          >
+            <button 
+              type="button" 
+              onClick={() => setShowCreationForm((prev) => !prev)} 
+              className="button"
+              style={{ marginBottom: '15px' }}
+            >
+              {showCreationForm ? 'Hide Form' : 'Create New Category'}
+            </button>
+            
+            {showCreationForm && (
+              <div style={{ display: 'flex', justifyContent: 'center'}}>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: '500px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Category Name:</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Utilities"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      disabled={saving}
+                      style={{ padding: '0.4rem' }}
+                    />
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button type="button" onClick={() => { setShowCreationForm(false); setSaveError(''); }} disabled={saving}>
+                      Cancel
+                    </button>
+                    <button type="submit" disabled={saving}>
+                      {saving ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                  
+                  {saveError && <div className="save-error" style={{ color: 'red', fontSize: '0.85rem' }}>{saveError}</div>}
+                </form>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -145,6 +145,7 @@ function App() {
               await deleteExpense(id);
               await fetchExpenses(filters);
             }}
+            categories={categories}
           />
         )}
       </section>

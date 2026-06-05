@@ -1,33 +1,28 @@
 import React, { useState } from 'react';
-import './BankAccountList.css'; // Reusing your exact style configurations
+import './BankAccountList.css';
 
 export default function CategoryManager({ categories = [], onCreateCategory, loading, error }) {
-  const [newCategory, setNewCategory] = useState('');
-  const [showCreationForm, setShowCreationForm] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [targetParentId, setTargetParentId] = useState(''); // Empty string means Root Category
+  const [showForm, setShowForm] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaveError('');
-    if (!newCategory.trim()) {
-      setSaveError('Category name cannot be empty.');
-      return;
-    }
+    if (!newName.trim()) return;
 
     setSaving(true);
     try {
-      await onCreateCategory(newCategory.trim());
-      setNewCategory('');
-      setShowCreationForm(false);
+      const pid = targetParentId === '' ? null : Number(targetParentId);
+      await onCreateCategory(newName.trim(), pid);
+      setNewName('');
+      setTargetParentId('');
+      setShowForm(false);
     } catch (err) {
-      console.error('Failed creating category', err);
-      setSaveError(err.response?.data?.detail || 'Unable to save category.');
+      setSaveError(err.response?.data?.detail || 'Failed to save.');
     } finally {
       setSaving(false);
     }
@@ -35,38 +30,38 @@ export default function CategoryManager({ categories = [], onCreateCategory, loa
 
   return (
     <div className="account-list">
-      {/* Header element to toggle collapse view */}
-      <div className="account-list__header" onClick={toggleCollapse}>
-        <h3>Expense Categories ({categories.length})</h3>
-        <button className="collapse-button" type="button">
-          {isCollapsed ? 'Show' : 'Hide'}
-        </button>
+      <div className="account-list__header" onClick={() => setIsCollapsed(!isCollapsed)}>
+        <h3>Categories & Subcategories</h3>
+        <button className="collapse-button" type="button">{isCollapsed ? 'Show' : 'Hide'}</button>
       </div>
 
       {!isCollapsed && (
         <>
-          {error ? (
-            <div className="account-list__error">{error}</div>
-          ) : null}
-
-          {loading ? (
-            <div>Loading categories...</div>
-          ) : categories.length === 0 ? (
-            <div>No categories found in the database.</div>
-          ) : (
+          {error && <div className="account-list__error">{error}</div>}
+          {loading ? <div>Loading tree...</div> : (
             <div className="account-list__wrapper">
               <table className="bank-account-table">
                 <thead>
                   <tr>
-                    <th className="table-header-cell">ID</th>
-                    <th className="table-header-cell">Category Name</th>
+                    <th className="table-header-cell" style={{ width: '50%', textAlign: 'left' }}>Main Category</th>
+                    <th className="table-header-cell" style={{ textAlign: 'left' }}>Subcategories</th>
                   </tr>
                 </thead>
                 <tbody>
                   {categories.map((cat) => (
                     <tr key={cat.id}>
-                      <td>{cat.id}</td>
-                      <td>{cat.name}</td>
+                      <td style={{ fontWeight: 'bold' }}>{cat.name}</td>
+                      <td>
+                        {cat.subcategories?.length > 0 ? (
+                          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                            {cat.subcategories.map(sub => (
+                              <span key={sub.id} style={{ background: '#edf2f7', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8rem' }}>
+                                {sub.name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : <span style={{ color: '#aaa', fontSize: '0.85rem', display: 'block', textAlign: 'left' }}>None</span>}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -74,44 +69,34 @@ export default function CategoryManager({ categories = [], onCreateCategory, loa
             </div>
           )}
 
-          <div 
-            className="account-list__creation-zone" 
-            style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px dashed #ccc' }}
-          >
-            <button 
-              type="button" 
-              onClick={() => setShowCreationForm((prev) => !prev)} 
-              className="button"
-              style={{ marginBottom: '15px' }}
-            >
-              {showCreationForm ? 'Hide Form' : 'Create New Category'}
+          <div className="account-list__creation-zone" style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px dashed #ccc' }}>
+            <button type="button" onClick={() => setShowForm(!showForm)} className="button">
+              {showForm ? 'Hide Form' : 'Create Category/Subcategory'}
             </button>
             
-            {showCreationForm && (
+            {showForm && (
               <div style={{ display: 'flex', justifyContent: 'center'}}>
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: '500px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Category Name:</label>
-                    <input
-                      type="text"
-                      placeholder="e.g., Utilities"
-                      value={newCategory}
-                      onChange={(e) => setNewCategory(e.target.value)}
-                      disabled={saving}
-                      style={{ padding: '0.4rem' }}
-                    />
-                  </div>
-                  
+                <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.75rem', maxWidth: '900px', marginTop: '15px' }}>
+                  <input
+                    type="text"
+                    placeholder="Name (e.g., Utilities)"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    required
+                    className='inlineButton'
+                    style={{width: '200px'}}
+                  />
+                  <select value={targetParentId} onChange={(e) => setTargetParentId(e.target.value)} className='inlineButton'>
+                    <option value="">Treat as Top-Level Category</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>Child of: {cat.name}</option>
+                    ))}
+                  </select>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button type="button" onClick={() => { setShowCreationForm(false); setSaveError(''); }} disabled={saving}>
-                      Cancel
-                    </button>
-                    <button type="submit" disabled={saving}>
-                      {saving ? 'Saving...' : 'Save'}
-                    </button>
+                    <button type="button" onClick={() => setShowForm(false)} className='inlineButton'>Cancel</button>
+                    <button type="submit" disabled={saving} className='inlineButton'>Save</button>
                   </div>
-                  
-                  {saveError && <div className="save-error" style={{ color: 'red', fontSize: '0.85rem' }}>{saveError}</div>}
+                  {saveError && <div style={{ color: 'red', fontSize: '0.85rem' }}>{saveError}</div>}
                 </form>
               </div>
             )}

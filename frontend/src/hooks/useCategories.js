@@ -11,22 +11,21 @@ export default function useCategories() {
       const data = await categoryApi.getAll();
       setCategories(data);
     } catch (err) {
-      console.error('Failed fetching categories', err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const createCategory = useCallback(async (name) => {
+  const createCategory = useCallback(async (name, parentId = null) => {
     try {
-      const newCategory = await categoryApi.create({ name });
-      setCategories(prev => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)));
-      return newCategory;
+      await categoryApi.create({ name, parent_id: parentId });
+      await fetchCategories(); // Re-fetch entire nested tree structure
     } catch (err) {
-      console.error('Failed creating category', err);
+      console.error(err);
       throw err;
     }
-  }, []);
+  }, [fetchCategories]);
 
   return { categories, loading, fetchCategories, createCategory };
 }

@@ -65,11 +65,17 @@ export default function ExpenseForm({
           <select 
             value={formData.category} 
             onChange={e => setFormData({ ...formData, category: e.target.value })}
-            className='inlineButton'
           >
-            <option value="Uncategorized">Select a Category</option>
+            <option value="Uncategorized">Uncategorized</option>
             {categories.map(cat => (
-              <option key={cat.id} value={cat.name}>{cat.name}</option>
+              <optgroup key={cat.id} label={cat.name}>
+                {/* Allow selection of the parent category directly */}
+                <option value={cat.name}>{cat.name} (General)</option>
+                {/* Map out nested subcategories inside the group indentation */}
+                {cat.subcategories?.map(sub => (
+                  <option key={sub.id} value={sub.name}>{sub.name}</option>
+                ))}
+              </optgroup>
             ))}
           </select>
 

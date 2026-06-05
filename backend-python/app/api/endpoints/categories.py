@@ -9,22 +9,23 @@ router = APIRouter()
 
 @router.get("/", response_model=List[CategoryResponse])
 def read_categories(db: Session = Depends(deps.get_db)):
-    return db.query(CategoryModel).order_by(CategoryModel.name.asc()).all()
+    # Only fetch root categories; subcategories are nested automatically
+    return db.query(CategoryModel).filter(CategoryModel.parent_id == None).order_by(CategoryModel.name.asc()).all()
 
 @router.post("/", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
 def create_category(category_in: CategoryCreate, db: Session = Depends(deps.get_db)):
-    # Standardise to Title Case for uniform display
     normalized_name = category_in.name.strip().title()
     
-    # Prevent duplicate categories
-    existing = db.query(CategoryModel).filter(CategoryModel.name == normalized_name).first()
+    # Check for duplicates within the same structural level
+    existing = db.query(CategoryModel).filter(
+        CategoryModel.name == normalized_name,
+        CategoryModel.parent_id == category_in.parent_id
+    ).first()
+    
     if existing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Category already exists."
-        )
+        raise HTTPException(status_code=400, detail="This category or subcategory already exists here.")
         
-    db_obj = CategoryModel(name=normalized_name)
+    db_obj = CategoryModel(name=normalized_name, parent_id=category_in.parent_id)
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)

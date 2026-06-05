@@ -15,6 +15,7 @@ import useExpenses from './hooks/useExpenses';
 import useAccounts from './hooks/useAccounts';
 import useExpenseForm from './hooks/useExpenseForm';
 import useExpenseFilters from './hooks/useExpenseFilters';
+import useCategories from './hooks/useCategories';
 
 function App() {
   const { expenses, loading: expensesLoading, error: expensesError, fetchExpenses, createExpense, updateExpense, deleteExpense } = useExpenses();
@@ -49,6 +50,11 @@ function App() {
       closeExpenseForm();
     }
   };
+
+  const { categories, fetchCategories, createCategory } = useCategories();
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   return (
     <div className="page">
@@ -105,6 +111,8 @@ function App() {
         {showExpenseForm && (
           <div className="formPanel">
             <ExpenseForm
+              categories={categories}       // Pass down categories hook data
+              accountNameMap={accountNameMap} // Pass down accounts map data
               initialData={editingExpense}
               onExpenseAdded={async (data) => {
                 await createExpense(data);

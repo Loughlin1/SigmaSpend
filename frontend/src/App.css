@@ -168,6 +168,11 @@
   cursor: pointer;
 }
 
+.inlineButton::placeholder {
+  color: rgba(255, 255, 255, 0.6); /* Change to your preferred colour (e.g., dark blue) */
+  opacity: 1;
+}
+
 .formPanel {
   margin: 1rem 0;
   padding: 1rem;

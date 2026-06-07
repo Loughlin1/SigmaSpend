@@ -43,24 +43,28 @@ export default function CategoryManager({ categories = [], onCreateCategory, loa
               <table className="bank-account-table">
                 <thead>
                   <tr>
-                    <th className="table-header-cell" style={{ width: '50%', textAlign: 'left' }}>Main Category</th>
+                    <th className="table-header-cell" style={{ width: '30%', textAlign: 'left' }}>Main Category</th>
                     <th className="table-header-cell" style={{ textAlign: 'left' }}>Subcategories</th>
                   </tr>
                 </thead>
                 <tbody>
                   {categories.map((cat) => (
                     <tr key={cat.id}>
-                      <td style={{ fontWeight: 'bold' }}>{cat.name}</td>
-                      <td>
+                      {/* Render the icon right next to the title or in its own block */}
+                      <td style={{ fontWeight: 'bold', verticalAlign: 'top', paddingTop: '0.5rem', textAlign: 'left' }}>
+                        <span style={{ marginRight: '0.5rem' }}>{cat.icon || '📁'}</span>
+                        {cat.name}
+                      </td>
+                      <td style={{ verticalAlign: 'top', paddingTop: '0.5rem', textAlign: 'left' }}>
                         {cat.subcategories?.length > 0 ? (
                           <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                             {cat.subcategories.map(sub => (
-                              <span key={sub.id} style={{ background: '#edf2f7', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8rem' }}>
+                              <span key={sub.id} style={{ background: '#edf2f7', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8rem', color: '#333' }}>
                                 {sub.name}
                               </span>
                             ))}
                           </div>
-                        ) : <span style={{ color: '#aaa', fontSize: '0.85rem', display: 'block', textAlign: 'left' }}>None</span>}
+                        ) : <span style={{ color: '#aaa', fontSize: '0.85rem' }}>None</span>}
                       </td>
                     </tr>
                   ))}

@@ -1,10 +1,10 @@
 import React from 'react';
 
-export default function LedgerFilters({ filters, onFilterChange, accountNameMap, categories = []}) {
+// FIX: Added categories = [] to the destructured props
+export default function LedgerFilters({ filters, onFilterChange, accountNameMap, categories = [] }) {
   
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Convert string boolean back to actual boolean or null
     let processedValue = value;
     if (name === 'is_income') {
       if (value === 'true') processedValue = true;
@@ -48,17 +48,18 @@ export default function LedgerFilters({ filters, onFilterChange, accountNameMap,
           className='inlineButton'
         >
           <option value="">All Categories</option>
-          <option value="Uncategorized">Uncategorized</option>
+          <option value="Uncategorized">❓ Uncategorized</option>
           
           {categories.map((cat) => (
-            <optgroup key={cat.id} label={cat.name}>
+            /* Updated to include the category's custom emoji icon in the grouping header */
+            <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
               {/* Allow filtering broadly by the top-level grouping option */}
-              <option value={cat.name}>{cat.name} (All)</option>
+              <option value={cat.name}>{cat.icon || '📁'} {cat.name} (All)</option>
               
               {/* Map nested children subcategories inside the indent view */}
               {cat.subcategories?.map((sub) => (
                 <option key={sub.id} value={sub.name}>
-                  {sub.name}
+                  🔹 {sub.name}
                 </option>
               ))}
             </optgroup>

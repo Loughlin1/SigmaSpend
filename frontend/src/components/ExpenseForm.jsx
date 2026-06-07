@@ -66,14 +66,14 @@ export default function ExpenseForm({
             value={formData.category} 
             onChange={e => setFormData({ ...formData, category: e.target.value })}
           >
-            <option value="Uncategorized">Uncategorized</option>
+            <option value="Uncategorized">❓ Uncategorized</option>
             {categories.map(cat => (
-              <optgroup key={cat.id} label={cat.name}>
-                {/* Allow selection of the parent category directly */}
-                <option value={cat.name}>{cat.name} (General)</option>
-                {/* Map out nested subcategories inside the group indentation */}
+              /* Include the parent icon in the optgroup label */
+              <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
+                <option value={cat.name}>{cat.icon || '📁'} {cat.name} (All)</option>
                 {cat.subcategories?.map(sub => (
-                  <option key={sub.id} value={sub.name}>{sub.name}</option>
+                  /* Subcategories can have default folder/bullet styling */
+                  <option key={sub.id} value={sub.name}>🔹 {sub.name}</option>
                 ))}
               </optgroup>
             ))}

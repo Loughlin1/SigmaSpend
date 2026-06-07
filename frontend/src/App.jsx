@@ -140,12 +140,12 @@ function App() {
           <LedgerTable
             expenses={expenses}
             accountNameMap={accountNameMap}
+            categories={categories}
             onEdit={openEditExpense}
             onDelete={async (id) => {
               await deleteExpense(id);
               await fetchExpenses(filters);
             }}
-            categories={categories}
           />
         )}
       </section>

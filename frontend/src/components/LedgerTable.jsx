@@ -1,6 +1,28 @@
 import React from 'react';
 
-export default function LedgerTable({ expenses = [], accountNameMap = {}, onEdit, onDelete }) {
+// FIX: Added categories to the destructured props with a safe fallback default array
+export default function LedgerTable({ 
+  expenses = [], 
+  accountNameMap = {}, 
+  categories = [], 
+  onEdit, 
+  onDelete 
+}) {
+  
+  // Now this look-up function safely has access to the injected categories tree scope
+  const getCategoryIcon = (categoryName) => {
+    const match = categories.find(c => c.name === categoryName);
+    if (match) return match.icon;
+    
+    // If it's a subcategory, look through the children lists
+    for (let cat of categories) {
+      if (cat.subcategories?.some(s => s.name === categoryName)) {
+        return '🔹'; // Consistent bullet for all subcategory lines
+      }
+    }
+    return '❓'; // Fallback icon
+  };
+
   return (
     <table border="1" cellPadding="10" className="table">
       <thead className="tableHeader">
@@ -20,7 +42,7 @@ export default function LedgerTable({ expenses = [], accountNameMap = {}, onEdit
             <td>{exp.date}</td>
             <td>{exp.description}</td>
             <td>{accountNameMap[exp.account_id] || exp.account_id}</td>
-            <td>{exp.category}</td>
+            <td>{getCategoryIcon(exp.category)} {exp.category}</td>
             <td>{exp.is_income ? 'Income' : 'Expense'}</td>
             <td>£{Number(exp.amount).toFixed(2)}</td>
             <td>

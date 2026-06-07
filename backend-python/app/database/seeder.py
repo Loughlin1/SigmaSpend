@@ -48,7 +48,11 @@ def seed_database_if_empty(db: Session):
         for cat_data in seed_definitions.get("categories", []):
             # Create top-level parent category
             parent_name = cat_data["name"].strip().title()
-            parent_cat = Category(name=parent_name, parent_id=None)
+            parent_cat = Category(
+                name=parent_name,
+                icon=cat_data.get("icon"),
+                parent_id=None,
+            )
             db.add(parent_cat)
             db.flush() # Flushes record to generate parent_cat.id for subcategory assignments
 

@@ -1,16 +1,36 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.database.session import engine, Base
+from app.database.session import SessionLocal, engine, Base
+from app.database.seeder import seed_database_if_empty
 from app.api.endpoints import ingestion, expenses, categories
 # Import models to ensure they're registered with Base.metadata
 from app.models.bank_account import BankAccount
 from app.models.expense import Expense
+from app.models.category import Category
+from app.models.category_rules import CategoryRule
 
-# Bootstraps local tables on initialization if they are missing
-Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title=settings.PROJECT_NAME)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup Sequence:
+    print("[Startup] Initialising database tables...")
+
+    # 1. Enforce physical creation of the .db file and tables if missing
+    Base.metadata.create_all(bind=engine)
+    
+    # 2. Open a transient lifecycle context session block to run the seed checks
+    db = SessionLocal()
+    try:
+        seed_database_if_empty(db)
+    finally:
+        db.close()
+        
+    yield
+    # Shutdown Sequence (if any) can go here
+
+app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
 
 # Setup CORS policies so your local React app (Port 5173) can query this API
 app.add_middleware(

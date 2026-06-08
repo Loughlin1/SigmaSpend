@@ -35,3 +35,9 @@ export const categoryApi = {
   getAll: () => apiClient.get('/categories/').then(res => res.data),
   create: (data) => apiClient.post('/categories/', data).then(res => res.data),
 };
+
+export const rulesApi = {
+  getAll: () => axios.get('/rules').then(res => res.data),
+  create: (payload) => axios.post('/rules', payload).then(res => res.data),
+  delete: (id) => axios.delete(`/rules/${id}`)
+};

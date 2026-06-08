@@ -4,6 +4,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 from app.models.bank_account import BankAccount
 from app.models.category import Category
+from app.models.category_rules import CategoryRule
 
 def seed_database_if_empty(db: Session):
     """
@@ -13,8 +14,9 @@ def seed_database_if_empty(db: Session):
     # 1. Verify if seeding is even necessary
     has_accounts = db.query(BankAccount).first() is not None
     has_categories = db.query(Category).first() is not None
+    has_rules = db.query(CategoryRule).first() is not None
     
-    if has_accounts and has_categories:
+    if has_accounts and has_categories and has_rules:
         return # Database already contains data, skip seeding to avoid integrity clashes
 
     config_path = Path(__file__).parent.parent / "core" / "config.yaml"
@@ -61,6 +63,16 @@ def seed_database_if_empty(db: Session):
                 normalized_sub = sub_name.strip().title()
                 child_cat = Category(name=normalized_sub, parent_id=parent_cat.id)
                 db.add(child_cat)
+
+    # 3. Seed Explicit Categorisation Rules
+    if not has_rules:
+        print("[Seeder] Populating keyword processing rules...")
+        for rule_data in seed_definitions.get("rules", []):
+            db_rule = CategoryRule(
+                keyword=rule_data["keyword"].strip().lower(),
+                target_category=rule_data["target_category"].strip()
+            )
+            db.add(db_rule)
 
     try:
         db.commit()

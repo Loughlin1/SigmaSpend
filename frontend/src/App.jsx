@@ -10,6 +10,7 @@ import BankAccountList from './components/BankAccountList';
 import LedgerTable from './components/LedgerTable';
 import LedgerFilters from './components/LedgerFilters';
 import CategoryManager from './components/CategoryManager';
+import RuleManager from './components/RuleManager';
 
 // Custom Hooks
 import useExpenses from './hooks/useExpenses';
@@ -17,6 +18,7 @@ import useAccounts from './hooks/useAccounts';
 import useExpenseForm from './hooks/useExpenseForm';
 import useExpenseFilters from './hooks/useExpenseFilters';
 import useCategories from './hooks/useCategories';
+import useRules from './hooks/useRules';
 
 function App() {
   const { expenses, loading: expensesLoading, error: expensesError, fetchExpenses, createExpense, updateExpense, deleteExpense } = useExpenses();
@@ -24,6 +26,8 @@ function App() {
   const { showExpenseForm, actionSelect, editingExpense, closeExpenseForm, openEditExpense, handleActionChange } = useExpenseForm();
   const { filters, handleFilterChange } = useExpenseFilters();
   const { categories, loading: categoriesLoading, error: categoriesError, fetchCategories, createCategory } = useCategories();
+  const { rules, loading: rulesLoading, error: rulesError, fetchRules, createRule, deleteRule } = useRules();
+
   const [showAccountForm, setShowAccountForm] = useState(false);
 
   // 1. Single Source of Truth for Ledger data fetching - reacts automatically to filter changes
@@ -84,6 +88,17 @@ function App() {
           onCreateCategory={createCategory}
           loading={categoriesLoading}
           error={categoriesError}
+        />
+      </section>
+
+      <section className="sectionCard">
+        <RuleManager
+          rules={rules}
+          categories={categories}
+          onCreateRule={createRule}
+          onDeleteRule={deleteRule}
+          loading={rulesLoading}
+          error={rulesError}
         />
       </section>
 

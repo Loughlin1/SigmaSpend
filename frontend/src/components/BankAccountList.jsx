@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ingestionApi } from '../api/client';
 import BankAccountForm from './BankAccountForm';
 
-import './BankAccountList.css';
+import '../styles/lists.css';
 
 
 export default function BankAccountList({ accounts, loading, error, onAccountUpdated, onAccountCreated, showAccountForm, setShowAccountForm}) {

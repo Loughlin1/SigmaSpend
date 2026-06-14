@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import './BankAccountList.css'; // Reusing your global architecture styling
+import '../styles/lists.css';
+import '../styles/forms.css';
+
 
 export default function RuleManager({ rules = [], categories = [], onCreateRule, onDeleteRule, loading, error }) {
   const [keyword, setKeyword] = useState('');
@@ -91,43 +93,49 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
             </button>
 
             {showForm && (
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: '350px', marginTop: '15px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Keyword Trigger:</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., starbucks (case-insensitive)"
-                    value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
-                    disabled={saving}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Target Destination Category:</label>
-                  <select 
-                    value={targetCategory} 
-                    onChange={(e) => setTargetCategory(e.target.value)}
-                    disabled={saving}
-                  >
-                    <option value="">-- Choose Target --</option>
-                    {categories.map(cat => (
-                      <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
-                        <option value={cat.name}>{cat.name} (General)</option>
-                        {cat.subcategories?.map(sub => (
-                          <option key={sub.id} value={sub.name}>{sub.name}</option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '5px' }}>
-                  <button type="submit" disabled={saving}>Save Rule</button>
-                  <button type="button" onClick={() => setShowForm(false)} disabled={saving}>Cancel</button>
-                </div>
-                {saveError && <div style={{ color: 'red', fontSize: '0.85rem' }}>{saveError}</div>}
-              </form>
+              <section className="form">
+                <form onSubmit={handleSubmit} className="form__grid">
+                  <label className="form-field-wrapper">
+                    Keyword Trigger
+                    <input
+                      type="text"
+                      placeholder="e.g., starbucks (case-insensitive)"
+                      value={keyword}
+                      onChange={(e) => setKeyword(e.target.value)}
+                      disabled={saving}
+                      className="form-inline-input"
+                    />
+                  </label>
+                  
+                  <label className="form-field-wrapper">
+                    Target Destination Category
+                    <select 
+                      value={targetCategory} 
+                      onChange={(e) => setTargetCategory(e.target.value)}
+                      required
+                      disabled={saving}
+                      className="form-inline-input"
+                    >
+                      <option value="" disabled>-- Choose Target --</option>
+                      {categories.map(cat => (
+                        <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
+                          <option value={cat.name}>{cat.name} (General)</option>
+                          {cat.subcategories?.map(sub => (
+                            <option key={sub.id} value={sub.name}>{sub.name}</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="form-field-wrapper">
+                    <button type="button" onClick={() => setShowForm(false)} disabled={saving} className="inlineButton form__cancel">Cancel</button>
+                  </div>
+                  <div className="form-field-wrapper">
+                    <button type="submit" disabled={saving} className="inlineButton form__submit">Save Rule</button>
+                  </div>
+                  {saveError && <div style={{ color: 'red', fontSize: '0.85rem' }}>{saveError}</div>}
+                </form>
+              </section>
             )}
           </div>
         </>

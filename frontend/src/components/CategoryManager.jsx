@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import './BankAccountList.css';
+import '../styles/lists.css';
+import '../styles/forms.css';
 
 export default function CategoryManager({ categories = [], onCreateCategory, loading, error }) {
   const [newName, setNewName] = useState('');
@@ -79,30 +80,43 @@ export default function CategoryManager({ categories = [], onCreateCategory, loa
             </button>
             
             {showForm && (
-              <div style={{ display: 'flex', justifyContent: 'center'}}>
-                <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.75rem', maxWidth: '900px', marginTop: '15px' }}>
-                  <input
-                    type="text"
-                    placeholder="Name (e.g., Utilities)"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    required
-                    className='inlineButton'
-                    style={{width: '200px'}}
-                  />
-                  <select value={targetParentId} onChange={(e) => setTargetParentId(e.target.value)} className='inlineButton'>
-                    <option value="">Treat as Top-Level Category</option>
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>Child of: {cat.name}</option>
-                    ))}
-                  </select>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button type="button" onClick={() => setShowForm(false)} className='inlineButton'>Cancel</button>
-                    <button type="submit" disabled={saving} className='inlineButton'>Save</button>
+              <section className="form">
+                <form onSubmit={handleSubmit} className="form__grid">
+                  <label className="form-field-wrapper">
+                    Name
+                    <input
+                      type="text"
+                      placeholder="Name (e.g., Utilities)"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      required
+                      className='form-inline-input'
+                      style={{width: '300px'}}
+                    />
+                  </label>
+                  <label className="form-field-wrapper">
+                    Category Type
+                    <select 
+                      value={targetParentId}
+                      onChange={(e) => setTargetParentId(e.target.value)}
+                      className='form-inline-input'
+                      style={{width: '300px'}}
+                      >
+                      <option value="">Treat as Top-Level Category</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>Child of: {cat.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="form-field-wrapper">
+                    <button type="button" onClick={() => setShowForm(false)} className='inlineButton form__cancel'>Cancel</button>
+                  </div>
+                  <div className="form-field-wrapper">
+                    <button type="submit" disabled={saving} className='inlineButton form__submit'>Save</button>
                   </div>
                   {saveError && <div style={{ color: 'red', fontSize: '0.85rem' }}>{saveError}</div>}
                 </form>
-              </div>
+              </section>
             )}
           </div>
         </>

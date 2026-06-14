@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ingestionApi } from '../api/client';
-import './BankAccountForm.css';
+import '../styles/forms.css'
 
 export default function BankAccountForm({ onAccountCreated }) {
   const [accountId, setAccountId] = useState('');
@@ -87,39 +87,39 @@ export default function BankAccountForm({ onAccountCreated }) {
   };
 
   return (
-    <section className="bank-account-form">
+    <section className="form">
       <h3>Create New Bank Account</h3>
-      {error && <div className="bank-account-form__error">{error}</div>}
-      {successMessage && <div className="bank-account-form__success">{successMessage}</div>}
-      <form onSubmit={handleSubmit} className="bank-account-form__grid">
-        <label className="field-wrapper">
+      {error && <div className="form__error">{error}</div>}
+      {successMessage && <div className="form__success">{successMessage}</div>}
+      <form onSubmit={handleSubmit} className="form__grid">
+        <label className="form-field-wrapper">
           Account ID
           <input
             type="text"
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             placeholder="e.g. checking_001"
-            className="inline-input"
+            className="form-inline-input"
           />
         </label>
-        <label className="field-wrapper">
+        <label className="form-field-wrapper">
           Account Name
           <input
             type="text"
             value={accountName}
             onChange={(e) => setAccountName(e.target.value)}
             placeholder="e.g. My Checking Account"
-            className="inline-input"
+            className="form-inline-input"
           />
         </label>
-        <label className="field-wrapper">
+        <label className="form-field-wrapper">
           Bank Name
           <select
             value={bankName}
             onChange={(e) => setBankName(e.target.value)}
             required
             aria-label="Bank Name"
-            className="inline-input"
+            className="form-inline-input"
           >
             <option value="" disabled>Select a bank</option>
             <option value="Lloyds Bank">Lloyds Bank</option>
@@ -154,75 +154,78 @@ export default function BankAccountForm({ onAccountCreated }) {
             <option value="Allied Irish Bank (GB)">Allied Irish Bank (GB)</option>
           </select>
         </label>
-        <label className="field-wrapper">
+        <label className="form-field-wrapper">
           Statement Format
           <select
             value={amountStyle}
             onChange={(e) => setAmountStyle(e.target.value)}
-            className="inline-input"
+            className="form-inline-input"
           >
             <option value="single_column">Single Column</option>
             <option value="split_columns">Split Columns</option>
           </select>
         </label>
-        <label className="field-wrapper">
+        <label className="form-field-wrapper">
           Date Column
           <input
             type="text"
             value={dateColumn}
             onChange={(e) => setDateColumn(e.target.value)}
             placeholder="e.g. Date"
-            className="inline-input"
+            className="form-inline-input"
           />
         </label>
-        <label className="field-wrapper">
+        <label className="form-field-wrapper">
           Description Column
           <input
             type="text"
             value={descriptionColumn}
             onChange={(e) => setDescriptionColumn(e.target.value)}
             placeholder="e.g. Description"
-            className="inline-input"
+            className="form-inline-input"
           />
         </label>
         {amountStyle === 'single_column' ? (
-          <label className="field-wrapper">
+          <label className="form-field-wrapper">
             Amount Column
             <input
               type="text"
               value={amountColumn}
               onChange={(e) => setAmountColumn(e.target.value)}
               placeholder="e.g. Amount"
-              className="inline-input"
+              className="form-inline-input"
             />
           </label>
         ) : (
           <>
-            <label className="field-wrapper">
+            <label className="form-field-wrapper">
               Debit Column
               <input
                 type="text"
                 value={amountOutColumn}
                 onChange={(e) => setAmountOutColumn(e.target.value)}
                 placeholder="e.g. Debit"
-                className="inline-input"
+                className="form-inline-input"
               />
             </label>
-            <label className="field-wrapper">
+            <label className="form-field-wrapper">
               Credit Column
               <input
                 type="text"
                 value={amountInColumn}
                 onChange={(e) => setAmountInColumn(e.target.value)}
                 placeholder="e.g. Credit"
-                className="inline-input"
+                className="form-inline-input"
               />
             </label>
           </>
         )}
-        <button type="submit" disabled={loading} className="inlineButton bank-account-form__submit">
-          {loading ? 'Saving...' : 'Add Bank Account'}
-        </button>
+        <div className="form-field-wrapper"></div>
+        <div className="form-field-wrapper">
+          <button type="submit" disabled={loading} className="inlineButton form__submit">
+            {loading ? 'Saving...' : 'Add Bank Account'}
+          </button>
+        </div>
       </form>
     </section>
   );

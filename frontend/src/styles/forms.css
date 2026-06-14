@@ -1,4 +1,4 @@
-.bank-account-form {
+.form {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12,21 +12,21 @@
   box-sizing: border-box;
 }
 
-.bank-account-form__error,
-.bank-account-form__success {
+.form__error,
+.form__success {
   width: 100%;
   margin-bottom: 0.75rem;
 }
 
-.bank-account-form__error {
+.form__error {
   color: #cc0000;
 }
 
-.bank-account-form__success {
+.form__success {
   color: #006600;
 }
 
-.bank-account-form__grid {
+.form__grid {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -34,7 +34,7 @@
   width: 100%;
 }
 
-.field-wrapper {
+.form-field-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -42,7 +42,7 @@
   width: 100%;
 }
 
-.inline-input {
+.form-inline-input {
   width: 100%;
   max-width: 100%;
   padding: 0.5rem;
@@ -52,9 +52,18 @@
   box-sizing: border-box;
 }
 
-.bank-account-form__submit {
+.form__submit {
   width: 100%;
-  max-width: 240px;
+  max-width: 200px;
   padding: 0.75rem 1rem;
   align-self: center;
 }
+
+.form__cancel {
+  width: 100%;
+  max-width: 200px;
+  padding: 0.75rem 1rem;
+  align-self: center;
+  background: grey;
+}
+

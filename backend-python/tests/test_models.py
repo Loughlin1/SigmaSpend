@@ -2,6 +2,7 @@
 Tests for the Expense model.
 """
 import pytest
+import datetime
 from app.models.expense import Expense
 
 
@@ -12,7 +13,7 @@ class TestExpenseModel:
         """Test creating an Expense record in the database."""
         expense = Expense(
             account_id="acc_001",
-            date="2024-01-01",
+            date=datetime.date(2024, 1, 1),
             amount=50.00,
             is_income=False,
             description="Grocery Store",
@@ -36,7 +37,7 @@ class TestExpenseModel:
         """Test that category defaults to 'Uncategorized'."""
         expense = Expense(
             account_id="acc_001",
-            date="2024-01-01",
+            date=datetime.date(2024, 1, 1),
             amount=100.00,
             is_income=False,
             description="Test",
@@ -55,7 +56,7 @@ class TestExpenseModel:
         """Test is_income flag for income transactions."""
         income = Expense(
             account_id="acc_001",
-            date="2024-01-01",
+            date=datetime.date(2024, 1, 1),
             amount=2000.00,
             is_income=True,
             description="Salary",
@@ -74,7 +75,7 @@ class TestExpenseModel:
         """Test that transaction_hash is unique."""
         expense1 = Expense(
             account_id="acc_001",
-            date="2024-01-01",
+            date=datetime.date(2024, 1, 1),
             amount=50.00,
             is_income=False,
             description="Test 1",
@@ -88,7 +89,7 @@ class TestExpenseModel:
         
         expense2 = Expense(
             account_id="acc_001",
-            date="2024-01-01",
+            date=datetime.date(2024, 1, 1),
             amount=50.00,
             is_income=False,
             description="Test 2",
@@ -103,7 +104,7 @@ class TestExpenseModel:
         """Test querying expenses by category."""
         expense1 = Expense(
             account_id="acc_001",
-            date="2024-01-01",
+            date=datetime.date(2024, 1, 1),
             amount=50.00,
             is_income=False,
             description="Pizza",
@@ -112,7 +113,7 @@ class TestExpenseModel:
         )
         expense2 = Expense(
             account_id="acc_001",
-            date="2024-01-02",
+            date=datetime.date(2024, 1, 2),
             amount=30.00,
             is_income=False,
             description="Gas",

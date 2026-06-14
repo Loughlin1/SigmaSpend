@@ -7,9 +7,11 @@ from app.schemas.category_rules import CategoryRuleBase as RuleModel, CategoryRu
 
 router = APIRouter()
 
+
 @router.get("/", response_model=List[CategoryRuleResponse])
 def read_rules(db: Session = Depends(deps.get_db)):
-    return db.query(RuleModel).order_by(RuleModel.keyword.asc()).all()
+    return db.query(RuleModel).order_by(RuleModel.keyword).all()
+
 
 @router.post("/", response_model=CategoryRuleResponse, status_code=status.HTTP_201_CREATED)
 def create_rule(rule_in: CategoryRuleCreate, db: Session = Depends(deps.get_db)):

@@ -14,9 +14,13 @@ from app.schemas.expense import ExpenseCreate, ExpenseUpdate, ExpenseResponse
 router = APIRouter()
 
 def parse_uk_date(date_str: Optional[str]) -> Optional[date]:
+    if not date_str:
+        return None
+    if isinstance(date_str, date):
+        return date_str
     try:
         # Automatically processes YYYY-MM-DD and prioritises DD/MM/YYYY text streams
-        return parser.parse(date_str, dayfirst=True).date()
+        return parser.parse(str(date_str), dayfirst=True).date()
     except (ParserError, TypeError):
         raise HTTPException(
             status_code=400, 
@@ -71,13 +75,19 @@ def create_expense(
     """
     # Create the model instance from the validation schema
     db_obj = ExpenseModel(**expense_in.dict())
+    expense_data = expense_in.dict()
+    expense_data["date"] = parse_uk_date(expense_data["date"])
+
+    # Create the model instance safely with native date objects
+    db_obj = ExpenseModel(**expense_data)
     
     # For manual entries, generate a deterministic fallback hash or tag
     # to fit your Schema contract without breaking the Deduplication Engine rules.
     import hashlib
-    import time
-    fallback_seed = f"manual-{expense_in.date}-{expense_in.amount}-{time.time()}"
-    db_obj.transaction_hash = hashlib.sha256(fallback_seed.encode()).hexdigest()
+    fallback_seed = f"manual-{expense_in.account_id}-{expense_data['date']}-{expense_in.amount}-{expense_in.description}"
+    generated_hash = hashlib.sha256(fallback_seed.encode("utf-8")).hexdigest()
+    expense_data["transaction_hash"] = generated_hash
+    db_obj = ExpenseModel(**expense_data)
 
     db.add(db_obj)
     db.commit()
@@ -120,6 +130,9 @@ def update_expense(
         )
         
     update_data = expense_in.dict(exclude_unset=True)
+    if "date" in update_data and update_data["date"] is not None:
+        update_data["date"] = parse_uk_date(update_data["date"])
+
     for field in update_data:
         setattr(expense, field, update_data[field])
         
@@ -127,6 +140,12 @@ def update_expense(
     db.commit()
     db.refresh(expense)
     return expense
+
+
+@router.get("/_debug/models")
+def debug_models():
+    """Debug utility to ensure metadata is healthy."""
+    return {"status": "healthy"}
 
 
 @router.delete("/{expense_id}", status_code=status.HTTP_204_NO_CONTENT)

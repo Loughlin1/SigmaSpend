@@ -1,3 +1,4 @@
+// src/components/CategoryManager.jsx
 import React, { useState } from 'react';
 import '../styles/lists.css';
 import '../styles/forms.css';

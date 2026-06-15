@@ -1,3 +1,4 @@
+// src/components/LedgerTable.jsx
 import React from 'react';
 
 export default function LedgerTable({ 

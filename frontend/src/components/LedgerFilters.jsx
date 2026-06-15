@@ -1,6 +1,6 @@
+// src/components/LedgerFilters.jsx
 import React from 'react';
 
-// FIX: Added categories = [] to the destructured props
 export default function LedgerFilters({ filters, onFilterChange, accountNameMap, categories = [] }) {
   
   const handleChange = (e) => {

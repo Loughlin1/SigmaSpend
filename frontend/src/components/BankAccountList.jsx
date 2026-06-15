@@ -1,3 +1,4 @@
+// src/components/BankAccountList.jsx
 import React, { useState } from 'react';
 import { ingestionApi } from '../api/client';
 import BankAccountForm from './BankAccountForm';

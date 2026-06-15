@@ -16,45 +16,6 @@ from app.models.category import Category
 
 
 class StatementParserService:
-    
-    @staticmethod
-    def load_bank_config(bank_profile: str = None) -> dict:
-        """
-        Loads the configuration YAML and returns the ruleset for the 
-        currently active bank/account profile.
-        
-        Args:
-            bank_profile: Specific profile to load. If None, loads the active_bank.
-        """
-        config_path = Path(__file__).parent.parent / "core" / "config.yaml"
-        
-        if not config_path.exists():
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Configuration file missing at expected path: {config_path}"
-            )
-            
-        with open(config_path, "r", encoding="utf-8") as file:
-            try:
-                config_data = yaml.safe_load(file)
-            except yaml.YAMLError as e:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Failed to parse config.yaml syntax: {str(e)}"
-                )
-        
-        # Use provided profile or fall back to active_bank
-        active_bank = bank_profile or config_data.get("active_bank")
-        bank_rules = config_data.get("banks", {}).get(active_bank)
-        
-        if not bank_rules:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Bank profile '{active_bank}' is not defined in config.yaml."
-            )
-            
-        return bank_rules
-
     @classmethod
     def get_account_bank_config(cls, db: Session, account_id: str, bank_profile: str = None) -> dict:
         account = db.query(BankAccount).filter(BankAccount.account_id == account_id).first()
@@ -70,9 +31,6 @@ class StatementParserService:
                 "amount_style": account.amount_style or "single_column",
                 "mappings": account.mappings,
             }
-
-        if bank_profile:
-            return cls.load_bank_config(bank_profile)
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -107,12 +65,8 @@ class StatementParserService:
         if account_id:
             bank_config = cls.get_account_bank_config(db, account_id, bank_profile)
         else:
-            bank_config = cls.load_bank_config(bank_profile)
-        
-        # Use provided account_id or fall back to config
-        if account_id is None:
-            account_id = bank_config["account_id"]
-        
+            return {}
+
         amount_style = bank_config.get("amount_style", "single_column")
         mappings = bank_config["mappings"]
         all_rules = db.query(CategoryRule).all()
@@ -147,6 +101,7 @@ class StatementParserService:
                 raw_date = row[mappings["date_column"]].strip()
                 description = row[mappings["description_column"]].strip()
                 parsed_date = date_parser.parse(raw_date, dayfirst=True).date()
+                notes = row[mappings["notes_column"]].strip()
 
                 amount = 0.0
                 is_income = False
@@ -208,6 +163,7 @@ class StatementParserService:
                     amount=amount,
                     is_income=is_income,
                     description=description,
+                    notes=notes,
                     transaction_hash=tx_hash,
                     category=assigned_cat
                 )

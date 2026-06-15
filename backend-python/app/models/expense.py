@@ -10,6 +10,7 @@ class Expense(Base):
     amount = Column(Float, nullable=False)
     is_income = Column(Boolean, default=False, nullable=False)
     description = Column(String, nullable=False)
+    notes = Column(String, nullable=True)
     category = Column(String, default="Uncategorized", index=True)
     
     # Enforces database-level structural constraint to guarantee no duplicates

@@ -1,6 +1,5 @@
 import React from 'react';
 
-// FIX: Added categories to the destructured props with a safe fallback default array
 export default function LedgerTable({ 
   expenses = [], 
   accountNameMap = {}, 
@@ -9,7 +8,6 @@ export default function LedgerTable({
   onDelete 
 }) {
   
-  // Now this look-up function safely has access to the injected categories tree scope
   const getCategoryIcon = (categoryName) => {
     const match = categories.find(c => c.name === categoryName);
     if (match) return match.icon;
@@ -25,12 +23,13 @@ export default function LedgerTable({
 
   return (
     <table border="1" cellPadding="10" className="table">
-      <thead className="tableHeader">
+      <thead className="table">
         <tr>
           <th>Date</th>
           <th>Description</th>
           <th>Account</th>
           <th>Category</th>
+          <th>Notes</th>
           <th>Type</th>
           <th>Amount</th>
           <th>Actions</th>
@@ -43,13 +42,14 @@ export default function LedgerTable({
             <td>{exp.description}</td>
             <td>{accountNameMap[exp.account_id] || exp.account_id}</td>
             <td>{getCategoryIcon(exp.category)} {exp.category}</td>
+            <td>{exp.notes}</td>
             <td>{exp.is_income ? 'Income' : 'Expense'}</td>
             <td>£{Number(exp.amount).toFixed(2)}</td>
-            <td>
+            <td style={{display: "flex", gap: "0.25rem", alignContent: "center", justifyContent: "center", border: "none"}}>
               <button type="button" onClick={() => onEdit && onEdit(exp)}>
                 Edit
               </button>
-              <button type="button" onClick={() => onDelete && onDelete(exp.id)} style={{ marginLeft: '0.5rem' }}>
+              <button type="button" style={{background: '#c53030', border: '1px solid #fed7d7', borderRadius: '4px'}} onClick={() => onDelete && onDelete(exp.id)}>
                 Delete
               </button>
             </td>

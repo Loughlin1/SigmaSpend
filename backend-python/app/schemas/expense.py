@@ -8,6 +8,7 @@ class ExpenseBase(BaseModel):
     is_income: bool
     category: Optional[str] = "Uncategorized"
     description: str
+    notes: str
     date: date
     account_id: str
 

@@ -196,6 +196,16 @@
   font-weight: 600;
 }
 
+.table tbody tr {
+  font-size: 0.75rem; 
+  color: #2d3748;
+}
+
+.table tbody tr button {
+  font-size: 0.5rem;
+  padding: 0.5rem 0.5rem;
+}
+
 .chartWrapper {
   margin-bottom: 3rem;
 }

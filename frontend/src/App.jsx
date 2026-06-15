@@ -1,7 +1,9 @@
 // src/App.jsx
 import './App.css';
 import React, { useState, useEffect } from 'react';
-import logo from './assets/logo.png';
+
+import Header from './components/Header';
+import Footer from './components/Footer';
 import DescriptionSection from './components/Description';
 import ExpenseForm from './components/ExpenseForm';
 import StatementUpload from './components/StatementUpload';
@@ -59,11 +61,7 @@ function App() {
 
   return (
     <div className="page">
-      <div className="logo-container">
-        <img src={logo} alt="SigmaSpend Logo" width="64" className="logo"/>
-        <h1>SigmaSpend Dashboard</h1>
-      </div>
-      <hr />
+      <Header />
 
       <section className="sectionCard">
         <div className="splitSection">
@@ -166,6 +164,8 @@ function App() {
           />
         )}
       </section>
+
+      <Footer />
     </div>
   );
 }

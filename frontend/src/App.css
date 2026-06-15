@@ -123,7 +123,6 @@
 .splitSection {
   display: flex;
   gap: 2rem;
-  padding-bottom: 2rem;
   align-items: flex-start;
 }
 

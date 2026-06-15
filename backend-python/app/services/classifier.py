@@ -1,5 +1,6 @@
 # app/services/classifier.py
 import ollama
+import re
 from typing import List, Optional
 from dateutil import parser
 from app.models.category_rules import CategoryRule
@@ -8,11 +9,24 @@ def match_rule_based_category(description: str, db_rules: List[CategoryRule]) ->
     """
     Scans a line description against explicit text keywords. (Fast & Local)
     """
-    desc_lower = description.lower()
-    for rule in db_rules:
-        if rule.keyword.lower() in desc_lower:
-            return rule.target_category
+    if not db_rules:
+        return None
+        
+    # Map keywords to categories for an O(1) lookup later
+    rule_map = {rule.keyword.lower(): rule.target_category for rule in db_rules}
+    
+    # Escape keywords and join them into a single regex: \b(starbucks|netflix|uber)\b
+    # Word boundaries (\b) ensure "Uber" doesn't accidentally match "PubErnie"
+    pattern_str = r"\b(" + "|".join(re.escape(k) for k in rule_map.keys()) + r")\b"
+    compiled_pattern = re.compile(pattern_str, re.IGNORECASE)
+    
+    match = compiled_pattern.search(description)
+    if match:
+        matched_keyword = match.group(1).lower()
+        return rule_map.get(matched_keyword)
+        
     return None
+
 
 def classify_description_with_ai(description: str, available_categories: List[str]) -> str:
     """

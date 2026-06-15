@@ -47,11 +47,19 @@ def read_expenses(
     query = db.query(ExpenseModel)
 
     if category:
-        parent_cat = db.query(CategoryModel).filter(CategoryModel.name == category).first()
-        if parent_cat and parent_cat.subcategories:
-            subcategory_names = [sub.name for sub in parent_cat.subcategories]
-            allowed_categories = [category] + subcategory_names
-            query = query.filter(ExpenseModel.category.in_(allowed_categories))
+        if category.strip().lower() == "uncategorized":
+            # Captures items saved as "Uncategorized", empty string, or None
+            query = query.filter(
+                (ExpenseModel.category == "Uncategorized") | 
+                (ExpenseModel.category == "") | 
+                (ExpenseModel.category.is_(None))
+            )    
+        else:
+            parent_cat = db.query(CategoryModel).filter(CategoryModel.name == category).first()
+            if parent_cat and parent_cat.subcategories:
+                subcategory_names = [sub.name for sub in parent_cat.subcategories]
+                allowed_categories = [category] + subcategory_names
+                query = query.filter(ExpenseModel.category.in_(allowed_categories))
     if account_id:
         query = query.filter(ExpenseModel.account_id == account_id)
     if is_income is not None:

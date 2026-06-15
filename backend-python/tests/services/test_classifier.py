@@ -21,28 +21,28 @@ def test_match_rule_based_category_success():
     db_rules = [rule1, rule2]
     
     # Act & Assert: Exact and partial matches should pass
-    assert match_rule_based_category("STARBUCKS LONDON", db_rules) == "Coffee Shops"
-    assert match_rule_based_category("NETFLIX.COM DIGITAL", db_rules) == "Subscriptions"
+    assert match_rule_based_category("STARBUCKS LONDON", "", db_rules) == "Coffee Shops"
+    assert match_rule_based_category("NETFLIX.COM DIGITAL", "", db_rules) == "Subscriptions"
 
 
 def test_match_rule_based_category_case_insensitive():
     """Test that keyword matching ignores string casing completely."""
     rule = MagicMock(spec=CategoryRule, keyword="saInsBurYs", target_category="Groceries")
     
-    assert match_rule_based_category("SAINSBURYS SUPERMARKET", [rule]) == "Groceries"
-    assert match_rule_based_category("sainsburys local", [rule]) == "Groceries"
+    assert match_rule_based_category("SAINSBURYS SUPERMARKET",  "", [rule]) == "Groceries"
+    assert match_rule_based_category("sainsburys local",  "", [rule]) == "Groceries"
 
 
 def test_match_rule_based_category_no_match():
     """Test that when no keywords match, the function returns None gracefully."""
     rule = MagicMock(spec=CategoryRule, keyword="TFL", target_category="Transport")
     
-    assert match_rule_based_category("Unknown Vendor Payment", [rule]) is None
+    assert match_rule_based_category("Unknown Vendor Payment",  "", [rule]) is None
 
 
 def test_match_rule_based_category_empty_rules():
     """Test that an empty database rule list returns None."""
-    assert match_rule_based_category("Any Description", []) is None
+    assert match_rule_based_category("Any Description",  "", []) is None
 
 
 # ============================================================================

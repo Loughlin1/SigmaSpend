@@ -5,7 +5,7 @@ from typing import List, Optional
 from dateutil import parser
 from app.models.category_rules import CategoryRule
 
-def match_rule_based_category(description: str, db_rules: List[CategoryRule]) -> Optional[str]:
+def match_rule_based_category(description: str, notes: str, db_rules: List[CategoryRule]) -> Optional[str]:
     """
     Scans a line description against explicit text keywords. (Fast & Local)
     """
@@ -24,7 +24,12 @@ def match_rule_based_category(description: str, db_rules: List[CategoryRule]) ->
     if match:
         matched_keyword = match.group(1).lower()
         return rule_map.get(matched_keyword)
-        
+    else:
+        match_notes = compiled_pattern.search(notes)
+        if match_notes:
+            matched_keyword = match_notes.group(1).lower()
+            return rule_map.get(matched_keyword)
+
     return None
 
 

@@ -152,7 +152,7 @@ class StatementParserService:
                     continue
                 
                 # 7. Categorise expense (rules-based first then AI if not)
-                assigned_cat = match_rule_based_category(description, all_rules)
+                assigned_cat = match_rule_based_category(description, notes, all_rules)
                 if not assigned_cat:
                     assigned_cat = classify_description_with_ai(description, flat_categories)
 

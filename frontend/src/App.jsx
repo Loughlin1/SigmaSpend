@@ -49,18 +49,16 @@ function App() {
     setShowAccountForm(false);
   };
 
+  // 3. Optimized update handler used exclusively by inline actions or manual creations
   const handleSaveExpense = async (payload) => {
     try {
       await updateExpense(payload.id, payload);
-      await fetchExpenses(filters); // Refresh current filter views
+      await fetchExpenses(filters); // Refresh current filter views instantly
     } catch (err) {
       console.error('Failed updating record', err);
-    } finally {
-      closeExpenseForm();
     }
   };
 
-  // 3. Create wrappers to guarantee reactive data refreshing on creation/deletion
   const handleCreateRule = async (ruleData) => {
     await createRule(ruleData);
     await fetchRules(); // Pull fresh data instantly
@@ -78,7 +76,11 @@ function App() {
       <section className="sectionCard">
         <div className="splitSection">
           <DescriptionSection />
-          <StatementUpload accounts={accounts} onUploadSuccess={() => fetchExpenses(filters)} />
+          {/* Synchronize state completely following file intake rules */}
+          <StatementUpload 
+            accounts={accounts} 
+            onUploadSuccess={() => { fetchExpenses(filters); fetchRules(); }} 
+          />
         </div>
       </section>
 
@@ -138,21 +140,22 @@ function App() {
         <LedgerFilters 
           filters={filters} 
           onFilterChange={handleFilterChange} 
-          accountNameMap={accountNameMap} 
+          accountNameMap={accountNameMap}
+          categories={categories}
         />
 
+        {/* ExpenseForm remains here ONLY for creating clean manual transactions */}
         {showExpenseForm && (
           <div className="formPanel">
             <ExpenseForm
-              categories={categories}       // Pass down categories hook data
-              accountNameMap={accountNameMap} // Pass down accounts map data
-              initialData={editingExpense}
+              categories={categories}       
+              accountNameMap={accountNameMap} 
+              initialData={null} // Enforces form is blank for fresh manual creation entries
               onExpenseAdded={async (data) => {
                 await createExpense(data);
                 await fetchExpenses(filters);
                 closeExpenseForm();
               }}
-              onExpenseSaved={handleSaveExpense}
               onCancel={closeExpenseForm}
             />
           </div>
@@ -168,7 +171,7 @@ function App() {
             expenses={expenses}
             accountNameMap={accountNameMap}
             categories={categories}
-            onEdit={openEditExpense}
+            onExpenseSaved={handleSaveExpense}
             onDelete={async (id) => {
               await deleteExpense(id);
               await fetchExpenses(filters);

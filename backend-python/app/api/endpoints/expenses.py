@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 # Synced with your exact project layout and schema names
 from app.api import deps
 from app.models.expense import Expense as ExpenseModel
+from app.models.category import Category as CategoryModel
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate, ExpenseResponse
 
 
@@ -46,7 +47,11 @@ def read_expenses(
     query = db.query(ExpenseModel)
 
     if category:
-        query = query.filter(ExpenseModel.category == category)
+        parent_cat = db.query(CategoryModel).filter(CategoryModel.name == category).first()
+        if parent_cat and parent_cat.subcategories:
+            subcategory_names = [sub.name for sub in parent_cat.subcategories]
+            allowed_categories = [category] + subcategory_names
+            query = query.filter(ExpenseModel.category.in_(allowed_categories))
     if account_id:
         query = query.filter(ExpenseModel.account_id == account_id)
     if is_income is not None:

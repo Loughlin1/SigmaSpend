@@ -37,11 +37,12 @@ function App() {
     fetchExpenses(filters);
   }, [fetchExpenses, filters]);
 
-  // 2. Fetch Accounts on initial mount
+  // 2. Fetch Accounts, Categories, and Rules on initial mount
   useEffect(() => {
     fetchAccounts();
     fetchCategories();
-  }, [fetchAccounts, fetchCategories]);
+    fetchRules();
+  }, [fetchAccounts, fetchCategories, fetchRules]);
 
   const handleAccountCreated = async () => {
     await fetchAccounts();
@@ -57,6 +58,17 @@ function App() {
     } finally {
       closeExpenseForm();
     }
+  };
+
+  // 3. Create wrappers to guarantee reactive data refreshing on creation/deletion
+  const handleCreateRule = async (ruleData) => {
+    await createRule(ruleData);
+    await fetchRules(); // Pull fresh data instantly
+  };
+
+  const handleDeleteRule = async (ruleId) => {
+    await deleteRule(ruleId);
+    await fetchRules(); // Pull fresh data instantly
   };
 
   return (
@@ -95,8 +107,8 @@ function App() {
         <RuleManager
           rules={rules}
           categories={categories}
-          onCreateRule={createRule}
-          onDeleteRule={deleteRule}
+          onCreateRule={handleCreateRule}
+          onDeleteRule={handleDeleteRule}
           loading={rulesLoading}
           error={rulesError}
         />

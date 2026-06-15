@@ -1,0 +1,17 @@
+/* src/styles/charts.css */
+
+.chart-canvas-container {
+  position: relative;
+  width: 100%;
+  height: 320px; /* Explicit static canvas clearance boundary gives Recharts an absolute height engine target */
+  margin-top: 1.5rem;
+  box-sizing: border-box;
+}
+
+/* Enhancing standard typography elements within cards */
+.chartWrapper h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #2d3748;
+  font-weight: 600;
+}

@@ -1,6 +1,7 @@
 // src/components/ExpenseChart.jsx
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import '../styles/charts.css'
 
 export default function ExpenseChart({ expenses, accounts }) {
   const accountNameLookup = accounts.reduce((lookup, account) => {
@@ -21,16 +22,32 @@ export default function ExpenseChart({ expenses, accounts }) {
   }, []);
 
   return (
-    <div className="chart-container" style={{ width: '100%', height: 300 }}>
+    <div className="chartWrapper">
       <h3>Spending Breakdown by Account</h3>
-      <ResponsiveContainer>
-        <BarChart data={chartData}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip formatter={(value) => [`£${value.toFixed(2)}`, 'Total']} />
-          <Bar dataKey="value" fill="#4f46e5" />
-        </BarChart>
-      </ResponsiveContainer>
+      <div className="chart-canvas-container">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
+            <XAxis 
+              dataKey="name" 
+              tick={{ fill: '#4a5568', fontSize: 12 }} 
+              axisLine={{ stroke: '#cbd5e0' }}
+              tickLine={false}
+            />
+            <YAxis 
+              tick={{ fill: '#4a5568', fontSize: 12 }} 
+              axisLine={{ stroke: '#cbd5e0' }}
+              tickLine={false}
+              tickFormatter={(value) => `£${value}`}
+            />
+            <Tooltip 
+              formatter={(value) => [`£${value.toFixed(2)}`, 'Total']} 
+              contentStyle={{ background: '#fff', border: '1px solid #ccc', borderRadius: '6px', fontSize: '13px' }}
+            />
+            {/* Using an authentic theme-aligned hex code (#2b6cb0) matching your .button classes */}
+            <Bar dataKey="value" fill="#2b6cb0" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

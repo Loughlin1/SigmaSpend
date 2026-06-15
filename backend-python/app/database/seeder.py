@@ -68,11 +68,12 @@ def seed_database_if_empty(db: Session):
     if not has_rules:
         print("[Seeder] Populating keyword processing rules...")
         for rule_data in seed_definitions.get("rules", []):
-            db_rule = CategoryRule(
-                keyword=rule_data["keyword"].strip().lower(),
-                target_category=rule_data["target_category"].strip()
-            )
-            db.add(db_rule)
+            for keyword in rule_data["keywords"]:
+                db_rule = CategoryRule(
+                    keyword=keyword.strip().lower(),
+                    target_category=rule_data["target_category"].strip()
+                )
+                db.add(db_rule)
 
     try:
         db.commit()

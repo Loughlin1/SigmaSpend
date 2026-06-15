@@ -65,10 +65,12 @@ function App() {
       </div>
       <hr />
 
-      <div className="splitSection">
-        <DescriptionSection />
-        <StatementUpload accounts={accounts} onUploadSuccess={() => fetchExpenses(filters)} />
-      </div>
+      <section className="sectionCard">
+        <div className="splitSection">
+          <DescriptionSection />
+          <StatementUpload accounts={accounts} onUploadSuccess={() => fetchExpenses(filters)} />
+        </div>
+      </section>
 
       <section className="sectionCard">
         <BankAccountList
@@ -102,11 +104,11 @@ function App() {
         />
       </section>
 
-      <div style={{ marginBottom: '5rem' }}>
+      <section className="sectionCard">
         <ExpenseChart expenses={expenses} accounts={accounts} />
-      </div>
+      </section>
 
-      <section style={{ marginBottom: '1rem' }}>
+      <section className="sectionCard">
         <div className="headingRow" style={{ marginBottom: '1rem' }}>
           <h3 style={{ margin: 0 }}>Transaction Ledger</h3>
           <div className="actionsRow">

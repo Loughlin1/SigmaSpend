@@ -1,7 +1,7 @@
 // src/components/StatementUpload.jsx
 import React, { useState } from 'react';
 import { ingestionApi } from '../api/client';
-import './StatementUpload.css';
+import '../styles/forms.css';
 
 export default function StatementUpload({ accounts, onUploadSuccess }) {
   const [files, setFiles] = useState([]);
@@ -10,7 +10,8 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleUpload = async () => {
+  const handleUpload = async (e) => {
+    e.preventDefault(); // Preventing submission bubbling transitions
     if (files.length === 0 || !selectedAccount) {
       setError('Please select a bank account and attach at least one CSV file.');
       return;
@@ -33,55 +34,63 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
   };
 
   return (
-    <div className="upload-box sectionCard">
+    <section className="form">
       <h3>Import Bank Statement</h3>
-      {error && <div className="upload-box__error">{error}</div>}
-      <div className="upload-box__row">
-        <div className="upload-box__field">
-          <label className="upload-box__label">
-            Select Bank Account
-            <select
-              value={selectedAccount}
-              onChange={(e) => setSelectedAccount(e.target.value)}
-              className="upload-box__select"
-            >
-              <option value="">Choose an account</option>
-              {accounts.map((account) => (
-                <option key={account.account_id} value={account.account_id}>
-                  {account.account_name} ({account.bank_name})
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div className="upload-box__actions">
+      {error && <div className="form__error">{error}</div>}
+      
+      <form onSubmit={handleUpload} className="form__grid">
+        <label className="form-field-wrapper">
+          Select Bank Account
+          <select
+            value={selectedAccount}
+            onChange={(e) => setSelectedAccount(e.target.value)}
+            className="form-inline-input"
+            required
+          >
+            <option value="">Choose an account</option>
+            {accounts.map((account) => (
+              <option key={account.account_id} value={account.account_id}>
+                {account.account_name} ({account.bank_name})
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="form-field-wrapper">
+          Attach Statement Files (.csv)
           <input
             key={inputKey}
             type="file"
             accept=".csv"
             multiple
             onChange={(e) => setFiles(Array.from(e.target.files))}
-            className="upload-box__file-input"
+            className="form-inline-input"
+            style={{ padding: '0.35rem' }} // Slight vertical normalization for file selector boxes
           />
-          <button
-            onClick={handleUpload}
-            disabled={files.length === 0 || !selectedAccount || loading}
-            className="inlineButton upload-box__button"
-          >
-            {loading ? 'Processing...' : `Upload ${files.length === 0 ? '' : files.length} file${files.length === 1 ? '' : 's'}`}
-          </button>
-        </div>
-      </div>
-      {files.length > 0 && (
-        <div className="upload-box__file-list">
-          <strong>Selected files:</strong>
-          {files.map((fileItem, index) => (
-            <div key={`${fileItem.name}-${index}`} className="upload-box__file-item">
-              {fileItem.name}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+        </label>
+
+        {files.length > 0 && (
+          <div style={{ gridColumn: '1 / -1', width: '100%', fontSize: '0.9rem', color: '#555', background: '#f7f7f7', padding: '0.5rem 0.75rem', borderRadius: '4px', border: '1px solid #eee' }}>
+            <strong>Selected files ({files.length}):</strong>
+            <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px' }}>
+              {files.map((fileItem, index) => (
+                <li key={`${fileItem.name}-${index}`} style={{ fontFamily: 'monospace' }}>
+                  {fileItem.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={files.length === 0 || !selectedAccount || loading}
+          className="inlineButton form__submit"
+          style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }} // Centers button across the grid layout width
+        >
+          {loading ? 'Processing...' : `Upload File${files.length === 1 ? '' : 's'}`}
+        </button>
+      </form>
+    </section>
   );
 }

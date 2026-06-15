@@ -135,6 +135,7 @@
   display: block;
   gap: 1rem;
   width: 100%;
+  margin-bottom: 1rem;
 }
 
 .headingRow {

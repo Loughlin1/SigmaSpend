@@ -64,11 +64,14 @@ def read_expenses(
                 (ExpenseModel.category.is_(None))
             )    
         else:
+            # Check if parent category or subcategory
             parent_cat = db.query(CategoryModel).filter(CategoryModel.name == category).first()
             if parent_cat and parent_cat.subcategories:
                 subcategory_names = [sub.name for sub in parent_cat.subcategories]
                 allowed_categories = [category] + subcategory_names
                 query = query.filter(ExpenseModel.category.in_(allowed_categories))
+            else:
+                query = query.filter(ExpenseModel.category == category)
     if account_id:
         query = query.filter(ExpenseModel.account_id == account_id)
     if is_income is not None:

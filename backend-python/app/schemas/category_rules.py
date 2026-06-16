@@ -2,10 +2,9 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 class CategoryRuleBase(BaseModel):
-    # The keyword to watch for in the bank statement description
     keyword: str = Field(..., description="The substring search keyword, e.g., 'Starbucks'")
-    # The exact category or subcategory name assigned when matched
     target_category: str = Field(..., description="The name of the destination category")
+    match_field: str = Field("description", description="Must be either 'description' or 'notes'")
 
 class CategoryRuleCreate(CategoryRuleBase):
     """

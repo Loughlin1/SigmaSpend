@@ -6,6 +6,10 @@ from app.models.bank_account import BankAccount
 from app.models.category import Category
 from app.models.category_rules import CategoryRule
 
+import logging
+logger = logging.getLogger("sigmaspend")
+
+
 def seed_database_if_empty(db: Session):
     """
     Validates if structural tables are pristine and inserts default configurations 
@@ -17,11 +21,12 @@ def seed_database_if_empty(db: Session):
     has_rules = db.query(CategoryRule).first() is not None
     
     if has_accounts and has_categories and has_rules:
+        logger.debug("Database already contains data; skipping seeding routine to prevent integrity conflicts.")
         return # Database already contains data, skip seeding to avoid integrity clashes
 
     config_path = Path(__file__).parent.parent / "core" / "config.yaml"
     if not config_path.exists():
-        print(f"[Seeder] Warning: Config file missing at {config_path}. Skipping seed.")
+        logger.warning(f"[Seeder] Warning: Config file missing at {config_path}. Skipping seed.")
         return
 
     with open(config_path, "r", encoding="utf-8") as file:
@@ -29,11 +34,14 @@ def seed_database_if_empty(db: Session):
     
     seed_definitions = config.get("seed_data", {})
     if not seed_definitions:
+        logger.warning("Configuration file found, but 'seed_data' block is empty or missing.")
         return
+    
+    logger.info("Empty database structure detected. Beginning initial database seeding routine...")
 
     # 2. Seed Bank Accounts table
     if not has_accounts:
-        print("[Seeder] Populating default bank accounts...")
+        logger.info("[Seeder] Populating default bank accounts...")
         for acc in seed_definitions.get("bank_accounts", []):
             db_account = BankAccount(
                 account_id=acc["account_id"],
@@ -46,7 +54,7 @@ def seed_database_if_empty(db: Session):
 
     # 3. Seed Hierarchical Category & Subcategory tables
     if not has_categories:
-        print("[Seeder] Populating structured category tree...")
+        logger.info("[Seeder] Populating structured category tree...")
         for cat_data in seed_definitions.get("categories", []):
             # Create top-level parent category
             parent_name = cat_data["name"].strip().title()
@@ -66,18 +74,19 @@ def seed_database_if_empty(db: Session):
 
     # 3. Seed Explicit Categorisation Rules
     if not has_rules:
-        print("[Seeder] Populating keyword processing rules...")
+        logger.info("[Seeder] Populating keyword processing rules...")
         for rule_data in seed_definitions.get("rules", []):
             for keyword in rule_data["keywords"]:
                 db_rule = CategoryRule(
                     keyword=keyword.strip().lower(),
-                    target_category=rule_data["target_category"].strip()
+                    target_category=rule_data["target_category"].strip(),
+                    match_field=rule_data["match_field"].strip(),
                 )
                 db.add(db_rule)
 
     try:
         db.commit()
-        print("[Seeder] Database tables initialized and seeded successfully.")
+        logger.info("[Seeder] Database tables initialized and seeded successfully.")
     except Exception as e:
         db.rollback()
-        print(f"[Seeder] Critical: Failed to execute database seed: {e}")
+        logger.critical(f"[Seeder] Critical: Failed to execute database seed: {e}")

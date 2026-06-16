@@ -1,6 +1,15 @@
+# backend-python/app/main.py
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Setup logging
+from app.core.logging_config import setup_logging
+setup_logging()
+
+import logging
+logger = logging.getLogger("sigmaspend")
+
 from app.core.config import settings
 from app.database.session import SessionLocal, engine, Base
 from app.database.seeder import seed_database_if_empty
@@ -15,7 +24,7 @@ from app.models.category_rules import CategoryRule
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup Sequence:
-    print("[Startup] Initialising database tables...")
+    logger.info("[Startup] Initialising database tables...")
 
     # 1. Enforce physical creation of the .db file and tables if missing
     Base.metadata.create_all(bind=engine)

@@ -12,3 +12,6 @@ config.yaml
 
 # SQLite
 *.db
+
+# Logs
+*.log

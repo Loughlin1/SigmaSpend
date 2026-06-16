@@ -1,10 +1,15 @@
+# backend-python/app/api/endpoints/ingestion.py
 from typing import List
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query, status
 from sqlalchemy.orm import Session
+
 from app.api.deps import get_db
 from app.services.parser import StatementParserService
 from app.models.bank_account import BankAccount
 from app.schemas.bank_account import BankAccountCreate, BankAccountResponse, BankAccountUpdate
+
+import logging
+logger = logging.getLogger("sigmaspend")
 
 router = APIRouter()
 
@@ -20,17 +25,10 @@ def create_bank_account(
 ):
     """
     Create a new bank account for CSV uploads.
-    
-    - **account_id**: Unique identifier (e.g., 'checking_001')
-    - **account_name**: Display name (e.g., 'My Checking Account')
-    - **bank_name**: Bank name (e.g., 'Chase')
-    - **amount_style**: CSV amount layout, either 'single_column' or 'split_columns'
-    - **mappings**: Column mappings to parse the uploaded bank CSV
-    - **bank_profile**: Optional legacy reference to a profile in config.yaml
     """
-    # Check if account already exists
     existing = db.query(BankAccount).filter(BankAccount.account_id == account_in.account_id).first()
     if existing:
+        logger.warning(f"Account creation conflict: ID '{account_in.account_id}' already exists")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Account '{account_in.account_id}' already exists"
@@ -40,6 +38,8 @@ def create_bank_account(
     db.add(db_account)
     db.commit()
     db.refresh(db_account)
+    
+    logger.info(f"Successfully created bank account: {db_account.account_id} ({db_account.bank_name})")
     return db_account
 
 
@@ -50,14 +50,14 @@ def list_bank_accounts(
 ):
     """
     List all bank accounts.
-    
-    - **active_only**: Set to false to include inactive accounts
     """
     query = db.query(BankAccount)
     if active_only:
         query = query.filter(BankAccount.is_active == True)
     
-    return query.all()
+    accounts = query.all()
+    logger.info(f"Retrieved {len(accounts)} bank accounts (active_only={active_only})")
+    return accounts
 
 
 @router.get("/accounts/{account_id}", response_model=BankAccountResponse)
@@ -68,6 +68,7 @@ def get_bank_account(
     """Retrieve details of a specific bank account."""
     account = db.query(BankAccount).filter(BankAccount.account_id == account_id).first()
     if not account:
+        logger.warning(f"Lookup failed: Bank account '{account_id}' not found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Account '{account_id}' not found"
@@ -84,6 +85,7 @@ def update_bank_account(
     """Update bank account details."""
     account = db.query(BankAccount).filter(BankAccount.account_id == account_id).first()
     if not account:
+        logger.warning(f"Update failed: Bank account '{account_id}' not found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Account '{account_id}' not found"
@@ -96,6 +98,8 @@ def update_bank_account(
     db.add(account)
     db.commit()
     db.refresh(account)
+    
+    logger.info(f"Successfully updated fields {list(update_data.keys())} for account '{account_id}'")
     return account
 
 
@@ -111,19 +115,20 @@ async def upload_csv_statement(
 ):
     """
     Upload and process one or more CSV bank statements.
-    
-    **Parameters:**
-    - **files**: CSV files to upload
-    - **account_id**: Target bank account (must exist or create first via POST /accounts)
     """
     if not files:
+        logger.warning("Upload triggered with no files attached.")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No files uploaded. Attach one or more CSV files."
         )
 
+    file_names = [f.filename for f in files if f.filename]
+    logger.info(f"Starting CSV statement upload process for account '{account_id}'. Files: {file_names}")
+
     for file in files:
         if file.filename and not file.filename.lower().endswith('.csv'):
+            logger.warning(f"Rejected file entry due to invalid extension: '{file.filename}'")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid file format. Only CSV files are supported."
@@ -132,12 +137,14 @@ async def upload_csv_statement(
     # Verify account exists
     account = db.query(BankAccount).filter(BankAccount.account_id == account_id).first()
     if not account:
+        logger.warning(f"Ingestion rejected: Bank account '{account_id}' does not exist.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Bank account '{account_id}' not found. Create it first via POST /accounts"
         )
     
     if not account.is_active:
+        logger.warning(f"Ingestion rejected: Bank account '{account_id}' is inactive.")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Account '{account_id}' is inactive"
@@ -148,16 +155,29 @@ async def upload_csv_statement(
         total_skipped = 0
 
         for file in files:
+            logger.info(f"Processing file contents for statement: '{file.filename}'")
             contents = await file.read()
             decoded_contents = contents.decode("utf-8")
+            
             result = StatementParserService.process_csv(
                 decoded_contents,
                 db,
                 account_id=account_id,
                 bank_profile=account.bank_profile
             )
-            total_added += result.get("added", 0)
-            total_skipped += result.get("skipped", 0)
+            
+            added = result.get("added", 0)
+            skipped = result.get("skipped", 0)
+            
+            logger.info(f"File '{file.filename}' ingestion metrics -> Added: {added}, Skipped (Duplicates): {skipped}")
+            
+            total_added += added
+            total_skipped += skipped
+
+        logger.info(
+            f"Ingestion lifecycle finished for account '{account_id}'. "
+            f"Processed {len(files)} file(s). Summary -> Total Added: {total_added}, Total Skipped: {total_skipped}"
+        )
 
         return {
             "status": "success",
@@ -169,6 +189,8 @@ async def upload_csv_statement(
             "files_processed": len(files)
         }
     except Exception as e:
+        # Crucial: log stacktrace for unhandled parsing or database dependency faults
+        logger.exception(f"Fatal crash inside CSV statement parsing wrapper for account '{account_id}': {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while handling the files: {str(e)}"

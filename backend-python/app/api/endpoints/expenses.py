@@ -1,3 +1,4 @@
+# backend-python/app/api/endpoints/expenses.py
 from datetime import date
 from dateutil import parser
 from dateutil.parser import ParserError
@@ -5,12 +6,13 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-# Synced with your exact project layout and schema names
 from app.api import deps
 from app.models.expense import Expense as ExpenseModel
 from app.models.category import Category as CategoryModel
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate, ExpenseResponse
 
+import logging
+logger = logging.getLogger("sigmaspend")
 
 router = APIRouter()
 
@@ -23,6 +25,7 @@ def parse_uk_date(date_str: Optional[str]) -> Optional[date]:
         # Automatically processes YYYY-MM-DD and prioritises DD/MM/YYYY text streams
         return parser.parse(str(date_str), dayfirst=True).date()
     except (ParserError, TypeError):
+        logger.warning(f"Date parsing failed for input: '{date_str}'")
         raise HTTPException(
             status_code=400, 
             detail=f"Invalid date format: '{date_str}'. Please provide a readable date layout."
@@ -44,6 +47,12 @@ def read_expenses(
     Retrieve a paginated and filtered list of expenses.
     Returns ExpenseResponse containing the database id and transaction_hash.
     """
+    logger.info(
+        f"Fetching expenses (skip={skip}, limit={limit}) with filters: "
+        f"category={category}, account_id={account_id}, is_income={is_income}, "
+        f"start_date={start_date}, end_date={end_date}"
+    )
+    
     query = db.query(ExpenseModel)
 
     if category:
@@ -86,13 +95,8 @@ def create_expense(
     Create a manual expense entry via the frontend Form component.
     Generates a placeholder transaction_hash since it bypasses statement ingestion.
     """
-    # Create the model instance from the validation schema
-    db_obj = ExpenseModel(**expense_in.dict())
     expense_data = expense_in.dict()
     expense_data["date"] = parse_uk_date(expense_data["date"])
-
-    # Create the model instance safely with native date objects
-    db_obj = ExpenseModel(**expense_data)
     
     # For manual entries, generate a deterministic fallback hash or tag
     # to fit your Schema contract without breaking the Deduplication Engine rules.
@@ -100,11 +104,17 @@ def create_expense(
     fallback_seed = f"manual-{expense_in.account_id}-{expense_data['date']}-{expense_in.amount}-{expense_in.description}"
     generated_hash = hashlib.sha256(fallback_seed.encode("utf-8")).hexdigest()
     expense_data["transaction_hash"] = generated_hash
+    
     db_obj = ExpenseModel(**expense_data)
 
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
+    
+    logger.info(
+        f"Manually created expense ID {db_obj.id} for account {db_obj.account_id} "
+        f"with generated hash: {generated_hash[:8]}..."
+    )
     return db_obj
 
 
@@ -118,6 +128,7 @@ def read_expense(
     """
     expense = db.query(ExpenseModel).filter(ExpenseModel.id == expense_id).first()
     if not expense:
+        logger.warning(f"Expense lookup failed: ID {expense_id} not found.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Expense record not found"
@@ -137,6 +148,7 @@ def update_expense(
     """
     expense = db.query(ExpenseModel).filter(ExpenseModel.id == expense_id).first()
     if not expense:
+        logger.warning(f"Update failed: Expense ID {expense_id} not found.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Expense record not found"
@@ -152,6 +164,8 @@ def update_expense(
     db.add(expense)
     db.commit()
     db.refresh(expense)
+    
+    logger.info(f"Updated fields {list(update_data.keys())} for expense ID {expense_id}")
     return expense
 
 
@@ -171,10 +185,13 @@ def delete_expense(
     """
     expense = db.query(ExpenseModel).filter(ExpenseModel.id == expense_id).first()
     if not expense:
+        logger.warning(f"Delete failed: Expense ID {expense_id} not found.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Expense record not found"
         )
     db.delete(expense)
     db.commit()
+    
+    logger.info(f"Permanently deleted expense ID {expense_id}")
     return None

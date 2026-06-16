@@ -153,6 +153,8 @@ async def upload_csv_statement(
     try:
         total_added = 0
         total_skipped = 0
+        total_categorized = 0
+        total_uncategorized = 0
 
         for file in files:
             logger.info(f"Processing file contents for statement: '{file.filename}'")
@@ -168,11 +170,15 @@ async def upload_csv_statement(
             
             added = result.get("added", 0)
             skipped = result.get("skipped", 0)
+            categorized = result.get("categorized", 0)
+            uncategorized = result.get("uncategorized", 0)
             
             logger.info(f"File '{file.filename}' ingestion metrics -> Added: {added}, Skipped (Duplicates): {skipped}")
             
             total_added += added
             total_skipped += skipped
+            total_categorized += categorized
+            total_uncategorized += uncategorized
 
         logger.info(
             f"Ingestion lifecycle finished for account '{account_id}'. "
@@ -185,6 +191,8 @@ async def upload_csv_statement(
             "summary": {
                 "added": total_added,
                 "skipped": total_skipped,
+                "categorized": total_categorized,
+                "uncategorized": total_uncategorized
             },
             "files_processed": len(files)
         }

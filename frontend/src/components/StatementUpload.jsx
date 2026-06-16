@@ -20,8 +20,27 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
     setError('');
     setLoading(true);
     try {
-      const summary = await ingestionApi.uploadStatement(files, selectedAccount);
-      alert(`Imported ${summary.summary?.added ?? 0} new records from ${files.length} file${files.length === 1 ? '' : 's'}!`);
+      const response = await ingestionApi.uploadStatement(files, selectedAccount);
+      const metrics = response.summary || response.data || response;
+
+      const added = metrics.added ?? 0;
+      const skipped = metrics.skipped ?? 0;
+      const categorized = metrics.categorized ?? 0;
+      const uncategorized = metrics.uncategorized ?? 0;
+      console.log("[SigmaSpend UI] Statement Ingestion Success Metrics:", {
+        total_files: files.length,
+        added,
+        skipped,
+        categorized,
+        uncategorized
+      });
+      alert(
+        `Import complete for ${files.length} file${files.length === 1 ? '' : 's'}!\n\n` +
+        `• New Transactions Added: ${added}\n` +
+        `• Duplicates Skipped: ${skipped}\n` +
+        `• Automatically Categorised: ${categorized} ✨\n` +
+        `• Left Uncategorised: ${uncategorized} ❓`
+      );
       onUploadSuccess();
       setFiles([]);
       setInputKey((prev) => prev + 1);

@@ -81,12 +81,14 @@ class StatementParserService:
             logger.error(f"Ingestion aborted. Configured mappings do not match CSV headers: {headers}")
             return {"added": 0, "skipped": 0, "errors": len(file_contents.splitlines())}
 
-        # Track file-local repetitions within this specific upload stream
+        # Tracking metrics
         file_combinations = defaultdict(int)
-        
         added_count = 0
         skipped_count = 0
         error_count = 0
+        # Categorization performance metrics
+        categorized_count = 0
+        uncategorized_count = 0
 
         for row_num, row in enumerate(reader, start=1):
             try:
@@ -101,7 +103,7 @@ class StatementParserService:
                 description = row[mappings["description_column"]].strip()
                 parsed_date = date_parser.parse(raw_date, dayfirst=True).date()
                 
-                # FIX: Use .get() to prevent KeyError if a file or mapping doesn't have notes
+                # Notes extraction guard
                 notes_key = mappings.get("notes_column")
                 notes = row.get(notes_key, "").strip() if notes_key else ""
 
@@ -130,22 +132,12 @@ class StatementParserService:
                     else:
                         continue
 
-                # 4. Accurate Cross-File Occurrence Calculation
-                # Query the database to find how many matching entries already exist historically
-                db_existing_count = db.query(Expense).filter(
-                    Expense.account_id == account_id,
-                    Expense.date == parsed_date,
-                    Expense.amount == amount,
-                    Expense.is_income == is_income,
-                    Expense.description == description
-                ).count()
-
+                # 4. Accurate Sequential Occurrence Calibration
+                # Determine its specific sequential position in the CURRENT file
                 base_sig = f"{account_id}_{raw_date}_{amount}_{is_income}_{description.lower()}"
                 file_combinations[base_sig] += 1
-                
-                # Final sequence = (What's already in the DB) + (What we found so far in this loop)
-                occurrence = db_existing_count + file_combinations[base_sig]
-                
+                occurrence = file_combinations[base_sig] # ◄ Track sequentially starting at 1, 2, etc.
+
                 # 5. Build Fingerprint Hash
                 tx_hash = cls.generate_transaction_hash(
                     account_id=account_id, date=raw_date, amount=amount,
@@ -176,6 +168,11 @@ class StatementParserService:
                 # if assigned_cat == "Uncategorized":
                 #     assigned_cat = classify_description_with_ai(description, flat_categories)
                 
+                if assigned_cat and assigned_cat.strip().lower() != "uncategorized":
+                    categorized_count += 1
+                else:
+                    uncategorized_count += 1
+
                 # 9. Insert Record
                 new_expense = Expense(
                     account_id=account_id,
@@ -196,5 +193,13 @@ class StatementParserService:
                 continue
                 
         db.commit()
-        logger.info(f"Ingestion Finished. Added: {added_count} | Skipped: {skipped_count} | Errors: {error_count}")
-        return {"added": added_count, "skipped": skipped_count}
+        logger.info(
+            f"Ingestion Summary -> Added: {added_count} | Skipped: {skipped_count} | Errors: {error_count} || "
+            f"Classification Breakdown -> Successfully Categorised: {categorized_count} | Left Uncategorised: {uncategorized_count}"
+        )
+        return {
+            "added": added_count, 
+            "skipped": skipped_count,
+            "categorized": categorized_count,
+            "uncategorized": uncategorized_count
+        }

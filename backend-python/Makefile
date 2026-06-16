@@ -52,6 +52,8 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 	@echo "[Clean] Directory cache wiped cleanly."
+	find . -type f -name "*.log" -delete 
+	@echo "[Clean] Directory cache and log history wiped cleanly."
 
 # Target to drop the SQLite file to force an immediate database re-seed on next boot
 db-reset:

@@ -20,34 +20,47 @@ export default function LedgerTable({
 
   // --- CLEAN EXTRACTED SAVING HANDLER ---
   const handleRowSave = async (e) => {
-    e.preventDefault();
-    
-    const payload = {
-      id: editFormData.id,
-      amount: parseFloat(editFormData.amount),
-      is_income: editFormData.is_income,
-      category: editFormData.category,
-      description: editFormData.description,
-      date: editFormData.date,
-      account_id: editFormData.account_id,
-      notes: editFormData.notes
-    };
-
-    // If a specific target checkbox cell was highlighted, trigger our custom hook
-    if (ruleTargetField !== "" && editFormData.category !== "Uncategorized") {
-      if (typeof onCreateRuleFromTransaction === 'function') {
-        await onCreateRuleFromTransaction({
-          description: editFormData.description,
-          notes: editFormData.notes,
-          target_category: editFormData.category,
-          matchField: ruleTargetField // Sends "description" or "notes"
-        });
-      }
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
     }
+    
+    try {
+      const payload = {
+        id: editFormData.id,
+        amount: parseFloat(editFormData.amount),
+        is_income: editFormData.is_income,
+        category: editFormData.category,
+        description: editFormData.description,
+        date: editFormData.date,
+        account_id: editFormData.account_id,
+        notes: editFormData.notes
+      };
 
-    await onExpenseSaved(payload);
-    setEditingId(null);
-    setRuleTargetField(""); // Reset rule generator selection
+      // 1. Trigger background rule learning if a specific column checkbox is ticked
+      if (ruleTargetField !== "" && editFormData.category !== "Uncategorized") {
+        if (typeof onCreateRuleFromTransaction === 'function') {
+          console.log(`[SigmaSpend UI] Dispatching new rule criteria targeting field: ${ruleTargetField}`);
+          await onCreateRuleFromTransaction({
+            description: editFormData.description,
+            notes: editFormData.notes,
+            target_category: editFormData.category,
+            matchField: ruleTargetField 
+          });
+        }
+      }
+
+      // 2. Submit transaction updates directly to the parent layout state handler
+      if (typeof onExpenseSaved === 'function') {
+        await onExpenseSaved(payload);
+      }
+
+      // 3. Clean up interaction flags on successful execution loop
+      setEditingId(null);
+      setRuleTargetField(""); 
+      
+    } catch (err) {
+      console.error("[SigmaSpend UI] Network thread halted inside handleRowSave:", err);
+    }
   };
 
   const startEdit = (exp) => {
@@ -66,10 +79,9 @@ export default function LedgerTable({
 
   const cancelEdit = () => {
     setEditingId(null);
-    setCreateRuleAutomatically(false);
+    setRuleTargetField(""); // Safely clean up the string column tracker instead
   };
 
-  // Helper for rendering parent icons dynamically
   const getCategoryIcon = (categoryName) => {
     const match = categories.find(c => c.name === categoryName);
     if (match) return match.icon;
@@ -106,7 +118,6 @@ export default function LedgerTable({
                   <input type="date" value={editFormData.date} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
                     onChange={e => setEditFormData({ ...editFormData, date: e.target.value })} />
                 </td>
-                {/* 1. Description Column Cell + Inline Target Checkbox Rule */}
                 <td>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     <input type="text" value={editFormData.description} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
@@ -121,7 +132,6 @@ export default function LedgerTable({
                     </label>
                   </div>
                 </td>
-                {/* Account Selection Column Cell */}
                 <td>
                   <select value={editFormData.account_id} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
                     onChange={e => setEditFormData({ ...editFormData, account_id: e.target.value })} >
@@ -131,7 +141,6 @@ export default function LedgerTable({
                     ))}
                   </select>
                 </td>
-                {/* Category Selection Column Cell */}
                 <td>
                   <select value={editFormData.category} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
                     onChange={e => setEditFormData({ ...editFormData, category: e.target.value })} >
@@ -146,7 +155,6 @@ export default function LedgerTable({
                     ))}
                   </select>
                 </td>
-                {/* 2. Notes Column Cell + Inline Target Checkbox Rule */}
                 <td>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     <input type="text" placeholder="Notes..." value={editFormData.notes} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
@@ -161,7 +169,6 @@ export default function LedgerTable({
                     </label>
                   </div>
                 </td>
-                {/* Transaction Type Column Cell */}
                 <td>
                   <select value={editFormData.is_income} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
                     onChange={e => setEditFormData({ ...editFormData, is_income: e.target.value === 'true' })} >
@@ -169,14 +176,11 @@ export default function LedgerTable({
                     <option value="true">Income</option>
                   </select>
                 </td>
-                {/* Financial Amount Column Cell */}
                 <td>
                   <input type="number" step="0.01" value={editFormData.amount} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem', fontWeight: '500' }}
                     onChange={e => setEditFormData({ ...editFormData, amount: e.target.value })} />
                 </td>
-                {/* Inline Interaction Management Buttons */}
                 <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                  {/* JSX is now perfectly clean and declarative */}
                   <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
                     <button 
                       type="button" 
@@ -195,7 +199,6 @@ export default function LedgerTable({
             );
           }
 
-          // Read-Only pristine view row layout
           return (
             <tr key={exp.id}>
               <td className="ledger-table-date">{exp.date}</td>

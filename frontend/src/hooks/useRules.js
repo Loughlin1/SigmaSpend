@@ -20,47 +20,63 @@ export default function useRules() {
   }, []);
 
   const createRule = useCallback(async (ruleData) => {
-    await rulesApi.createRule(ruleData);
+    await rulesApi.create(ruleData);
     await fetchRules(); // Automatically sync numbers following direct creations
   }, [fetchRules]);
 
   const deleteRule = useCallback(async (ruleId) => {
-    await rulesApi.deleteRule(ruleId);
+    await rulesApi.delete(ruleId);
     await fetchRules();
   }, [fetchRules]);
 
   const createRuleFromTransaction = useCallback(async ({ description, notes, target_category, matchField }) => {
   try {
-    // 1. Pick the correct reference text source string based on user intent
     const rawTextSource = matchField === 'notes' ? notes : description;
     
     if (!rawTextSource) {
-      console.warn("Target string source is empty. Auto-rule generation skipped.");
+      console.warn("[SigmaSpend Hook] Automated rule aborted: Target text source is blank.");
       return;
     }
 
-    // 2. Extract and clean the leading keyword anchor token
+    // --- OPTIMIZED EXTRACTOR FOR MULTI-WORD BRANDS ---
     const cleanKeyword = rawTextSource
-      .split(/[\s*]+/)[0]                   
-      .replace(/[^a-zA-Z0-9]/g, '')         
+      // 1. Remove obvious transaction noise like dates (e.g., 12/04 or 2026-04-11)
+      .replace(/\d{2,4}[-/.]\d{2}[-/.]\d{2,4}/g, '')
+      .replace(/\d{2}[-/.]\d{2}/g, '')
+      
+      // 2. Remove strings of purely consecutive numbers (like card endings or store IDs: #3421)
+      .replace(/\b\d{4,}\b/g, '')
+      .replace(/#\d+/g, '')
+      
+      // 3. Convert multiple spaces or symbols into single clean spaces
+      .replace(/[\s*]+/g, ' ')
+      
+      // 4. Strip out trailing/leading special characters but PRESERVE internal signs like '+' or '&'
+      .replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '')
+      
       .trim()
       .toLowerCase();
 
+    // Safety fallback guard clause
     if (cleanKeyword.length < 3) {
-      console.warn("Extracted keyword token too short for a safe automated rule match.");
+      console.warn(`[SigmaSpend Hook] Cleaned token "${cleanKeyword}" too short for a safe rule.`);
       return;
     }
 
-    // 3. Dispatch payload including the precise structural match_field target
-    await rulesApi.createRule({
-      keyword: cleanKeyword,
+    console.log(`[SigmaSpend Hook] Registering composite keyword rule: "${cleanKeyword}"`);
+
+    // Dispatch the payload to your FastAPI Pydantic endpoint contract
+    await createRule({
+      keyword: cleanKeyword,          // Now cleanly passes "snow + rock"
       target_category: target_category,
-      match_field: matchField // Passes "description" or "notes" explicitly
+      match_field: matchField 
     });
 
+    // Sync your local frontend metrics cache instantly
     await fetchRules();
+    
   } catch (err) {
-    console.error("Failed to automatically generate a background keyword rule", err);
+    console.error("[SigmaSpend Hook] Network loop failed inside createRuleFromTransaction:", err);
   }
 }, [fetchRules]);
 

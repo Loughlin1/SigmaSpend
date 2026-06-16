@@ -3,34 +3,48 @@ import ollama
 import re
 from typing import List, Optional
 from dateutil import parser
-from app.models.category_rules import CategoryRule
+import logging
 
-def match_rule_based_category(description: str, notes: str, db_rules: List[CategoryRule]) -> Optional[str]:
+from app.models.category_rules import CategoryRule
+from app.models.expense import Expense
+
+
+def match_rule_based_category(expense_obj: Expense, db_rules: List[CategoryRule], logger: logging.Logger) -> str:
     """
-    Scans a line description against explicit text keywords. (Fast & Local)
+    Evaluates incoming statement line parameters against registered rules.
+    Checks either the raw description string or notes field context dynamically.
     """
     if not db_rules:
-        return None
-        
-    # Map keywords to categories for an O(1) lookup later
-    rule_map = {rule.keyword.lower(): rule.target_category for rule in db_rules}
-    
-    # Escape keywords and join them into a single regex: \b(starbucks|netflix|uber)\b
-    # Word boundaries (\b) ensure "Uber" doesn't accidentally match "PubErnie"
-    pattern_str = r"\b(" + "|".join(re.escape(k) for k in rule_map.keys()) + r")\b"
-    compiled_pattern = re.compile(pattern_str, re.IGNORECASE)
-    
-    match = compiled_pattern.search(description)
-    if match:
-        matched_keyword = match.group(1).lower()
-        return rule_map.get(matched_keyword)
-    else:
-        match_notes = compiled_pattern.search(notes)
-        if match_notes:
-            matched_keyword = match_notes.group(1).lower()
-            return rule_map.get(matched_keyword)
+        logger.warning("No category rules found. Categorizing as 'Uncategorized'.")
+        return "Uncategorized"
 
-    return None
+    for match_field in ["description", "notes"]:
+        rule_map = {
+            rule.keyword.lower(): rule.target_category 
+            for rule in db_rules 
+            if rule.match_field.lower() == match_field
+        }
+        # If no rules exist for this specific column, skip compiling to avoid r"\b()\b" crashes
+        if not rule_map:
+            continue
+        # Escape keywords and join them into a single regex: \b(starbucks|netflix|uber)\b
+        # Word boundaries (\b) ensure "Uber" doesn't accidentally match "PubErnie"
+        pattern_str = r"\b(" + "|".join(re.escape(k) for k in rule_map.keys()) + r")\b"
+        compiled_pattern = re.compile(pattern_str, re.IGNORECASE)
+        
+        target_text = getattr(expense_obj, match_field, "")
+        if not target_text:
+            continue
+
+        match = compiled_pattern.search(target_text)
+        if match:
+            matched_keyword = match.group(1).lower()
+            # Safely return the category mapping assigned to that keyword token
+            if matched_keyword in rule_map:
+                logger.info(f"Rule match successful: Found keyword '{matched_keyword}' in field '{match_field}'.")
+                return rule_map[matched_keyword]
+
+    return "Uncategorized"
 
 
 def classify_description_with_ai(description: str, available_categories: List[str]) -> str:

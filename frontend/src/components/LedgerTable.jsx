@@ -7,68 +7,21 @@ export default function LedgerTable({
   expenses = [], 
   accountNameMap = {}, 
   categories = [], 
-  onExpenseSaved, // Maps straight to handleSaveExpense
-  onDelete 
+  onExpenseSaved, 
+  onDelete,
+  onCreateRuleFromTransaction 
 }) {
-  // Track which row primary key is currently being actively edited inline
   const [editingId, setEditingId] = useState(null);
+  const [ruleTargetField, setRuleTargetField] = useState("");
   
-  // Local state mirror for the single transaction record being altered
   const [editFormData, setEditFormData] = useState({
-    id: '',
-    date: '',
-    description: '',
-    account_id: '',
-    category: '',
-    notes: '',
-    is_income: false,
-    amount: ''
+    id: '', date: '', description: '', account_id: '', category: '', notes: '', is_income: false, amount: ''
   });
 
-  const getCategoryIcon = (categoryName) => {
-    const match = categories.find(c => c.name === categoryName);
-    if (match) return match.icon;
-
-    // If it's a subcategory, scan through parent groups and return the parent's icon
-    for (let cat of categories) {
-      // Look for string matching values inside the current category schema
-      if (cat.subcategories?.some(s => typeof s === 'string' ? s === categoryName : s.name === categoryName)) {
-        return cat.icon || '📁'; // Returns parent icon (e.g. 🍽️ for Food & Drink subcategories)
-      }
-    }
-    return '❓'; // Fallback icon if completely uncategorized
-  };
-
-  // Turn on editing for a row and snapshot its baseline state values
-  const startEdit = (exp) => {
-    setEditingId(exp.id);
-    setEditFormData({
-      id: exp.id,
-      // Handle potential date-reformatting layers safely if your raw API sends back UK strings
-      date: exp.date && exp.date.includes('/') 
-        ? exp.date.split('/').reverse().join('-') 
-        : exp.date || '',
-      description: exp.description || '',
-      account_id: exp.account_id || '',
-      category: exp.category || 'Uncategorized',
-      notes: exp.notes || '',
-      is_income: !!exp.is_income,
-      amount: exp.amount != null ? String(exp.amount) : ''
-    });
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-  };
-
-  const handleInlineSave = async (e) => {
+  // --- CLEAN EXTRACTED SAVING HANDLER ---
+  const handleRowSave = async (e) => {
     e.preventDefault();
-    if (!editFormData.account_id) {
-      alert("Please select a bank account.");
-      return;
-    }
-
-    // Parse values to align with Pydantic type signatures before API triggers
+    
     const payload = {
       id: editFormData.id,
       amount: parseFloat(editFormData.amount),
@@ -80,10 +33,52 @@ export default function LedgerTable({
       notes: editFormData.notes
     };
 
-    if (typeof onExpenseSaved === 'function') {
-      await onExpenseSaved(payload);
+    // If a specific target checkbox cell was highlighted, trigger our custom hook
+    if (ruleTargetField !== "" && editFormData.category !== "Uncategorized") {
+      if (typeof onCreateRuleFromTransaction === 'function') {
+        await onCreateRuleFromTransaction({
+          description: editFormData.description,
+          notes: editFormData.notes,
+          target_category: editFormData.category,
+          matchField: ruleTargetField // Sends "description" or "notes"
+        });
+      }
     }
-    setEditingId(null); // Return row to pristine read-only state
+
+    await onExpenseSaved(payload);
+    setEditingId(null);
+    setRuleTargetField(""); // Reset rule generator selection
+  };
+
+  const startEdit = (exp) => {
+    setEditingId(exp.id);
+    setEditFormData({
+      id: exp.id,
+      date: exp.date && exp.date.includes('/') ? exp.date.split('/').reverse().join('-') : exp.date || '',
+      description: exp.description || '',
+      account_id: exp.account_id || '',
+      category: exp.category || 'Uncategorized',
+      notes: exp.notes || '',
+      is_income: !!exp.is_income,
+      amount: exp.amount != null ? String(exp.amount) : ''
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setCreateRuleAutomatically(false);
+  };
+
+  // Helper for rendering parent icons dynamically
+  const getCategoryIcon = (categoryName) => {
+    const match = categories.find(c => c.name === categoryName);
+    if (match) return match.icon;
+    for (let cat of categories) {
+      if (cat.subcategories?.some(s => typeof s === 'string' ? s === categoryName : s.name === categoryName)) {
+        return cat.icon || '📁';
+      }
+    }
+    return '❓';
   };
 
   return (
@@ -108,45 +103,38 @@ export default function LedgerTable({
             return (
               <tr key={exp.id} style={{ background: '#f7fafc' }}>
                 <td>
-                  <input
-                    type="date"
-                    value={editFormData.date}
-                    onChange={e => setEditFormData({ ...editFormData, date: e.target.value })}
-                    className="form-inline-input"
-                    style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                  />
+                  <input type="date" value={editFormData.date} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
+                    onChange={e => setEditFormData({ ...editFormData, date: e.target.value })} />
                 </td>
+                {/* 1. Description Column Cell + Inline Target Checkbox Rule */}
                 <td>
-                  <input
-                    type="text"
-                    value={editFormData.description}
-                    onChange={e => setEditFormData({ ...editFormData, description: e.target.value })}
-                    required
-                    className="form-inline-input"
-                    style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <input type="text" value={editFormData.description} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
+                      onChange={e => setEditFormData({ ...editFormData, description: e.target.value })} />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.72rem', color: '#2b6cb0', cursor: 'pointer' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={ruleTargetField === 'description'} 
+                        onChange={(e) => setRuleTargetField(e.target.checked ? 'description' : '')} 
+                      />
+                      ⚡ Learn from description text
+                    </label>
+                  </div>
                 </td>
+                {/* Account Selection Column Cell */}
                 <td>
-                  <select
-                    value={editFormData.account_id}
-                    onChange={e => setEditFormData({ ...editFormData, account_id: e.target.value })}
-                    required
-                    className="form-inline-input"
-                    style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                  >
+                  <select value={editFormData.account_id} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
+                    onChange={e => setEditFormData({ ...editFormData, account_id: e.target.value })} >
                     <option value="">Select Account</option>
                     {Object.entries(accountNameMap).map(([id, name]) => (
                       <option key={id} value={id}>{name}</option>
                     ))}
                   </select>
                 </td>
+                {/* Category Selection Column Cell */}
                 <td>
-                  <select 
-                    value={editFormData.category} 
-                    onChange={e => setEditFormData({ ...editFormData, category: e.target.value })}
-                    className="form-inline-input"
-                    style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                  >
+                  <select value={editFormData.category} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
+                    onChange={e => setEditFormData({ ...editFormData, category: e.target.value })} >
                     <option value="Uncategorized">❓ Uncategorized</option>
                     {categories.map(cat => (
                       <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
@@ -158,41 +146,44 @@ export default function LedgerTable({
                     ))}
                   </select>
                 </td>
+                {/* 2. Notes Column Cell + Inline Target Checkbox Rule */}
                 <td>
-                  <input
-                    type="text"
-                    placeholder="Notes..."
-                    value={editFormData.notes}
-                    onChange={e => setEditFormData({ ...editFormData, notes: e.target.value })}
-                    className="form-inline-input"
-                    style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <input type="text" placeholder="Notes..." value={editFormData.notes} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
+                      onChange={e => setEditFormData({ ...editFormData, notes: e.target.value })} />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.72rem', color: '#2b6cb0', cursor: 'pointer' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={ruleTargetField === 'notes'} 
+                        onChange={(e) => setRuleTargetField(e.target.checked ? 'notes' : '')} 
+                      />
+                      📝 Learn from notes text
+                    </label>
+                  </div>
                 </td>
+                {/* Transaction Type Column Cell */}
                 <td>
-                  <select
-                    value={editFormData.is_income}
-                    onChange={e => setEditFormData({ ...editFormData, is_income: e.target.value === 'true' })}
-                    className="form-inline-input"
-                    style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                  >
+                  <select value={editFormData.is_income} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
+                    onChange={e => setEditFormData({ ...editFormData, is_income: e.target.value === 'true' })} >
                     <option value="false">Expense</option>
                     <option value="true">Income</option>
                   </select>
                 </td>
+                {/* Financial Amount Column Cell */}
                 <td>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={editFormData.amount}
-                    onChange={e => setEditFormData({ ...editFormData, amount: e.target.value })}
-                    required
-                    className="form-inline-input"
-                    style={{ padding: '0.25rem', fontSize: '0.85rem', fontWeight: '500' }}
-                  />
+                  <input type="number" step="0.01" value={editFormData.amount} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem', fontWeight: '500' }}
+                    onChange={e => setEditFormData({ ...editFormData, amount: e.target.value })} />
                 </td>
+                {/* Inline Interaction Management Buttons */}
                 <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                  {/* JSX is now perfectly clean and declarative */}
                   <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
-                    <button type="button" onClick={handleInlineSave} className="inlineButton" style={{ background: '#f0fff4', color: '#22543d', borderColor: '#c6f6d5' }}>
+                    <button 
+                      type="button" 
+                      onClick={handleRowSave} 
+                      className="inlineButton" 
+                      style={{ background: '#f0fff4', color: '#22543d', borderColor: '#c6f6d5' }}
+                    >
                       Save
                     </button>
                     <button type="button" onClick={cancelEdit} className="inlineButton">

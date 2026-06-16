@@ -15,3 +15,6 @@ config.yaml
 
 # Logs
 *.log
+
+# Pytest
+*.coverage

@@ -28,7 +28,7 @@ function App() {
   const { showExpenseForm, actionSelect, editingExpense, closeExpenseForm, openEditExpense, handleActionChange } = useExpenseForm();
   const { filters, handleFilterChange } = useExpenseFilters();
   const { categories, loading: categoriesLoading, error: categoriesError, fetchCategories, createCategory } = useCategories();
-  const { rules, loading: rulesLoading, error: rulesError, fetchRules, createRule, deleteRule } = useRules();
+  const { rules, loading: rulesLoading, error: rulesError, fetchRules, createRule, deleteRule, createRuleFromTransaction } = useRules();
 
   const [showAccountForm, setShowAccountForm] = useState(false);
 
@@ -176,6 +176,7 @@ function App() {
               await deleteExpense(id);
               await fetchExpenses(filters);
             }}
+            onCreateRuleFromTransaction={createRuleFromTransaction}
           />
         )}
       </section>

@@ -4,7 +4,7 @@ from dateutil import parser
 from dateutil.parser import ParserError
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.api import deps
 from app.models.expense import Expense as ExpenseModel
@@ -57,21 +57,23 @@ def read_expenses(
 
     if category:
         if category.strip().lower() == "uncategorized":
-            # Captures items saved as "Uncategorized", empty string, or None
             query = query.filter(
                 (ExpenseModel.category == "Uncategorized") | 
                 (ExpenseModel.category == "") | 
                 (ExpenseModel.category.is_(None))
             )    
         else:
-            # Check if parent category or subcategory
-            parent_cat = db.query(CategoryModel).filter(CategoryModel.name == category).first()
-            if parent_cat and parent_cat.subcategories:
-                subcategory_names = [sub.name for sub in parent_cat.subcategories]
-                allowed_categories = [category] + subcategory_names
-                query = query.filter(ExpenseModel.category.in_(allowed_categories))
+            matched_cat = db.query(CategoryModel).filter(CategoryModel.name == category).first()
+            if matched_cat: 
+                if matched_cat.subcategories:
+                    allowed_ids = [matched_cat.id] + [sub.id for sub in matched_cat.subcategories]
+                    query = query.filter(ExpenseModel.category_id.in_(allowed_ids))
+                else:
+                    query = query.filter(ExpenseModel.category_id == matched_cat.id)
             else:
-                query = query.filter(ExpenseModel.category == category)
+                # If category string isn't found in DB, force empty result query gracefully
+                query = query.filter(ExpenseModel.category_id == -1)
+
     if account_id:
         query = query.filter(ExpenseModel.account_id == account_id)
     if is_income is not None:
@@ -83,7 +85,6 @@ def read_expenses(
         db_end_date = parse_uk_date(end_date)
         query = query.filter(ExpenseModel.date <= db_end_date)
         
-    # Order by date descending so the newest items hit the React History view first
     expenses = query.order_by(ExpenseModel.date.desc()).offset(skip).limit(limit).all()
     return expenses
 
@@ -118,7 +119,9 @@ def create_expense(
         f"Manually created expense ID {db_obj.id} for account {db_obj.account_id} "
         f"with generated hash: {generated_hash[:8]}..."
     )
-    return db_obj
+    return db.query(ExpenseModel).options(
+        joinedload(ExpenseModel.category_rel).joinedload(CategoryModel.parent)
+    ).filter(ExpenseModel.id == db_obj.id).first()
 
 
 @router.get("/{expense_id}", response_model=ExpenseResponse)
@@ -129,7 +132,10 @@ def read_expense(
     """
     Fetch a single record by its ID.
     """
-    expense = db.query(ExpenseModel).filter(ExpenseModel.id == expense_id).first()
+    expense = db.query(ExpenseModel).options(
+        joinedload(ExpenseModel.category_rel).joinedload(CategoryModel.parent)
+    ).filter(ExpenseModel.id == expense_id).first()
+
     if not expense:
         logger.warning(f"Expense lookup failed: ID {expense_id} not found.")
         raise HTTPException(
@@ -169,7 +175,9 @@ def update_expense(
     db.refresh(expense)
     
     logger.info(f"Updated fields {list(update_data.keys())} for expense ID {expense_id}")
-    return expense
+    return db.query(ExpenseModel).options(
+        joinedload(ExpenseModel.category_rel).joinedload(CategoryModel.parent)
+    ).filter(ExpenseModel.id == expense_id).first()
 
 
 @router.get("/_debug/models")

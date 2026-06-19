@@ -22,10 +22,9 @@ def read_categories(db: Session = Depends(deps.get_db)):
 def create_category(category_in: CategoryCreate, db: Session = Depends(deps.get_db)):
     normalized_name = category_in.name.strip().title()
     
-    # Check for duplicates within the same structural level
+    # Check for duplicates
     existing = db.query(CategoryModel).filter(
         CategoryModel.name == normalized_name,
-        CategoryModel.parent_id == category_in.parent_id
     ).first()
     
     if existing:

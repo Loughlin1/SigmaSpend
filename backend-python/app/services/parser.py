@@ -6,6 +6,7 @@ from collections import defaultdict
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from dateutil import parser as date_parser
+from typing import List, Dict, Any, Tuple, Optional
 
 from app.models.expense import Expense
 from app.models.bank_account import BankAccount
@@ -19,10 +20,10 @@ logger = logging.getLogger("sigmaspend")
 
 class StatementParserService:
     @classmethod
-    def get_account_bank_config(cls, db: Session, account_id: str, bank_profile: str = None) -> dict:
+    def get_account_bank_config(cls, db: Session, account_id: str, bank_profile: Optional[str] = None) -> dict:
         account = db.query(BankAccount).filter(BankAccount.account_id == account_id).first()
         if not account:
-            logger.error(f"Ingestion lookup failed: Account '{account_id}' does not exist.")
+            logger.error(f"[parser] Ingestion lookup failed: Account '{account_id}' does not exist.")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Bank account '{account_id}' not found. Create it first via POST /accounts"
@@ -39,7 +40,7 @@ class StatementParserService:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Bank configuration for account '{account_id}' is missing."
         )
-
+    
     @staticmethod
     def generate_transaction_hash(
         account_id: str, date: str, amount: float, is_income: bool, description: str, occurrence: int
@@ -49,36 +50,92 @@ class StatementParserService:
         return hashlib.md5(base_signature.encode("utf-8")).hexdigest()
 
     @classmethod
+    def _get_category_cache(cls, db: Session) -> Tuple[List[str], Dict[str, Any]]:
+        """Extracts and builds the in-memory lookup cache maps from the database."""
+        flat_categories = []
+        category_map = {}
+        db_categories = db.query(Category).all()
+
+        for cat in db_categories:
+            category_map[cat.name.lower()] = cat
+            flat_categories.append(cat.name)
+            
+            if cat.subcategories:
+                for sub in cat.subcategories:
+                    # Fixing the type collision bug found in your original inner loop
+                    sub_name = sub if isinstance(sub, str) else sub.name
+                    category_map[sub_name.lower()] = sub
+                    flat_categories.append(sub_name)
+
+        return list(set(flat_categories)), category_map
+
+    @staticmethod
+    def _parse_amount(row: Dict[str, str], amount_style: str, mappings: Dict[str, str]) -> Tuple[float, bool]:
+        """Handles parsing monetary amounts and determining direction (Income vs Outflow)."""
+        amount = 0.0
+        is_income = False
+
+        if amount_style == "single_column":
+            raw_amount = float(row[mappings["amount_column"]].replace(",", ""))
+            if raw_amount >= 0:
+                amount = raw_amount
+                is_income = True
+            else:
+                amount = abs(raw_amount)
+                is_income = False
+                
+        elif amount_style == "split_columns":
+            raw_out = row.get(mappings["amount_out_column"], "").strip().replace(",", "")
+            raw_in = row.get(mappings["amount_in_column"], "").strip().replace(",", "")
+            
+            if raw_out and float(raw_out) > 0:
+                amount = float(raw_out)
+                is_income = False
+            elif raw_in and float(raw_in) > 0:
+                amount = float(raw_in)
+                is_income = True
+            else:
+                raise ValueError("Row contains no valid numeric values in split columns.")
+                
+        return amount, is_income
+
+    @staticmethod
+    def _assign_category(expense: Expense, all_rules: List[Any], category_map: Dict[str, Any]) -> Optional[int]:
+        """Runs transaction routing against Rule Engine and links its integer Category ID."""
+        assigned_cat = match_rule_based_category(expense, all_rules, logger)
+        
+        # Unmuted/prepared for when local Ollama AI block is enabled
+        # if not assigned_cat or assigned_cat.strip().lower() == "uncategorized":
+        #     assigned_cat = classify_description_with_ai(expense.description, list(category_map.keys()))
+
+        if assigned_cat and assigned_cat.strip().lower() != "uncategorized":
+            lookup_key = assigned_cat.strip().lower()
+            if lookup_key in category_map:
+                return category_map[lookup_key].id
+            else:
+                logger.warning(f"[parser] Category label '{assigned_cat}' not recognized in backend schema configurations.")
+        return None
+
+    @classmethod
     def process_csv(cls, file_contents: str, db: Session, account_id: str = None, bank_profile: str = None) -> dict:
         if not account_id:
-            logger.warning("Aborting CSV processing: No account_id provided to execution thread.")
+            logger.warning("[parser] Aborting CSV processing: No account_id provided to execution thread.")
             return {}
 
         bank_config = cls.get_account_bank_config(db, account_id, bank_profile)
         amount_style = bank_config.get("amount_style", "single_column")
         mappings = bank_config["mappings"]
         
-        logger.info(f"Starting CSV ingestion pipeline for account: '{account_id}' (Format: {amount_style})")
+        logger.info(f"[parser] Starting CSV ingestion pipeline for account: '{account_id}' (Format: {amount_style})")
 
         all_rules = db.query(CategoryRule).all()
-        
-        # Flatten categories cache safely
-        flat_categories = []
-        db_categories = db.query(Category).all()
-        for cat in db_categories:
-            flat_categories.append(cat.name)
-            for sub in cat.subcategories:
-                # Handle both string arrays and object array mappings cleanly
-                flat_categories.append(sub if isinstance(sub, str) else sub.name)
-        flat_categories = list(set(flat_categories))
-
+        flat_categories, category_map = cls._get_category_cache(db)
+    
         csv_file = StringIO(file_contents)
         reader = csv.DictReader(csv_file)
-        
-        # Check if basic columns exist before iterating to catch configuration bugs fast
         headers = reader.fieldnames or []
         if mappings["date_column"] not in headers or mappings["description_column"] not in headers:
-            logger.error(f"Ingestion aborted. Configured mappings do not match CSV headers: {headers}")
+            logger.error(f"[parser] Ingestion aborted. Configured mappings do not match CSV headers: {headers}")
             return {"added": 0, "skipped": 0, "errors": len(file_contents.splitlines())}
 
         # Tracking metrics
@@ -92,66 +149,39 @@ class StatementParserService:
 
         for row_num, row in enumerate(reader, start=1):
             try:
-                # 1. Row Filter Clause Guard
+                # Row Filter Clause Guard
                 if "filter_column" in bank_config and "filter_value" in bank_config:
-                    file_val = row.get(mappings["filter_column"], "").strip()
-                    if file_val != str(bank_config["filter_value"]):
+                    if row.get(mappings["filter_column"], "").strip() != str(bank_config["filter_value"]):
                         continue
 
-                # 2. Extract Baseline Properties Safely
+                # Extract Baseline Properties
                 raw_date = row[mappings["date_column"]].strip()
                 description = row[mappings["description_column"]].strip()
                 parsed_date = date_parser.parse(raw_date, dayfirst=True).date()
                 
-                # Notes extraction guard
                 notes_key = mappings.get("notes_column")
                 notes = row.get(notes_key, "").strip() if notes_key else ""
 
-                amount = 0.0
-                is_income = False
+                amount, is_income = cls._parse_amount(row, amount_style, mappings)
 
-                # 3. Process Monetary Columns
-                if amount_style == "single_column":
-                    raw_amount = float(row[mappings["amount_column"]].replace(",", ""))
-                    if raw_amount >= 0:
-                        amount = raw_amount
-                        is_income = True
-                    else:
-                        amount = abs(raw_amount)
-                        is_income = False
-                elif amount_style == "split_columns":
-                    raw_out = row.get(mappings["amount_out_column"], "").strip().replace(",", "")
-                    raw_in = row.get(mappings["amount_in_column"], "").strip().replace(",", "")
-                    
-                    if raw_out and float(raw_out) > 0:
-                        amount = float(raw_out)
-                        is_income = False
-                    elif raw_in and float(raw_in) > 0:
-                        amount = float(raw_in)
-                        is_income = True
-                    else:
-                        continue
-
-                # 4. Accurate Sequential Occurrence Calibration
+                # Deduplication Strategy Evaluation
                 # Determine its specific sequential position in the CURRENT file
                 base_sig = f"{account_id}_{raw_date}_{amount}_{is_income}_{description.lower()}"
                 file_combinations[base_sig] += 1
                 occurrence = file_combinations[base_sig] # ◄ Track sequentially starting at 1, 2, etc.
 
-                # 5. Build Fingerprint Hash
                 tx_hash = cls.generate_transaction_hash(
                     account_id=account_id, date=raw_date, amount=amount,
                     is_income=is_income, description=description, occurrence=occurrence
                 )
                 
-                # 6. Deduplication Check
-                exists = db.query(Expense).filter(Expense.transaction_hash == tx_hash).first()
-                if exists:
+                # Deduplication Check
+                if db.query(Expense).filter(Expense.transaction_hash == tx_hash).first():
                     skipped_count += 1
-                    logger.debug(f"Row #{row_num} skipped: Hash collision caught via Deduplication Engine.")
+                    logger.debug(f"[parser] Row #{row_num} skipped: Hash collision caught via Deduplication Engine.")
                     continue
 
-                # 7. Instatiate a transient Expense object BEFORE categorisation
+                # Instatiate a transient Expense object BEFORE categorisation
                 new_expense = Expense(
                     account_id=account_id,
                     date=parsed_date,
@@ -160,40 +190,28 @@ class StatementParserService:
                     description=description,
                     notes=notes,
                     transaction_hash=tx_hash,
-                    category="Uncategorized"
+                    category_id=None
                 )
-                
-                # 8. Classification Engine Trigger
-                assigned_cat = match_rule_based_category(new_expense, all_rules, logger)
-                # if assigned_cat == "Uncategorized":
-                #     assigned_cat = classify_description_with_ai(description, flat_categories)
-                
-                if assigned_cat and assigned_cat.strip().lower() != "uncategorized":
+
+                # Rule Engine & AI Category Assignment
+                cat_id = cls._assign_category(new_expense, all_rules, category_map)
+                new_expense.category_id = cat_id
+                if cat_id:
                     categorized_count += 1
                 else:
                     uncategorized_count += 1
 
-                # 9. Insert Record
-                new_expense = Expense(
-                    account_id=account_id,
-                    date=parsed_date,
-                    amount=amount,
-                    is_income=is_income,
-                    description=description,
-                    notes=notes,
-                    transaction_hash=tx_hash,
-                    category=assigned_cat
-                )
                 db.add(new_expense)
                 added_count += 1
-                
+
             except Exception as row_error:
                 error_count += 1
-                logger.warning(f"Skipped row #{row_num} due to formatting exception: {str(row_error)}")
+                logger.warning(f"[parser] Skipped row #{row_num} due to formatting exception: {str(row_error)}")
                 continue
-                
+
         db.commit()
         logger.info(
+            f"[parser] Successfully parsed CSV file into database"
             f"Ingestion Summary -> Added: {added_count} | Skipped: {skipped_count} | Errors: {error_count} || "
             f"Classification Breakdown -> Successfully Categorised: {categorized_count} | Left Uncategorised: {uncategorized_count}"
         )

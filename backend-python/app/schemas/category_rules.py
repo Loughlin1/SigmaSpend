@@ -1,17 +1,16 @@
 # app/schemas/category_rules.py
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 from typing import Optional
 
 class CategoryRuleBase(BaseModel):
     keyword: str = Field(..., description="The substring search keyword, e.g., 'Starbucks'")
-    target_category: str = Field(..., description="The name of the destination category")
     match_field: str = Field("description", description="Must be either 'description' or 'notes'")
 
 class CategoryRuleCreate(CategoryRuleBase):
     """
     Validation schema used when a client posts a new rule configuration payload.
     """
-    pass
+    target_category: str = Field(..., description="The name of the destination category")
 
 class CategoryRuleUpdate(BaseModel):
     """
@@ -23,9 +22,15 @@ class CategoryRuleUpdate(BaseModel):
 class CategoryRuleResponse(CategoryRuleBase):
     """
     The structured data shape returned to the React frontend client.
-    Includes the database primary key ID.
     """
     id: int
+    category_id: int = Field(..., description="The internal structural database ID")
+
+    # This dynamically injects 'target_category' into the JSON response body
+    # by reading the SQLAlchemy relationship string name.
+    @computed_field
+    def target_category(self) -> str:
+        return self.category.name if hasattr(self, "category") and self.category else ""
 
     class Config:
         from_attributes = True  # Allows Pydantic to read SQLAlchemy models natively

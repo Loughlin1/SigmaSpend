@@ -69,17 +69,31 @@ def seed_database_if_empty(db: Session):
             # Inject corresponding nested children subcategories
             for sub_name in cat_data.get("subcategories", []):
                 normalized_sub = sub_name.strip().title()
+
+                # Double check to prevent global unique collision crashes
+                existing = db.query(Category).filter(Category.name == normalized_sub).first()
+                if existing:
+                    logger.warning(f"[Seeder] Subcategory '{normalized_sub}' already exists globally! Skipping creation.")
+                    continue
+
                 child_cat = Category(name=normalized_sub, parent_id=parent_cat.id)
                 db.add(child_cat)
+        db.flush()
 
     # 3. Seed Explicit Categorisation Rules
     if not has_rules:
         logger.info("[Seeder] Populating keyword processing rules...")
         for rule_data in seed_definitions.get("rules", []):
+            category_name = rule_data["target_category"].strip().title()
+            category = db.query(Category).filter(Category.name == category_name).first()
+            if not category:
+                logger.warning(f"[Seeder] Skipping rules for '{category_name}': Category not found.")
+                continue
+
             for keyword in rule_data["keywords"]:
                 db_rule = CategoryRule(
                     keyword=keyword.strip().lower(),
-                    target_category=rule_data["target_category"].strip(),
+                    category_id=category.id,
                     match_field=rule_data["match_field"].strip(),
                 )
                 db.add(db_rule)

@@ -1,21 +1,20 @@
 # app/schemas/expense.py
-from pydantic import BaseModel, field_serializer
-from typing import Optional
-from datetime import date
+import datetime
+from typing import Optional, Dict, Any
+from pydantic import BaseModel, field_serializer, Field, model_validator
 
-# Properties shared across all states
 class ExpenseBase(BaseModel):
-    amount: float
-    is_income: bool
-    category: Optional[str] = "Uncategorized"
-    description: str
-    notes: str
-    date: date
     account_id: str
+    date: datetime.date
+    amount: float
+    is_income: bool = False
+    description: str
+    notes: Optional[str] = None
+    category_id: Optional[int] = None
 
     # Converts Python date objects directly to UK format strings for JSON payloads
     @field_serializer('date')
-    def serialize_date(self, dt: date, _info) -> str:
+    def serialize_date(self, dt: datetime.date, _info) -> str:
         return dt.strftime("%d/%m/%Y")  # Outputs: "04/06/2026"
 
 # Properties received via API on manual creation
@@ -30,6 +29,55 @@ class ExpenseUpdate(ExpenseBase):
 class ExpenseResponse(ExpenseBase):
     id: int
     transaction_hash: str
+    category_metadata: Dict[str, Any] = Field(
+        default={
+            "name": "Uncategorized",
+            "is_subcategory": False,
+            "parent_name": "Uncategorized",
+            "full_path": "Uncategorized"
+        }
+    )
 
     class Config:
         from_attributes = True  # Allows Pydantic to read SQLAlchemy models natively
+    
+    @model_validator(mode="before")
+    @classmethod
+    def compute_category_metadata(cls, data: Any) -> Any:
+        """
+        Intercepts incoming SQLAlchemy model structures before validation 
+        to compile nested category relationship hierarchies into flat dictionary items.
+        """
+        # 1. Standardize access because 'before' can receive an object or a dict
+        category_rel = getattr(data, "category_rel", None)
+        
+        # 2. Establish fallback dictionary layout
+        metadata = {
+            "name": "Uncategorized",
+            "is_subcategory": False,
+            "parent_name": "Uncategorized",
+            "full_path": "Uncategorized"
+        }
+
+        # 3. Traverse the self-referential tree if the database relationship exists
+        if category_rel:
+            if getattr(category_rel, "parent_id", None) is not None and getattr(category_rel, "parent", None):
+                # Target is an active Subcategory
+                metadata["name"] = category_rel.name
+                metadata["is_subcategory"] = True
+                metadata["parent_name"] = category_rel.parent.name
+                metadata["full_path"] = f"{category_rel.parent.name} > {category_rel.name}"
+            else:
+                # Target is a standalone Parent Category
+                metadata["name"] = category_rel.name
+                metadata["is_subcategory"] = False
+                metadata["parent_name"] = category_rel.name
+                metadata["full_path"] = category_rel.name
+
+        # 4. Bind metadata safely onto the object structure
+        if hasattr(data, "__dict__"):
+            data.__dict__["category_metadata"] = metadata
+        elif isinstance(data, dict):
+            data["category_metadata"] = metadata
+
+        return data

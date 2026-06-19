@@ -15,12 +15,12 @@ def match_rule_based_category(expense_obj: Expense, db_rules: List[CategoryRule]
     Checks either the raw description string or notes field context dynamically.
     """
     if not db_rules:
-        logger.warning("No category rules found. Categorizing as 'Uncategorized'.")
+        logger.warning("[classifier] No category rules found. Categorizing as 'Uncategorized'.")
         return "Uncategorized"
 
     for match_field in ["description", "notes"]:
         rule_map = {
-            rule.keyword.lower(): rule.target_category 
+            rule.keyword.lower(): str(rule.category.name)
             for rule in db_rules 
             if rule.match_field.lower() == match_field
         }
@@ -41,7 +41,7 @@ def match_rule_based_category(expense_obj: Expense, db_rules: List[CategoryRule]
             matched_keyword = match.group(1).lower()
             # Safely return the category mapping assigned to that keyword token
             if matched_keyword in rule_map:
-                logger.info(f"Rule match successful: Found keyword '{matched_keyword}' in field '{match_field}'.")
+                logger.info(f"[classifier] Rule match successful: Found keyword '{matched_keyword}' in field '{match_field}'.")
                 return rule_map[matched_keyword]
 
     return "Uncategorized"

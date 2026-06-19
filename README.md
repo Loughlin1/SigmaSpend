@@ -19,6 +19,8 @@ sigmaspend/
 ├── frontend/               # React (Vite) Application
 │   ├── src/
 │   │   ├── components/     # UI Components (Form, History, Chart)
+│   │   ├── hooks/          # Data Fetching and Business logic
+│   │   ├── styles/         # CSS files
 │   │   ├── api/            # Centralised API client logic
 │   │   └── App.jsx
 │   └── package.json

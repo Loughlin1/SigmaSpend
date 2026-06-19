@@ -13,9 +13,8 @@ export default function LedgerTable({
 }) {
   const [editingId, setEditingId] = useState(null);
   const [ruleTargetField, setRuleTargetField] = useState("");
-  
   const [editFormData, setEditFormData] = useState({
-    id: '', date: '', description: '', account_id: '', category: '', notes: '', is_income: false, amount: ''
+    id: '', date: '', description: '', account_id: '', category_id: '', notes: '', is_income: false, amount: ''
   });
 
   // --- CLEAN EXTRACTED SAVING HANDLER ---
@@ -29,7 +28,7 @@ export default function LedgerTable({
         id: editFormData.id,
         amount: parseFloat(editFormData.amount),
         is_income: editFormData.is_income,
-        category: editFormData.category,
+        category_id: editFormData.category_id ? parseInt(editFormData.category_id, 10) : null,
         description: editFormData.description,
         date: editFormData.date,
         account_id: editFormData.account_id,
@@ -37,17 +36,20 @@ export default function LedgerTable({
       };
 
       // 1. Trigger background rule learning if a specific column checkbox is ticked
-      if (ruleTargetField !== "" && editFormData.category !== "Uncategorized") {
+      if (ruleTargetField !== "" && editFormData.category_id !== "") {
         if (typeof onCreateRuleFromTransaction === 'function') {
-          console.log(`[SigmaSpend UI] Dispatching new rule criteria targeting field: ${ruleTargetField}`);
+          // Extract the matching text based on what checkbox they ticked
+          const ruleKeyword = ruleTargetField === 'description' 
+            ? editFormData.description 
+            : editFormData.notes;
+
           await onCreateRuleFromTransaction({
-            description: editFormData.description,
-            notes: editFormData.notes,
-            target_category: editFormData.category,
-            matchField: ruleTargetField 
+            keyword: ruleKeyword,               // Map to schema 'keyword'
+            match_field: ruleTargetField,       // Map to snake_case 'match_field'
+            category_id: payload.category_id    // Map to schema 'category_id'
           });
         }
-      }
+    }
 
       // 2. Submit transaction updates directly to the parent layout state handler
       if (typeof onExpenseSaved === 'function') {
@@ -70,7 +72,8 @@ export default function LedgerTable({
       date: exp.date && exp.date.includes('/') ? exp.date.split('/').reverse().join('-') : exp.date || '',
       description: exp.description || '',
       account_id: exp.account_id || '',
-      category: exp.category || 'Uncategorized',
+      // Update: Fallback safely to empty string if no category_id is linked yet (Uncategorized)
+      category_id: exp.category_id != null ? String(exp.category_id) : '',
       notes: exp.notes || '',
       is_income: !!exp.is_income,
       amount: exp.amount != null ? String(exp.amount) : ''
@@ -79,18 +82,23 @@ export default function LedgerTable({
 
   const cancelEdit = () => {
     setEditingId(null);
-    setRuleTargetField(""); // Safely clean up the string column tracker instead
+    setRuleTargetField(""); 
   };
 
-  const getCategoryIcon = (categoryName) => {
-    const match = categories.find(c => c.name === categoryName);
-    if (match) return match.icon;
+  // Update: Find elements dynamically using item ID values instead of unstable strings
+  const getCategoryDisplay = (categoryId) => {
+    if (!categoryId) return { icon: '❓', name: 'Uncategorized' };
+
     for (let cat of categories) {
-      if (cat.subcategories?.some(s => typeof s === 'string' ? s === categoryName : s.name === categoryName)) {
-        return cat.icon || '📁';
+      if (cat.id === categoryId) {
+        return { icon: cat.icon || '📁', name: cat.name };
+      }
+      const subMatch = cat.subcategories?.find(s => s.id === categoryId);
+      if (subMatch) {
+        return { icon: cat.icon || '📁', name: subMatch.name };
       }
     }
-    return '❓';
+    return { icon: '❓', name: 'Uncategorized' };
   };
 
   return (
@@ -110,6 +118,7 @@ export default function LedgerTable({
       <tbody>
         {expenses.map((exp) => {
           const isCurrentRowEditing = editingId === exp.id;
+          const displayCategory = getCategoryDisplay(exp.category_id);
 
           if (isCurrentRowEditing) {
             return (
@@ -142,14 +151,14 @@ export default function LedgerTable({
                   </select>
                 </td>
                 <td>
-                  <select value={editFormData.category} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                    onChange={e => setEditFormData({ ...editFormData, category: e.target.value })} >
-                    <option value="Uncategorized">❓ Uncategorized</option>
+                  <select value={editFormData.category_id} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
+                    onChange={e => setEditFormData({ ...editFormData, category_id: e.target.value })} >
+                    <option value="">❓ Uncategorized</option>
                     {categories.map(cat => (
                       <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
-                        <option value={cat.name}>{cat.icon || '📁'} {cat.name} (All)</option>
+                        <option value={cat.id}>{cat.icon || '📁'} {cat.name} (All)</option>
                         {cat.subcategories?.map(sub => (
-                          <option key={sub.id} value={sub.name}>🔹 {sub.name}</option>
+                          <option key={sub.id} value={sub.id}>🔹 {sub.name}</option>
                         ))}
                       </optgroup>
                     ))}
@@ -204,7 +213,7 @@ export default function LedgerTable({
               <td className="ledger-table-date">{exp.date}</td>
               <td>{exp.description}</td>
               <td>{accountNameMap[exp.account_id] || exp.account_id}</td>
-              <td>{getCategoryIcon(exp.category)} {exp.category}</td>
+              <td>{displayCategory.icon} {displayCategory.name}</td>
               <td>{exp.notes || <span style={{ color: '#ccc' }}>—</span>}</td>
               <td>{exp.is_income ? 'Income' : 'Expense'}</td>
               <td className="ledger-table-amount" style={{ color: exp.is_income ? '#22543d' : '#2d3748' }}>

@@ -1,13 +1,16 @@
 # backend-python/app/main.py
+import logging
+import time
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 # Setup logging
 from app.core.logging_config import setup_logging
 setup_logging()
 
-import logging
 logger = logging.getLogger("sigmaspend")
 
 from app.core.config import settings
@@ -49,6 +52,78 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def log_incoming_requests(request: Request, call_next):
+    """
+    Global interceptor that logs every incoming API request details
+    and records its exact execution time.
+    """
+    start_time = time.time()
+    
+    # Extract request metadata
+    method = request.method
+    path = request.url.path
+    client_host = request.client.host if request.client else "unknown"
+    
+    # Log the incoming call step
+    logger.info(f"📥 Incoming: {method} {path} | Client IP: {client_host}")
+    
+    # Process the request down the router chain
+    try:
+        response = await call_next(request)
+        
+        # Calculate execution latency
+        process_time = (time.time() - start_time) * 1000
+        
+        # Log completion with tracking status code
+        status_code = response.status_code
+        log_msg = f"📤 Response: {method} {path} -> Status: {status_code} | Latency: {process_time:.2f}ms"
+        
+        # Colour-code or flag warning alerts in your console stream based on status
+        if status_code >= 400:
+            logger.warning(log_msg)
+        else:
+            logger.info(log_msg)
+            
+        return response
+        
+    except Exception as e:
+        # Catch unexpected pipeline crashes safely
+        process_time = (time.time() - start_time) * 1000
+        logger.error(f"💥 Pipeline Crash: {method} {path} failed after {process_time:.2f}ms | Error: {str(e)}")
+        raise e
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Catches all framework-level Pydantic validation errors, 
+    extracts the exact failing field context, and forces it into the application log stream.
+    """
+    error_details = exc.errors()
+    
+    # Format a highly human-readable tracking block for the terminal stdout
+    log_msg = [
+        f"❌ Pydantic Schema Validation Failed on route: {request.method} {request.url.path}"
+    ]
+    
+    for error in error_details:
+        # Loc represents the path to the problematic field (e.g., ['body', 'keyword'])
+        field_path = " -> ".join(str(loc) for loc in error.get("loc", []))
+        error_msg = error.get("msg", "Unknown error")
+        error_type = error.get("type", "unknown_type")
+        
+        log_msg.append(f"  • Field Error [{field_path}]: {error_msg} ({error_type})")
+        
+    # Commit the clean stacked trace to your system logger
+    logger.error("\n".join(log_msg))
+    
+    # Return standard JSON format payload back to the React UI client
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": error_details},
+    )
 
 @app.get("/")
 def read_root():

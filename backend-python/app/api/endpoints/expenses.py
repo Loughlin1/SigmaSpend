@@ -10,6 +10,7 @@ from app.api import deps
 from app.models.expense import Expense as ExpenseModel
 from app.models.category import Category as CategoryModel
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate, ExpenseResponse, AnalyticalBreakdownResponse
+from app.services.expense import ExpenseService
 from app.services.analytics import ExpenseAnalyticsService
 from app.services.utilities import parse_uk_date
 
@@ -39,41 +40,9 @@ def read_expenses(
         f"category={category}, account_id={account_id}, is_income={is_income}, "
         f"start_date={start_date}, end_date={end_date}"
     )
-    
-    query = db.query(ExpenseModel)
-
-    if category:
-        if category.strip().lower() == "uncategorized":
-            query = query.filter(
-                (ExpenseModel.category == "Uncategorized") | 
-                (ExpenseModel.category == "") | 
-                (ExpenseModel.category.is_(None))
-            )    
-        else:
-            matched_cat = db.query(CategoryModel).filter(CategoryModel.name == category).first()
-            if matched_cat: 
-                if matched_cat.subcategories:
-                    allowed_ids = [matched_cat.id] + [sub.id for sub in matched_cat.subcategories]
-                    query = query.filter(ExpenseModel.category_id.in_(allowed_ids))
-                else:
-                    query = query.filter(ExpenseModel.category_id == matched_cat.id)
-            else:
-                # If category string isn't found in DB, force empty result query gracefully
-                query = query.filter(ExpenseModel.category_id == -1)
-
-    if account_id:
-        query = query.filter(ExpenseModel.account_id == account_id)
-    if is_income is not None:
-        query = query.filter(ExpenseModel.is_income == is_income)
-    if start_date:
-        db_start_date = parse_uk_date(start_date, logger)
-        query = query.filter(ExpenseModel.date >= db_start_date)
-    if end_date:
-        db_end_date = parse_uk_date(end_date, logger)
-        query = query.filter(ExpenseModel.date <= db_end_date)
-        
-    expenses = query.order_by(ExpenseModel.date.desc()).offset(skip).limit(limit).all()
-    return expenses
+    return ExpenseService.get_filtered_expenses(
+        db, skip, limit, category, account_id, is_income, start_date, end_date
+    )
 
 
 @router.post("/", response_model=ExpenseResponse, status_code=status.HTTP_201_CREATED)
@@ -86,26 +55,8 @@ def create_expense(
     Create a manual expense entry via the frontend Form component.
     Generates a placeholder transaction_hash since it bypasses statement ingestion.
     """
-    expense_data = expense_in.dict()
-    expense_data["date"] = parse_uk_date(expense_data["date"], logger)
-    
-    # For manual entries, generate a deterministic fallback hash or tag
-    # to fit your Schema contract without breaking the Deduplication Engine rules.
-    import hashlib
-    fallback_seed = f"manual-{expense_in.account_id}-{expense_data['date']}-{expense_in.amount}-{expense_in.description}"
-    generated_hash = hashlib.sha256(fallback_seed.encode("utf-8")).hexdigest()
-    expense_data["transaction_hash"] = generated_hash
-    
-    db_obj = ExpenseModel(**expense_data)
-
-    db.add(db_obj)
-    db.commit()
-    db.refresh(db_obj)
-    
-    logger.info(
-        f"Manually created expense ID {db_obj.id} for account {db_obj.account_id} "
-        f"with generated hash: {generated_hash[:8]}..."
-    )
+    db_obj = ExpenseService.create_manual_expense(db, expense_in)
+    # Return with loaded tree
     return db.query(ExpenseModel).options(
         joinedload(ExpenseModel.category_rel).joinedload(CategoryModel.parent)
     ).filter(ExpenseModel.id == db_obj.id).first()

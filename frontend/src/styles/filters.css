@@ -1,0 +1,73 @@
+/* Ledger Filters Main Flex Layout Wrapper */
+.ledger-filters {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  background-color: #ffffff;
+}
+
+/* ⚡ THE ROW BREAKOUT FIX: Forces search onto its own distinct row line */
+.ledger-filters__field--search {
+  flex-basis: 100%;       /* Claims full horizontal real estate */
+  max-width: 450px;       /* Keeps search bar elegantly constrained on desktop monitors */
+  margin-bottom: 0.5rem;  /* Extra separation spacing from the dropdown row below */
+}
+
+/* Individual Dropdown Grid Fields */
+.ledger-filters__field {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Selection Labels styling */
+.ledger-filters__label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+/* Form Controls Input Layout Overrides */
+.ledger-filters__input,
+.ledger-filters__select,
+.ledger-filters__date {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #2d3748;
+  outline: none;
+  box-sizing: border-box;
+  min-height: 38px;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.ledger-filters__input {
+  width: 100%;
+}
+
+.ledger-filters__input:focus,
+.ledger-filters__select:focus,
+.ledger-filters__date:focus {
+  border-color: #4299e1;
+  box-shadow: 0 0 0 1px #4299e1;
+}
+
+.ledger-filters__date {
+  min-width: 140px;
+}
+
+.ledger-filters__actions {
+  display: flex;
+  align-items: center;
+}
+
+.ledger-filters__reset-btn {
+  min-height: 38px;
+  background-color: #f7fafc;
+  border-color: #e2e8f0;
+  color: #4a5568;
+}

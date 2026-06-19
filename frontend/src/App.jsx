@@ -45,7 +45,11 @@ function App() {
 
   // 1. Single Source of Truth for Ledger data fetching - reacts automatically to filter changes
   useEffect(() => {
-    fetchExpenses(filters);
+    // Optimization: strip out any blank strings before sending parameters over the network
+    const cleanParams = Object.fromEntries(
+      Object.entries(filters).filter(([_, val]) => val !== '' && val !== null)
+    );
+    fetchExpenses(cleanParams);
   }, [fetchExpenses, filters]);
 
   // 2. Reacts automatically to Chart specific filter changes

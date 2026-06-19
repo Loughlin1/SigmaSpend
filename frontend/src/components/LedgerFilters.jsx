@@ -1,8 +1,22 @@
 // src/components/LedgerFilters.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import '../styles/filters.css'
 
 export default function LedgerFilters({ filters, onFilterChange, accountNameMap, categories = [] }) {
-  
+  const [localSearch, setLocalSearch] = useState(filters.q || '');
+
+  useEffect(() => {
+    setLocalSearch(filters.q || '');
+  }, [filters.q]);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      onFilterChange('q', localSearch);
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [localSearch, onFilterChange]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     let processedValue = value;
@@ -15,23 +29,38 @@ export default function LedgerFilters({ filters, onFilterChange, accountNameMap,
   };
 
   const resetFilters = () => {
+    setLocalSearch('');
     onFilterChange('reset', null);
   };
 
   return (
-    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem', alignItems: 'flex-end' }}>
-      <div>
-        <label style={{ display: 'block', marginBottom: '0.25rem' }}>Type</label>
-        <select name="is_income" value={String(filters.is_income)} onChange={handleChange} className='inlineButton'>
+    <div className="ledger-filters">
+      {/* 行 1: Top Row full-width search input */}
+      <div className="ledger-filters__field ledger-filters__field--search">
+        <label className="ledger-filters__label" htmlFor="search_input">Search Ledger</label>
+        <input 
+          id="search_input"
+          type="text"
+          placeholder="Search description or notes..."
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
+          className="ledger-filters__input"
+        />
+      </div>
+
+      {/* 行 2: Secondary flow wrapping row for specific sub-filters */}
+      <div className="ledger-filters__field">
+        <label className="ledger-filters__label" htmlFor="filter_is_income">Type</label>
+        <select id="filter_is_income" name="is_income" value={String(filters.is_income)} onChange={handleChange} className="ledger-filters__select">
           <option value="">All Types</option>
           <option value="false">Expense</option>
           <option value="true">Income</option>
         </select>
       </div>
 
-      <div>
-        <label style={{ display: 'block', marginBottom: '0.25rem' }}>Account</label>
-        <select name="account_id" value={filters.account_id} onChange={handleChange} className='inlineButton'>
+      <div className="ledger-filters__field">
+        <label className="ledger-filters__label" htmlFor="filter_account_id">Account</label>
+        <select id="filter_account_id" name="account_id" value={filters.account_id} onChange={handleChange} className="ledger-filters__select">
           <option value="">All Accounts</option>
           {Object.entries(accountNameMap).map(([id, name]) => (
             <option key={id} value={id}>{name}</option>
@@ -39,45 +68,37 @@ export default function LedgerFilters({ filters, onFilterChange, accountNameMap,
         </select>
       </div>
 
-      <div>
-        <label style={{ display: 'block', marginBottom: '0.25rem' }}>Category</label>
-        <select 
-          name="category" 
-          value={filters.category} 
-          onChange={handleChange} 
-          className='inlineButton'
-        >
+      <div className="ledger-filters__field">
+        <label className="ledger-filters__label" htmlFor="filter_category">Category</label>
+        <select id="filter_category" name="category" value={filters.category} onChange={handleChange} className="ledger-filters__select">
           <option value="">All Categories</option>
           <option value="Uncategorized">❓ Uncategorized</option>
-          
           {categories.map((cat) => (
-            /* Updated to include the category's custom emoji icon in the grouping header */
             <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
-              {/* Allow filtering broadly by the top-level grouping option */}
               <option value={cat.name}>{cat.icon || '📁'} {cat.name} (All)</option>
-              
-              {/* Map nested children subcategories inside the indent view */}
               {cat.subcategories?.map((sub) => (
-                <option key={sub.id} value={sub.name}>
-                  🔹 {sub.name}
-                </option>
+                <option key={sub.id} value={sub.name}>🔹 {sub.name}</option>
               ))}
             </optgroup>
           ))}
         </select>
       </div>
 
-      <div>
-        <label style={{ display: 'block', marginBottom: '0.25rem' }}>Start Date</label>
-        <input type="date" name="start_date" value={filters.start_date} onChange={handleChange} className='inlineButton'/>
+      <div className="ledger-filters__field">
+        <label className="ledger-filters__label" htmlFor="filter_start_date">Start Date</label>
+        <input id="filter_start_date" type="date" name="start_date" value={filters.start_date} onChange={handleChange} className="ledger-filters__date"/>
       </div>
 
-      <div>
-        <label style={{ display: 'block', marginBottom: '0.25rem' }}>End Date</label>
-        <input type="date" name="end_date" value={filters.end_date} onChange={handleChange} className='inlineButton'/>
+      <div className="ledger-filters__field">
+        <label className="ledger-filters__label" htmlFor="filter_end_date">End Date</label>
+        <input id="filter_end_date" type="date" name="end_date" value={filters.end_date} onChange={handleChange} className="ledger-filters__date"/>
       </div>
 
-      <button type="button" onClick={resetFilters} className='inlineButton'>Clear Filters</button>
+      <div className="ledger-filters__actions">
+        <button type="button" onClick={resetFilters} className="inlineButton ledger-filters__reset-btn">
+          Clear Filters
+        </button>
+      </div>
     </div>
   );
 }

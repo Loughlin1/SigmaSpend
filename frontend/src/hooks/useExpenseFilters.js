@@ -6,7 +6,8 @@ const INITIAL_FILTERS = {
   account_id: '',
   is_income: '',
   start_date: '',
-  end_date: ''
+  end_date: '',
+  q: '' // ⚡ NEW: Tracking the search string parameter globally
 };
 
 export default function useExpenseFilters() {

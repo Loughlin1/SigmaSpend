@@ -20,7 +20,8 @@ class ExpenseService:
         account_id: Optional[str] = None,
         is_income: Optional[bool] = None,
         start_date: Optional[str] = None,
-        end_date: Optional[str] = None
+        end_date: Optional[str] = None,
+        q: Optional[str] = None  # Search term parameter
     ) -> List[ExpenseModel]:
         
         # Always eager load categories and their parents for the UI layers
@@ -55,7 +56,14 @@ class ExpenseService:
             query = query.filter(ExpenseModel.date >= parse_uk_date(start_date, logger))
         if end_date:
             query = query.filter(ExpenseModel.date <= parse_uk_date(end_date, logger))
-            
+        
+        if q:
+            search_term = f"%{q.strip().lower()}%"
+            query = query.filter(
+                (ExpenseModel.description.ilike(search_term)) |
+                (ExpenseModel.notes.ilike(search_term))
+            )
+
         return query.order_by(ExpenseModel.date.desc()).offset(skip).limit(limit).all()
 
     @staticmethod

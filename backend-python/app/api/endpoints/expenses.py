@@ -29,7 +29,8 @@ def read_expenses(
     account_id: Optional[str] = Query(None, description="Filter by specific bank account"),
     is_income: Optional[bool] = Query(None, description="Filter by type: True for Income, False for Expense"),
     start_date: Optional[str] = Query(None, description="Filter expenses from this date (YYYY-MM-DD)"),
-    end_date: Optional[str] = Query(None, description="Filter expenses up to this date (YYYY-MM-DD)")
+    end_date: Optional[str] = Query(None, description="Filter expenses up to this date (YYYY-MM-DD)"),
+    q: Optional[str] = Query(None, description="Search transaction descriptions or notes")
 ):
     """
     Retrieve a paginated and filtered list of expenses.
@@ -39,9 +40,10 @@ def read_expenses(
         f"Fetching expenses (skip={skip}, limit={limit}) with filters: "
         f"category={category}, account_id={account_id}, is_income={is_income}, "
         f"start_date={start_date}, end_date={end_date}"
+        f"q={q}"
     )
     return ExpenseService.get_filtered_expenses(
-        db, skip, limit, category, account_id, is_income, start_date, end_date
+        db, skip, limit, category, account_id, is_income, start_date, end_date, q
     )
 
 

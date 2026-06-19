@@ -13,3 +13,5 @@ def setup_logging():
     )
     # Prevent third-party libraries (like uvicorn or multipart) from flooding your logs with DEBUG noise
     logging.getLogger("uvicorn.access").setLevel(logging.INFO)
+    logging.getLogger("python_multipart").setLevel(logging.INFO)
+    logging.getLogger("httpx").setLevel(logging.WARNING)

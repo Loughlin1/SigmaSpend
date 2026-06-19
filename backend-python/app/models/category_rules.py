@@ -1,3 +1,4 @@
+# app/models/category_rules.py
 from sqlalchemy import String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database.session import Base

@@ -1,15 +1,16 @@
 // src/components/RuleManager.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/lists.css';
 import '../styles/forms.css';
 
-export default function RuleManager({ rules = [], categories = [], onCreateRule, onDeleteRule, loading, error }) {
+export default function RuleManager({ rules = [], categories = [], onCreateRule, onDeleteRule, fetchRules, loading, error }) {
   const [keyword, setKeyword] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,6 +39,20 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
     }
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Automatically trigger a refresh when the user types a search value
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (typeof fetchRules === 'function') {
+        fetchRules(searchQuery);
+      }
+    }, 300); // 300ms Debounce prevents slamming your FastAPI instance with requests on every single keystroke
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, fetchRules]);
+
+
   return (
     <div className="account-list">
       <div className="account-list__header" onClick={() => setIsCollapsed(!isCollapsed)}>
@@ -49,6 +64,17 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
 
       {!isCollapsed && (
         <>
+          {/* ⚡ SEARCH INPUT BAR LAYER ⚡ */}
+          <div style={{ padding: '10px 0', marginBottom: '15px' }}>
+            <input
+              type="text"
+              placeholder="🔍 Search rules by trigger keyword or category destination..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="rule-search-input"
+            />
+          </div>
+
           {error && <div className="account-list__error">{error}</div>}
           
           {loading ? (

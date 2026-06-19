@@ -135,6 +135,7 @@ function App() {
           categories={categories}
           onCreateRule={handleCreateRule}
           onDeleteRule={handleDeleteRule}
+          fetchRules={fetchRules}
           loading={rulesLoading}
           error={rulesError}
         />

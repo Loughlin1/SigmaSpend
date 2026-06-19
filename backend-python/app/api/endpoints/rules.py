@@ -1,6 +1,6 @@
 # app/api/endpoints/rules.py
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session, joinedload
 from app.api import deps
 
@@ -15,18 +15,27 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[CategoryRuleResponse])
-def read_rules(db: Session = Depends(deps.get_db)):
-    logger.info("Fetching all category rules")    
-    # Updated: Match whichever relationship string name is declared on your model (e.g., category or category_rel)
-    relationship_to_load = (
-        CategoryRule.category_rel 
-        if hasattr(CategoryRule, "category_rel") 
-        else CategoryRule.category
-    )
+def read_rules(
+    db: Session = Depends(deps.get_db),
+    q: Optional[str] = Query(None, description="Search keyword trigger or category name")
+):
+    logger.info(f"Fetching category rules with search filter: q={q}")
     
-    return db.query(CategoryRule).options(
-        joinedload(relationship_to_load)
-    ).order_by(CategoryRule.keyword).all()
+    # Eager load the category model context
+    relationship_to_load = (
+        CategoryRule.category_rel if hasattr(CategoryRule, "category_rel") else CategoryRule.category
+    )
+    query = db.query(CategoryRule).options(joinedload(relationship_to_load))
+
+    if q:
+        search_term = f"%{q.strip().lower()}%"
+        # Search against either the rule keyword or join on the Category table to match category names
+        query = query.join(Category).filter(
+            (CategoryRule.keyword.ilike(search_term)) |
+            (Category.name.ilike(search_term))
+        )
+
+    return query.order_by(CategoryRule.keyword).all()
 
 
 @router.post("/", response_model=CategoryRuleResponse, status_code=status.HTTP_201_CREATED)

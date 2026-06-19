@@ -39,7 +39,7 @@ export const categoryApi = {
 };
 
 export const rulesApi = {
-  getAll: () => apiClient.get('/rules/').then(res => res.data),
+  getAll: (params) => apiClient.get('/rules/', { params }).then(res => res.data),
   create: (payload) => apiClient.post('/rules/', payload).then(res => res.data),
   delete: (id) => apiClient.delete(`/rules/${id}`)
 };

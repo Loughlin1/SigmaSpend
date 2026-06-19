@@ -1,3 +1,4 @@
+# app/schemas/expense.py
 from pydantic import BaseModel, field_serializer
 from typing import Optional
 from datetime import date

@@ -1,3 +1,4 @@
+# app/schemas/category_rules.py
 from pydantic import BaseModel, Field
 from typing import Optional
 

@@ -1,52 +1,133 @@
 // src/components/ExpenseChart.jsx
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import '../styles/charts.css'
+import '../styles/charts.css';
 
-export default function ExpenseChart({ expenses, accounts }) {
-  const accountNameLookup = accounts.reduce((lookup, account) => {
-    lookup[account.account_id] = account.account_name;
-    return lookup;
-  }, {});
+export default function ExpenseChart({ expenses = [], accounts = [], loading }) {
+  const [groupBy, setGroupBy] = useState('parent-category'); 
+  const [transactionType, setTransactionType] = useState('expenses'); 
 
-  const chartData = expenses.reduce((acc, curr) => {
-    if (curr.is_income) return acc; // Skip income for pure expense tracking
-    const accountLabel = accountNameLookup[curr.account_id] || curr.account_id;
-    const existing = acc.find(item => item.name === accountLabel);
-    if (existing) {
-      existing.value += curr.amount;
-    } else {
-      acc.push({ name: accountLabel, value: curr.amount });
-    }
-    return acc;
-  }, []);
+  const chartData = useMemo(() => {
+    if (!Array.isArray(expenses) || expenses.length === 0) return [];
+
+    // Normalise dropdown logic to backend keys
+    let targetType = 'category';
+    if (groupBy === 'total') targetType = 'total';
+    if (groupBy === 'subcategory') targetType = 'subcategory';
+
+    // Filter by type matching logic
+    const filteredRows = expenses.filter(
+      item => String(item.type).toLowerCase() === targetType.toLowerCase()
+    );
+
+    // Map rows to Recharts friendly properties
+    return filteredRows
+      .map((item) => {
+        let displayName = item.category_name || 'Global Grand Total';
+        
+        if (targetType === 'subcategory' && item.parent_name) {
+          displayName = `${item.parent_name} → ${item.category_name}`;
+        }
+
+        // Safe metric balance extraction
+        const isIncome = transactionType.toLowerCase() === 'income' || transactionType.toLowerCase() === 'all';
+        const valueField = isIncome ? item.total_income : item.total_expenses;
+
+        return {
+          name: displayName,
+          value: parseFloat((valueField || 0).toFixed(2)),
+          period: item.period || ''
+        };
+      })
+      // Temporarily commented out to verify data mapping is reaching the canvas layout
+      // .filter(node => node.value > 0) 
+      .sort((a, b) => b.value - a.value);
+  }, [expenses, groupBy, transactionType]);
+
+  const dynamicHeight = Math.max(chartData.length * 42, 300);
+
+  if (loading) {
+    return (
+      <div className="chartWrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px' }}>
+        <p>Recalculating multi-level summations via database engine...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="chartWrapper">
-      <h3>Spending Breakdown by Account</h3>
-      <div className="chart-canvas-container">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
-            <XAxis 
-              dataKey="name" 
-              tick={{ fill: '#4a5568', fontSize: 12 }} 
-              axisLine={{ stroke: '#cbd5e0' }}
-              tickLine={false}
-            />
-            <YAxis 
-              tick={{ fill: '#4a5568', fontSize: 12 }} 
-              axisLine={{ stroke: '#cbd5e0' }}
-              tickLine={false}
-              tickFormatter={(value) => `£${value}`}
-            />
-            <Tooltip 
-              formatter={(value) => [`£${value.toFixed(2)}`, 'Total']} 
-              contentStyle={{ background: '#fff', border: '1px solid #ccc', borderRadius: '6px', fontSize: '13px' }}
-            />
-            {/* Using an authentic theme-aligned hex code (#2b6cb0) matching your .button classes */}
-            <Bar dataKey="value" fill="#2b6cb0" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="chartHeader">
+        <h3>Charts</h3>
+        
+        <div className="chartControls">
+          <div className="controlGroup">
+            <label htmlFor="groupBy">Breakdown Layer:</label>
+            <select 
+              id="groupBy" 
+              value={groupBy} 
+              onChange={(e) => setGroupBy(e.target.value)}
+              className="chartSelect"
+            >
+              <option value="parent-category">Parent Categories</option>
+              <option value="subcategory">Subcategories</option>
+              <option value="total">Overall Grand Totals</option>
+            </select>
+          </div>
+
+          <div className="controlGroup">
+            <label htmlFor="transactionType">Metric:</label>
+            <select 
+              id="transactionType" 
+              value={transactionType} 
+              onChange={(e) => setTransactionType(e.target.value)}
+              className="chartSelect"
+            >
+              <option value="expenses">Expenses Only</option>
+              <option value="income">Income Only</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <hr className="chartDivider" />
+
+      <div className="chart-canvas-container" style={{ height: `${dynamicHeight}px`, minHeight: '300px' }}>
+        {chartData.length === 0 ? (
+          <div className="noDataMessage">No transaction records match your selected criteria.</div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart 
+              data={chartData} 
+              layout="vertical" 
+              margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
+            >
+              <XAxis 
+                type="number"
+                tick={{ fill: '#4a5568', fontSize: 12 }} 
+                axisLine={{ stroke: '#cbd5e0' }}
+                tickLine={false}
+                tickFormatter={(value) => `£${value}`}
+              />
+              <YAxis 
+                type="category"
+                dataKey="name" 
+                tick={{ fill: '#4a5568', fontSize: 12 }} 
+                axisLine={{ stroke: '#cbd5e0' }}
+                tickLine={false}
+                width={180} 
+              />
+              <Tooltip 
+                formatter={(value, name, props) => [`£${value.toFixed(2)}`, `Total (${props.payload.period})`]} 
+                contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px' }}
+              />
+              <Bar 
+                dataKey="value" 
+                fill={transactionType.toLowerCase() === 'income' ? '#38a169' : '#2b6cb0'} 
+                radius={[0, 4, 4, 0]} 
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

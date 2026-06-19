@@ -1,3 +1,4 @@
+// src/hooks/useExpenses.js
 import { useState, useCallback } from 'react';
 import { expenseApi } from '../api/client';
 

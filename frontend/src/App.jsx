@@ -13,6 +13,7 @@ import LedgerTable from './components/LedgerTable';
 import LedgerFilters from './components/LedgerFilters';
 import CategoryManager from './components/CategoryManager';
 import RuleManager from './components/RuleManager';
+import AnalyticsFilters from './components/AnalyticsFilters'; // Import your new component
 
 // Custom Hooks
 import useExpenses from './hooks/useExpenses';
@@ -21,6 +22,7 @@ import useExpenseForm from './hooks/useExpenseForm';
 import useExpenseFilters from './hooks/useExpenseFilters';
 import useCategories from './hooks/useCategories';
 import useRules from './hooks/useRules';
+import useExpenseAnalytics from './hooks/useExpenseAnalytics';
 
 function App() {
   const { expenses, loading: expensesLoading, error: expensesError, fetchExpenses, createExpense, updateExpense, deleteExpense } = useExpenses();
@@ -29,6 +31,15 @@ function App() {
   const { filters, handleFilterChange } = useExpenseFilters();
   const { categories, loading: categoriesLoading, error: categoriesError, fetchCategories, createCategory } = useCategories();
   const { rules, loading: rulesLoading, error: rulesError, fetchRules, createRule, deleteRule, createRuleFromTransaction } = useRules();
+  
+  // Analytics Hook & Independent Filter State
+  const { summaryData, loading: analyticsLoading, error: analyticsError, fetchSummary } = useExpenseAnalytics();
+  const [chartFilters, setChartFilters] = useState({
+    group_by: 'month',
+    start_date: '2023-01-01', 
+    end_date: '2026-12-31',
+    account_id: ''
+  });
 
   const [showAccountForm, setShowAccountForm] = useState(false);
 
@@ -37,7 +48,12 @@ function App() {
     fetchExpenses(filters);
   }, [fetchExpenses, filters]);
 
-  // 2. Fetch Accounts, Categories, and Rules on initial mount
+  // 2. Reacts automatically to Chart specific filter changes
+  useEffect(() => {
+    fetchSummary(chartFilters);
+  }, [fetchSummary, chartFilters]);
+
+  // 3. Fetch Accounts, Categories, and Rules on initial mount
   useEffect(() => {
     fetchAccounts();
     fetchCategories();
@@ -49,11 +65,17 @@ function App() {
     setShowAccountForm(false);
   };
 
-  // 3. Optimized update handler used exclusively by inline actions or manual creations
+  // Helper function to keep chart aggregates sync'd if database modifications occur
+  const triggerGlobalRefresh = async () => {
+    await fetchExpenses(filters);
+    await fetchSummary(chartFilters);
+  };
+
+  // Optimized update handler used exclusively by inline actions or manual creations
   const handleSaveExpense = async (payload) => {
     try {
       await updateExpense(payload.id, payload);
-      await fetchExpenses(filters); // Refresh current filter views instantly
+      await triggerGlobalRefresh(); 
     } catch (err) {
       console.error('Failed updating record', err);
     }
@@ -61,12 +83,12 @@ function App() {
 
   const handleCreateRule = async (ruleData) => {
     await createRule(ruleData);
-    await fetchRules(); // Pull fresh data instantly
+    await fetchRules(); 
   };
 
   const handleDeleteRule = async (ruleId) => {
     await deleteRule(ruleId);
-    await fetchRules(); // Pull fresh data instantly
+    await fetchRules(); 
   };
 
   return (
@@ -76,10 +98,12 @@ function App() {
       <section className="sectionCard">
         <div className="splitSection">
           <DescriptionSection />
-          {/* Synchronize state completely following file intake rules */}
           <StatementUpload 
             accounts={accounts} 
-            onUploadSuccess={() => { fetchExpenses(filters); fetchRules(); }} 
+            onUploadSuccess={async () => { 
+              await triggerGlobalRefresh(); 
+              await fetchRules(); 
+            }} 
           />
         </div>
       </section>
@@ -116,10 +140,28 @@ function App() {
         />
       </section>
 
+      {/* --- RECONCILED ANALYTICS CHART SECTION --- */}
       <section className="sectionCard">
-        <ExpenseChart expenses={expenses} accounts={accounts} />
+        <div className="headingRow" style={{ marginBottom: '1rem' }}>
+          <h2 style={{ margin: 0 }}>Financial Summaries</h2>
+          {/* New Isolated Component handles filtering states safely without losing cursor focus */}
+          <AnalyticsFilters 
+            chartFilters={chartFilters}
+            onFilterChange={setChartFilters}
+            accounts={accounts}
+          />
+        </div>
+
+        {analyticsError && <p className="errorText">Error loading aggregations: {analyticsError.message}</p>}
+        
+        <ExpenseChart
+          expenses={summaryData} 
+          accounts={accounts}
+          loading={analyticsLoading}
+        />
       </section>
 
+      {/* --- TRANSACTION LEDGER SECTION --- */}
       <section className="sectionCard">
         <div className="headingRow" style={{ marginBottom: '1rem' }}>
           <h3 style={{ margin: 0 }}>Transaction Ledger</h3>
@@ -136,7 +178,6 @@ function App() {
           </div>
         </div>
 
-        {/* Dynamic Filter Controls */}
         <LedgerFilters 
           filters={filters} 
           onFilterChange={handleFilterChange} 
@@ -144,16 +185,15 @@ function App() {
           categories={categories}
         />
 
-        {/* ExpenseForm remains here ONLY for creating clean manual transactions */}
         {showExpenseForm && (
           <div className="formPanel">
             <ExpenseForm
               categories={categories}       
               accountNameMap={accountNameMap} 
-              initialData={null} // Enforces form is blank for fresh manual creation entries
+              initialData={null} 
               onExpenseAdded={async (data) => {
                 await createExpense(data);
-                await fetchExpenses(filters);
+                await triggerGlobalRefresh(); 
                 closeExpenseForm();
               }}
               onCancel={closeExpenseForm}
@@ -161,7 +201,6 @@ function App() {
           </div>
         )}
 
-        {/* Error and Loading states for structural UX */}
         {expensesError && <p className="errorText">Error loading ledger data: {expensesError.message}</p>}
         
         {expensesLoading ? (
@@ -174,7 +213,7 @@ function App() {
             onExpenseSaved={handleSaveExpense}
             onDelete={async (id) => {
               await deleteExpense(id);
-              await fetchExpenses(filters);
+              await triggerGlobalRefresh(); 
             }}
             onCreateRuleFromTransaction={createRuleFromTransaction}
           />

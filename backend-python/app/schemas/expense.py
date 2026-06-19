@@ -81,3 +81,12 @@ class ExpenseResponse(ExpenseBase):
             data["category_metadata"] = metadata
 
         return data
+
+
+class AnalyticalBreakdownResponse(BaseModel):
+    period: str              # e.g., "2026-01" or "2026-Year"
+    type: str                # "total", "category", or "subcategory"
+    category_name: Optional[str] = None  # Name of the category/subcategory (None for type="total")
+    parent_name: Optional[str] = None    # Direct bridge link for subcategories to group on the UI
+    total_income: float
+    total_expenses: float

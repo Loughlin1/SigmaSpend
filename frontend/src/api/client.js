@@ -1,3 +1,4 @@
+// src/api/client.js
 import axios from 'axios';
 
 const apiClient = axios.create({
@@ -12,6 +13,7 @@ export const expenseApi = {
   create: (data) => apiClient.post('/expenses/', data).then(res => res.data),
   update: (id, data) => apiClient.put(`/expenses/${id}`, data).then(res => res.data),
   delete: (id) => apiClient.delete(`/expenses/${id}`).then(res => res.data),
+  getSummary: (params) => apiClient.get('/expenses/analytics/summary').then(res => res.data),
 };
 
 export const ingestionApi = {

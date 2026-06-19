@@ -9,27 +9,14 @@ from sqlalchemy.orm import Session, joinedload
 from app.api import deps
 from app.models.expense import Expense as ExpenseModel
 from app.models.category import Category as CategoryModel
-from app.schemas.expense import ExpenseCreate, ExpenseUpdate, ExpenseResponse
+from app.schemas.expense import ExpenseCreate, ExpenseUpdate, ExpenseResponse, AnalyticalBreakdownResponse
+from app.services.analytics import ExpenseAnalyticsService
+from app.services.utilities import parse_uk_date
 
 import logging
 logger = logging.getLogger("sigmaspend")
 
 router = APIRouter()
-
-def parse_uk_date(date_str: Optional[str]) -> Optional[date]:
-    if not date_str:
-        return None
-    if isinstance(date_str, date):
-        return date_str
-    try:
-        # Automatically processes YYYY-MM-DD and prioritises DD/MM/YYYY text streams
-        return parser.parse(str(date_str), dayfirst=True).date()
-    except (ParserError, TypeError):
-        logger.warning(f"Date parsing failed for input: '{date_str}'")
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Invalid date format: '{date_str}'. Please provide a readable date layout."
-        )
 
 
 @router.get("/", response_model=List[ExpenseResponse])
@@ -79,10 +66,10 @@ def read_expenses(
     if is_income is not None:
         query = query.filter(ExpenseModel.is_income == is_income)
     if start_date:
-        db_start_date = parse_uk_date(start_date)
+        db_start_date = parse_uk_date(start_date, logger)
         query = query.filter(ExpenseModel.date >= db_start_date)
     if end_date:
-        db_end_date = parse_uk_date(end_date)
+        db_end_date = parse_uk_date(end_date, logger)
         query = query.filter(ExpenseModel.date <= db_end_date)
         
     expenses = query.order_by(ExpenseModel.date.desc()).offset(skip).limit(limit).all()
@@ -100,7 +87,7 @@ def create_expense(
     Generates a placeholder transaction_hash since it bypasses statement ingestion.
     """
     expense_data = expense_in.dict()
-    expense_data["date"] = parse_uk_date(expense_data["date"])
+    expense_data["date"] = parse_uk_date(expense_data["date"], logger)
     
     # For manual entries, generate a deterministic fallback hash or tag
     # to fit your Schema contract without breaking the Deduplication Engine rules.
@@ -123,6 +110,23 @@ def create_expense(
         joinedload(ExpenseModel.category_rel).joinedload(CategoryModel.parent)
     ).filter(ExpenseModel.id == db_obj.id).first()
 
+
+@router.get("/analytics/summary", response_model=List[AnalyticalBreakdownResponse])
+def read_expenses_summary(
+    db: Session = Depends(deps.get_db),
+    account_id: Optional[str] = Query(None, description="Filter by specific bank account"),
+    start_date: Optional[str] = Query(None, description="Filter from date (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="Filter up to date (YYYY-MM-DD)"),
+    group_by: str = Query("month", regex="^(month|year|day)$", description="Timeline granularity")
+):
+    """
+    Retrieve an aggregated financial summary breakdown of global grand totals, 
+    parent categories, and subcategories for the selected timeline.
+    """
+    results = ExpenseAnalyticsService.get_multi_tier_summary(
+        db, logger, account_id, start_date, end_date, group_by
+    )
+    return results
 
 @router.get("/{expense_id}", response_model=ExpenseResponse)
 def read_expense(
@@ -165,7 +169,7 @@ def update_expense(
         
     update_data = expense_in.dict(exclude_unset=True)
     if "date" in update_data and update_data["date"] is not None:
-        update_data["date"] = parse_uk_date(update_data["date"])
+        update_data["date"] = parse_uk_date(update_data["date"], logger)
 
     for field in update_data:
         setattr(expense, field, update_data[field])

@@ -1,3 +1,4 @@
+# app/models/bank_account.py
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, JSON
 from datetime import datetime
 from app.database.session import Base

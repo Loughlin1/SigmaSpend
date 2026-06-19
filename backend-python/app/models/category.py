@@ -1,3 +1,4 @@
+# app/models/category.py
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, backref
 from app.database.session import Base

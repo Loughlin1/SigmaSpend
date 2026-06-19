@@ -3,10 +3,9 @@ import React, { useState } from 'react';
 import '../styles/lists.css';
 import '../styles/forms.css';
 
-
 export default function RuleManager({ rules = [], categories = [], onCreateRule, onDeleteRule, loading, error }) {
   const [keyword, setKeyword] = useState('');
-  const [targetCategory, setTargetCategory] = useState('');
+  const [categoryId, setCategoryId] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [saveError, setSaveError] = useState('');
@@ -15,7 +14,8 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaveError('');
-    if (!keyword.trim() || !targetCategory) {
+    
+    if (!keyword.trim() || !categoryId) {
       setSaveError('Please provide both a keyword and a target category.');
       return;
     }
@@ -23,15 +23,17 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
     setSaving(true);
     try {
       await onCreateRule({
-        keyword: keyword.trim().lower(),
-        target_category: targetCategory
+        keyword: keyword.trim().toLowerCase(),
+        category_id: parseInt(categoryId, 10),
+        match_field: 'description' // Providing safe schema fallback default
       });
       setKeyword('');
-      setTargetCategory('');
+      setCategoryId('');
       setShowForm(false);
     } catch (err) {
       setSaveError(err.response?.data?.detail || 'Unable to save rule.');
-    } locate; {
+    } finally {
+      // Fix: Replaced broken "locate;" statement with valid "finally" block execution
       setSaving(false);
     }
   };
@@ -70,7 +72,7 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
                         "{rule.keyword}"
                       </td>
                       <td style={{ fontWeight: '600', textAlign: 'left' }}>
-                        {rule.target_category}
+                        {rule.category.icon} { rule.category.name || `Category #${rule.category_id}`}
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         <button 
@@ -111,8 +113,8 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
                   <label className="form-field-wrapper">
                     Target Destination Category
                     <select 
-                      value={targetCategory} 
-                      onChange={(e) => setTargetCategory(e.target.value)}
+                      value={categoryId} 
+                      onChange={(e) => setCategoryId(e.target.value)}
                       required
                       disabled={saving}
                       className="form-inline-input"
@@ -120,9 +122,10 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
                       <option value="" disabled>-- Choose Target --</option>
                       {categories.map(cat => (
                         <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
-                          <option value={cat.name}>{cat.name} (General)</option>
+                          {/* Update: Option values now pass the internal integer IDs */}
+                          <option value={cat.id}>{cat.name} (General)</option>
                           {cat.subcategories?.map(sub => (
-                            <option key={sub.id} value={sub.name}>{sub.name}</option>
+                            <option key={sub.id} value={sub.id}>{sub.name}</option>
                           ))}
                         </optgroup>
                       ))}

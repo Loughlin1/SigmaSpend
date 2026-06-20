@@ -36,7 +36,7 @@ function App() {
   const { summaryData, loading: analyticsLoading, error: analyticsError, fetchSummary } = useExpenseAnalytics();
   const [chartFilters, setChartFilters] = useState({
     group_by: 'month',
-    start_date: '2023-01-01', 
+    start_date: '2026-01-01', 
     end_date: '2026-12-31',
     account_id: ''
   });

@@ -1,137 +1,79 @@
+/* src/index.css */
 :root {
-  /* New Color Scheme */
+  /* Aligned Branded Color Palette Context */
   --primary-accent: #4CAF50;
   --secondary-accent: #FFC107;
+  --accent: #2b6cb0;
+  --accent-hover: #1d4ed8;
   --text-primary: #212121;
   --text-secondary: #757575;
   --background-light: #F5F5F5;
   --border-divider: #E0E0E0;
+  --code-bg: #E0E0E0;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* Typography Stacks */
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  font: 18px/145% var(--sans);
+  font: 16px/150% var(--sans);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text-primary); /* Using new variable */
-  background: var(--background-light); /* Using new variable */
-  font-synthesis: none;
+  color: var(--text-primary);
+  background: var(--background-light);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+/* Ensure child elements respect natural layout footprints natively */
+*, *::before, *::after {
+  box-sizing: inherit;
 }
 
 body {
   margin: 0;
+  padding: 0;
 }
 
+/* Fluid Shell Container Overrides Hard Pixel Limits */
 #root {
-  width: 1126px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 1200px; /* Fluid maximum bound limits */
   margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border-divider); /* Using new variable */
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
+/* Global Typography Hierarchy Standard */
+h1, h2, h3 {
+  font-family: var(--sans);
   font-weight: 500;
-  color: var(--text-primary); /* Using new variable */
+  color: var(--text-primary);
+  margin-top: 0;
 }
 
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+  font-size: 2.5rem;
+  letter-spacing: -0.03em;
+  margin-bottom: 1.5rem;
 }
+
 h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+  font-size: 1.5rem;
+  line-height: 120%;
+  margin-bottom: 0.5rem;
 }
+
 p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-}
-
-body {
-  margin: 0;
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+  margin: 0 0 1rem 0;
+  color: var(--text-secondary);
 }
 
 code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
   background: var(--code-bg);
+  border-radius: 4px;
 }

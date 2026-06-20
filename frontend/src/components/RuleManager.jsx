@@ -75,48 +75,7 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
             />
           </div>
 
-          {error && <div className="account-list__error">{error}</div>}
-          
-          {loading ? (
-            <div>Loading rules engine...</div>
-          ) : rules.length === 0 ? (
-            <div>No keyword mapping rules configured yet.</div>
-          ) : (
-            <div className="account-list__wrapper">
-              <table className="bank-account-table" style={{ width: '100%', tableLayout: 'fixed' }}>
-                <thead>
-                  <tr>
-                    <th className="table-header-cell" style={{ width: '40%', textAlign: 'left' }}>Keyword</th>
-                    <th className="table-header-cell" style={{ width: '40%', textAlign: 'left' }}>Maps To</th>
-                    <th className="table-header-cell" style={{ width: '20%', textAlign: 'center' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rules.map((rule) => (
-                    <tr key={rule.id}>
-                      <td style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: '#e53e3e', textAlign: 'left' }}>
-                        "{rule.keyword}"
-                      </td>
-                      <td style={{ fontWeight: '600', textAlign: 'left' }}>
-                        {rule.category.icon} { rule.category.name || `Category #${rule.category_id}`}
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <button 
-                          type="button" 
-                          onClick={() => onDeleteRule && onDeleteRule(rule.id)}
-                          style={{ padding: '2px 8px', background: '#fff5f5', color: '#c53030', border: '1px solid #fed7d7', borderRadius: '4px', cursor: 'pointer' }}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          <div className="account-list__creation-zone" style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px dashed #ccc' }}>
+          <div className="account-list__creation-zone" style={{ margin: '15px 0', padding: '15px 0', borderTop: '1px dashed #ccc'}}>
             <button type="button" onClick={() => setShowForm(!showForm)} className="button">
               {showForm ? 'Hide Form' : 'Create New Keyword Rule'}
             </button>
@@ -168,6 +127,47 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
               </section>
             )}
           </div>
+
+          {error && <div className="account-list__error">{error}</div>}
+          
+          {loading ? (
+            <div>Loading rules engine...</div>
+          ) : rules.length === 0 ? (
+            <div>No keyword mapping rules configured yet.</div>
+          ) : (
+            <div className="account-list__wrapper">
+              <table className="bank-account-table" style={{ width: '100%', tableLayout: 'fixed' }}>
+                <thead>
+                  <tr>
+                    <th className="table-header-cell" style={{ width: '40%', textAlign: 'left' }}>Keyword</th>
+                    <th className="table-header-cell" style={{ width: '40%', textAlign: 'left' }}>Maps To</th>
+                    <th className="table-header-cell" style={{ width: '20%', textAlign: 'center' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rules.map((rule) => (
+                    <tr key={rule.id}>
+                      <td style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: '#e53e3e', textAlign: 'left' }}>
+                        "{rule.keyword}"
+                      </td>
+                      <td style={{ fontWeight: '600', textAlign: 'left' }}>
+                        {rule.category.icon} { rule.category.name || `Category #${rule.category_id}`}
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <button 
+                          type="button" 
+                          onClick={() => onDeleteRule && onDeleteRule(rule.id)}
+                          style={{ padding: '2px 8px', background: '#fff5f5', color: '#c53030', border: '1px solid #fed7d7', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </>
       )}
     </div>

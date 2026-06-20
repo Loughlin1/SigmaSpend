@@ -102,142 +102,152 @@ export default function LedgerTable({
   };
 
   return (
-    <table border="1" cellPadding="10" className="table ledger-table-view" style={{ width: '100%' }}>
-      <thead>
-        <tr>
-          <th style={{ width: '8%' }}>Date</th>
-          <th style={{ width: '20%' }}>Description</th>
-          <th style={{ width: '8%' }}>Account</th>
-          <th style={{ width: '15%' }}>Category</th>
-          <th style={{ width: '15%' }}>Notes</th>
-          <th style={{ width: '10%' }}>Type</th>
-          <th style={{ width: '10%' }}>Amount</th>
-          <th style={{ width: '11%', textAlign: 'center' }}>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {expenses.map((exp) => {
-          const isCurrentRowEditing = editingId === exp.id;
-          const displayCategory = getCategoryDisplay(exp.category_id);
+    <div className="ledger-table-container">
+      <table border="1" cellPadding="10" className="table ledger-table-view" style={{ width: '100%' }}>
+        <thead>
+          <tr>
+            <th style={{ width: '10%' }}>Date</th>         {/* e.g., "2026-06-19" */}
+            <th style={{ width: '25%' }}>Description</th>  {/* e.g., "Starbucks Coffee London" */}
+            <th style={{ width: '10%' }}>Account</th>      {/* e.g., "Monzo Card" */}
+            <th style={{ width: '15%' }}>Category</th>     {/* e.g., "📁 Food & Drink" */}
+            <th style={{ width: '15%' }}>Notes</th>        {/* e.g., "Business lunch meeting" */}
+            <th style={{ width: '8%' }}>Type</th>          {/* e.g., "Expense" / "Income" */}
+            <th style={{ width: '10%' }}>Amount</th>        {/* e.g., "£1,240.50" */}
+            <th style={{ width: '5%', textAlign: 'center' }}>Actions</th> {/* Buttons icon/text width */}
+          </tr>
+        </thead>
+        <tbody>
+          {expenses.map((exp) => {
+            const isCurrentRowEditing = editingId === exp.id;
+            const displayCategory = getCategoryDisplay(exp.category_id);
 
-          if (isCurrentRowEditing) {
+            if (isCurrentRowEditing) {
+              return (
+                <tr key={exp.id} style={{ background: '#f7fafc' }}>
+                  <td>
+                    <input type="date" value={editFormData.date} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
+                      onChange={e => setEditFormData({ ...editFormData, date: e.target.value })} />
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <input type="text" value={editFormData.description} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
+                        onChange={e => setEditFormData({ ...editFormData, description: e.target.value })} />
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.72rem', color: '#2b6cb0', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={ruleTargetField === 'description'} 
+                          onChange={(e) => setRuleTargetField(e.target.checked ? 'description' : '')} 
+                        />
+                        ⚡ Learn from description text
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <select value={editFormData.account_id} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
+                      onChange={e => setEditFormData({ ...editFormData, account_id: e.target.value })} >
+                      <option value="">Select Account</option>
+                      {Object.entries(accountNameMap).map(([id, name]) => (
+                        <option key={id} value={id}>{name}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <select value={editFormData.category_id} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
+                      onChange={e => setEditFormData({ ...editFormData, category_id: e.target.value })} >
+                      <option value="">❓ Uncategorized</option>
+                      {categories.map(cat => (
+                        <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
+                          <option value={cat.id}>{cat.icon || '📁'} {cat.name} (All)</option>
+                          {cat.subcategories?.map(sub => (
+                            <option key={sub.id} value={sub.id}>🔹 {sub.name}</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <input type="text" placeholder="Notes..." value={editFormData.notes} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
+                        onChange={e => setEditFormData({ ...editFormData, notes: e.target.value })} />
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.72rem', color: '#2b6cb0', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={ruleTargetField === 'notes'} 
+                          onChange={(e) => setRuleTargetField(e.target.checked ? 'notes' : '')} 
+                        />
+                        📝 Learn from notes text
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <select value={editFormData.is_income} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
+                      onChange={e => setEditFormData({ ...editFormData, is_income: e.target.value === 'true' })} >
+                      <option value="false">Expense</option>
+                      <option value="true">Income</option>
+                    </select>
+                  </td>
+                  <td>
+                    <input type="number" step="0.01" value={editFormData.amount} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem', fontWeight: '500' }}
+                      onChange={e => setEditFormData({ ...editFormData, amount: e.target.value })} />
+                  </td>
+                  <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                    <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
+                      <button 
+                        type="button" 
+                        onClick={handleRowSave} 
+                        className="inlineButton" 
+                        style={{ background: '#f0fff4', color: '#22543d', borderColor: '#c6f6d5' }}
+                      >
+                        Save
+                      </button>
+                      <button type="button" onClick={cancelEdit} className="inlineButton">
+                        Cancel
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            }
+
             return (
-              <tr key={exp.id} style={{ background: '#f7fafc' }}>
-                <td>
-                  <input type="date" value={editFormData.date} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                    onChange={e => setEditFormData({ ...editFormData, date: e.target.value })} />
-                </td>
-                <td>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <input type="text" value={editFormData.description} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                      onChange={e => setEditFormData({ ...editFormData, description: e.target.value })} />
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.72rem', color: '#2b6cb0', cursor: 'pointer' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={ruleTargetField === 'description'} 
-                        onChange={(e) => setRuleTargetField(e.target.checked ? 'description' : '')} 
-                      />
-                      ⚡ Learn from description text
-                    </label>
-                  </div>
-                </td>
-                <td>
-                  <select value={editFormData.account_id} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                    onChange={e => setEditFormData({ ...editFormData, account_id: e.target.value })} >
-                    <option value="">Select Account</option>
-                    {Object.entries(accountNameMap).map(([id, name]) => (
-                      <option key={id} value={id}>{name}</option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <select value={editFormData.category_id} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                    onChange={e => setEditFormData({ ...editFormData, category_id: e.target.value })} >
-                    <option value="">❓ Uncategorized</option>
-                    {categories.map(cat => (
-                      <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
-                        <option value={cat.id}>{cat.icon || '📁'} {cat.name} (All)</option>
-                        {cat.subcategories?.map(sub => (
-                          <option key={sub.id} value={sub.id}>🔹 {sub.name}</option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <input type="text" placeholder="Notes..." value={editFormData.notes} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                      onChange={e => setEditFormData({ ...editFormData, notes: e.target.value })} />
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.72rem', color: '#2b6cb0', cursor: 'pointer' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={ruleTargetField === 'notes'} 
-                        onChange={(e) => setRuleTargetField(e.target.checked ? 'notes' : '')} 
-                      />
-                      📝 Learn from notes text
-                    </label>
-                  </div>
-                </td>
-                <td>
-                  <select value={editFormData.is_income} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                    onChange={e => setEditFormData({ ...editFormData, is_income: e.target.value === 'true' })} >
-                    <option value="false">Expense</option>
-                    <option value="true">Income</option>
-                  </select>
-                </td>
-                <td>
-                  <input type="number" step="0.01" value={editFormData.amount} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem', fontWeight: '500' }}
-                    onChange={e => setEditFormData({ ...editFormData, amount: e.target.value })} />
+              <tr key={exp.id}>
+                <td className="ledger-table-date">{exp.date}</td>
+                <td>{exp.description}</td>
+                <td>{accountNameMap[exp.account_id] || exp.account_id}</td>
+                <td>{displayCategory.icon} {displayCategory.name}</td>
+                <td>{exp.notes || <span style={{ color: '#ccc' }}>—</span>}</td>
+                <td>{exp.is_income ? 'Income' : 'Expense'}</td>
+                <td className="ledger-table-amount" style={{ color: exp.is_income ? '#22543d' : '#2d3748' }}>
+                  £{Number(exp.amount).toFixed(2)}
                 </td>
                 <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                   <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
                     <button 
                       type="button" 
-                      onClick={handleRowSave} 
-                      className="inlineButton" 
-                      style={{ background: '#f0fff4', color: '#22543d', borderColor: '#c6f6d5' }}
+                      onClick={() => startEdit(exp)} 
+                      className="inlineButton table-icon-btn"
+                      title="Edit Transaction"
+                      aria-label="Edit Transaction"
                     >
-                      Save
+                      ✏️
                     </button>
-                    <button type="button" onClick={cancelEdit} className="inlineButton">
-                      Cancel
+                    <button
+                      type="button" 
+                      onClick={() => onDelete && onDelete(exp.id)} 
+                      className="inlineButton table-icon-btn table-icon-btn--delete"
+                      style={{ background: '#fff5f5', color: '#c53030', borderColor: '#fed7d7' }}
+                      title="Delete Transaction"
+                      aria-label="Delete Transaction"
+                    >
+                      🗑️
                     </button>
                   </div>
                 </td>
               </tr>
             );
-          }
-
-          return (
-            <tr key={exp.id}>
-              <td className="ledger-table-date">{exp.date}</td>
-              <td>{exp.description}</td>
-              <td>{accountNameMap[exp.account_id] || exp.account_id}</td>
-              <td>{displayCategory.icon} {displayCategory.name}</td>
-              <td>{exp.notes || <span style={{ color: '#ccc' }}>—</span>}</td>
-              <td>{exp.is_income ? 'Income' : 'Expense'}</td>
-              <td className="ledger-table-amount" style={{ color: exp.is_income ? '#22543d' : '#2d3748' }}>
-                £{Number(exp.amount).toFixed(2)}
-              </td>
-              <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
-                  <button type="button" onClick={() => startEdit(exp)} className="inlineButton">
-                    Edit
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => onDelete && onDelete(exp.id)} 
-                    className="inlineButton"
-                    style={{ background: '#fff5f5', color: '#c53030', borderColor: '#fed7d7' }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }

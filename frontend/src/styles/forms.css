@@ -1,3 +1,4 @@
+/* src/styles/forms.css */
 .form {
   display: flex;
   flex-direction: column;
@@ -18,14 +19,10 @@
   margin-bottom: 0.75rem;
 }
 
-.form__error {
-  color: #cc0000;
-}
+.form__error { color: #cc0000; }
+.form__success { color: #006600; }
 
-.form__success {
-  color: #006600;
-}
-
+/* Clean CSS grid handles multi-column alignment organically */
 .form__grid {
   display: grid;
   gap: 1rem;
@@ -37,14 +34,13 @@
 .form-field-wrapper {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start; /* Left-align labels with text fields */
   gap: 0.25rem;
   width: 100%;
 }
 
 .form-inline-input {
   width: 100%;
-  max-width: 100%;
   padding: 0.5rem;
   margin-top: 0.25rem;
   border-radius: 4px;
@@ -52,18 +48,26 @@
   box-sizing: border-box;
 }
 
-.form__submit {
+/* Buttons adapt securely based on surrounding grid layout */
+.form__submit,
+.form__cancel {
   width: 100%;
-  max-width: 200px;
   padding: 0.75rem 1rem;
-  align-self: center;
+  border-radius: 6px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
 }
 
 .form__cancel {
-  width: 100%;
-  max-width: 200px;
-  padding: 0.75rem 1rem;
-  align-self: center;
-  background: grey;
+  background: #718096;
+  color: white;
 }
 
+@media (min-width: 576px) {
+  .form__submit,
+  .form__cancel {
+    max-width: 200px;
+    align-self: center;
+  }
+}

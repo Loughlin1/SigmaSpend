@@ -1,35 +1,45 @@
 /* src/styles/charts.css */
+.chartWrapper {
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
 .chartHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column; /* Mobile first: titles and selects pile vertically */
+  align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .chartControls {
   display: flex;
+  flex-direction: row;
+  flex-wrap: wrap; /* Wrap dropdowns cleanly on small touchscreens */
   align-items: center;
   gap: 1rem;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 .controlGroup {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column; /* Stack label texts over selects for accessibility ergonomics */
+  align-items: flex-start;
+  gap: 0.25rem;
   font-size: 0.875rem;
   color: #4a5568;
+  flex: 1 1 140px; /* Grow or contract evenly based on viewport availability */
 }
 
-.chartSelect, .chartInput {
-  padding: 0.375rem 0.5rem;
+.chartSelect {
+  width: 100%;
+  padding: 0.5rem;
   border: 1px solid #cbd5e0;
-  border-radius: 4px;
+  border-radius: 6px;
   background-color: #fff;
   color: #2d3748;
   font-size: 0.875rem;
+  min-height: 38px;
 }
 
 .clearFilterBtn {
@@ -39,35 +49,52 @@
   cursor: pointer;
   font-size: 0.875rem;
   text-decoration: underline;
+  padding: 0;
+  margin-top: 0.5rem;
 }
 
 .chartDivider {
   border: 0;
   border-top: 1px solid #e2e8f0;
-  margin-bottom: 1.5rem;
-}
-
-.noDataMessage {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  color: #718096;
-  font-style: italic;
+  margin: 1rem 0;
 }
 
 .chart-canvas-container {
   position: relative;
   width: 100%;
-  height: 320px; /* Explicit static canvas clearance boundary gives Recharts an absolute height engine target */
-  margin-top: 1.5rem;
+  height: 320px; /* Stable aspect ratio layout engine clearance */
+  margin-top: 1rem;
   box-sizing: border-box;
 }
 
-/* Enhancing standard typography elements within cards */
 .chartWrapper h3 {
   margin: 0;
   font-size: 1.2rem;
   color: #2d3748;
   font-weight: 600;
+}
+
+/* ⚡ RESPONSIVE BREAKPOINT: TABLET & DESKTOP MONITORS */
+@media (min-width: 768px) {
+  .chartHeader {
+    flex-direction: row; /* Flatten title and inputs to a single horizontal layout line */
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .chartControls {
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .controlGroup {
+    flex-direction: row; /* Put label side-by-side with dropdown input fields */
+    align-items: center;
+    flex: initial;
+  }
+
+  .chartSelect {
+    width: auto;
+    min-width: 160px;
+  }
 }

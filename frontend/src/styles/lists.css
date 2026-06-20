@@ -1,19 +1,24 @@
+/* src/styles/lists.css */
 .account-list {
   padding: 1rem;
   border: 1px solid #ccc;
   border-radius: 8px;
   background: #fff;
+  width: 100%;
 }
 
+/* ⚡ CRITICAL: Allows table container wrapper to scroll instead of breaking layout */
 .account-list__wrapper {
+  width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth inertia scrolling on mobile devices */
+  margin-bottom: 1rem;
 }
 
 .bank-account-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
-  max-width: 100%;
+  table-layout: auto; /* Allows columns with explicit widths to stay fixed */
 }
 
 .bank-account-table th,
@@ -21,30 +26,30 @@
   padding: 0.75rem 0.85rem;
   border-bottom: 1px solid #eee;
   text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   vertical-align: top;
 }
 
 .bank-account-table th {
-  background: #f5f5f5;
+  background: #f7fafc;
   font-weight: 600;
+  color: #4a5568;
+  font-size: 0.9rem;
 }
 
+/* Action button boundaries stay anchored safely */
 .bank-account-table th:last-child,
 .bank-account-table td:last-child {
-  width: 120px;            /* Set the exact size you want */
-  max-width: 120px;
-  text-align: center;      /* Keeps the layout clean */
-  white-space: nowrap;     /* Prevents the Save/Cancel buttons from breaking onto two lines */
+  width: 130px;
+  min-width: 130px;
+  text-align: center;
 }
 
-/* Ensure the table doesn't force columns to expand evenly */
-.bank-account-table {
-  width: 100%;
-  table-layout: auto;       /* Allows columns with explicit widths to stay fixed */
-  border-collapse: collapse;
+/* Text clipping optimizations */
+.bank-account-table td:not(.mapping-cell) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px; /* Limits expansion boundaries on mid-sized displays */
 }
 
 .mapping-cell {
@@ -59,53 +64,28 @@
 .mapping-inputs {
   display: flex;
   flex-direction: column;
-  gap: 8px; /* Adds clean spacing between fields */
-  min-width: 200px; /* Ensures the column expands to fit the form */
+  gap: 8px;
+  min-width: 180px;
 }
 
 .mapping-inputs label {
   display: flex;
-  flex-direction: column; /* Puts the input text box underneath the label title */
+  flex-direction: column;
   align-items: flex-start;
   font-size: 0.85rem;
 }
 
 .mapping-inputs input {
-  width: 100%; /* Spans the full width of the cell column */
-  box-sizing: border-box;
-  padding: 4px;
-}
-
-.mapping-row {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.mapping-row label {
-  white-space: nowrap;
-}
-
-.inline-input {
   width: 100%;
-  padding: 0.35rem;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 1px solid #cbd5e0;
   border-radius: 4px;
-  border: 1px solid #ccc;
-}
-
-.actions-cell .action-buttons {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
 }
 
 .account-list__error,
 .error-text {
   color: #cc0000;
-}
-
-.account-list__error {
   margin-bottom: 1rem;
 }
 
@@ -114,29 +94,26 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1rem;
-  background-color: var(--background-light);
-  border-bottom: 1px solid var(--border-divider);
+  background-color: #f7fafc;
+  border-bottom: 1px solid #e2e8f0;
   cursor: pointer;
   margin-bottom: 1rem;
+  border-radius: 4px;
 }
 
 .account-list__header h3 {
   margin: 0;
-  color: var(--text-primary);
+  font-size: 1.1rem;
 }
 
 .collapse-button {
-  background-color: var(--primary-accent);
+  background-color: #4CAF50;
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.collapse-button:hover {
-  opacity: 0.9;
+  font-size: 0.85rem;
 }
 
 .rule-search-input {
@@ -147,4 +124,112 @@
   border: 1px solid #cbd5e0;
   border-radius: 6px;
   outline: none;
+}
+
+
+/* Container that shields the parent card box layout from breaking */
+.ledger-table-container {
+  width: 100%;
+  max-width: 1100px;
+  margin-left: auto;  /* Centers the table inside the parent sectionCard if it's smaller */
+  margin-right: auto; /* Centers the table inside the parent sectionCard if it's smaller */
+
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Butter-smooth inertia scrolling on iOS/Android */
+  border-radius: 6px;
+  border: 1px solid var(--border-divider, #e0e0e0);
+  margin-top: 1rem;
+}
+
+/* Base table presentation overrides */
+.ledger-table-view {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px; /* Forces enough breathing room so headers don't squish during desktop scrolling */
+}
+
+/* ⚡ MOBILE RESPONSIVE SHIFT: Transform table to standalone cards under 768px viewports */
+@media (max-width: 768px) {
+  /* Bypass scrollbar entirely on phone screens by converting structural elements to block fields */
+  .ledger-table-container {
+    overflow-x: hidden;
+    border: none;
+  }
+
+  .ledger-table-view {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+  }
+  
+  .ledger-table-view,
+  .ledger-table-view thead,
+  .ledger-table-view tbody,
+  .ledger-table-view th,
+  .ledger-table-view td,
+  .ledger-table-view tr {
+    display: block;
+    width: 100% !important; /* Strips out individual hardcoded width percentages */
+  }
+
+  /* Hide the header column array completely */
+  .ledger-table-view thead {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  /* Morph every individual row row into a floating dashboard element card */
+  .ledger-table-view tr {
+    border: 1px solid var(--border-divider, #e0e0e0);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+
+    /* ⚡ THE MAX-WIDTH FIX FOR SMALL VIEWPORTS ⚡ */
+    width: 100% !important;
+    max-width: 480px;      /* ◄ ENFORCES A MAX WIDTH FOR MOBILE CARDS (Change to 450px, 500px, etc.) */
+    margin-left: auto;     /* ◄ Centers the cards inside the sectionCard if there is extra room */
+    margin-right: auto;    /* ◄ Centers the cards inside the sectionCard if there is extra room */
+    box-sizing: border-box;
+  }
+  
+  /* Layout table cells as horizontal pairs */
+  .ledger-table-view td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #edf2f7;
+
+    width: 100%;
+    box-sizing: border-box;
+    gap: 1rem; /* Creates breathing room between label prefix and data */
+  }
+
+  .ledger-table-view td:last-child {
+    border-bottom: none;
+    justify-content: center; /* Centers Action Buttons (Edit/Delete) */
+    padding-top: 0.75rem;
+  }
+  
+  /* Flex containers during edit-state should expand to full horizontal width */
+  .ledger-table-view td > div,
+  .ledger-table-view td > input,
+  .ledger-table-view td > select {
+    flex: 1; /* Allow content to grow fluidly */
+    width: 100%;
+    max-width: 60%; /* Enforces a hard boundary so text doesn't slam into the left-hand label */
+    text-align: right;
+    box-sizing: border-box;
+  }
+
+  .ledger-table-view td:not(:last-child) {
+    word-break: break-word; /* Allows long strings to wrap naturally onto a new line */
+    overflow-wrap: break-word;
+    white-space: normal; /* Disables standard table line-freezing */
+  }
 }

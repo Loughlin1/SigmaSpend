@@ -1,26 +1,28 @@
-/* Ledger Filters Main Flex Layout Wrapper */
+/* src/styles/filters.css */
+
+/* Base Layout Wrapper: Stack components on mobile viewports */
 .ledger-filters {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
-  flex-wrap: wrap;
   margin-bottom: 1.5rem;
   background-color: #ffffff;
+  width: 100%;
 }
 
-/* ⚡ THE ROW BREAKOUT FIX: Forces search onto its own distinct row line */
-.ledger-filters__field--search {
-  flex-basis: 100%;       /* Claims full horizontal real estate */
-  max-width: 450px;       /* Keeps search bar elegantly constrained on desktop monitors */
-  margin-bottom: 0.5rem;  /* Extra separation spacing from the dropdown row below */
-}
-
-/* Individual Dropdown Grid Fields */
+/* Base individual input row block */
 .ledger-filters__field {
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
-/* Selection Labels styling */
+/* Force full width on search box by default */
+.ledger-filters__field--search {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
 .ledger-filters__label {
   display: block;
   margin-bottom: 0.35rem;
@@ -29,10 +31,11 @@
   color: #4a5568;
 }
 
-/* Form Controls Input Layout Overrides */
+/* Clean, unified interactive control surfaces */
 .ledger-filters__input,
 .ledger-filters__select,
 .ledger-filters__date {
+  width: 100%;
   padding: 0.45rem 0.75rem;
   font-size: 0.875rem;
   border: 1px solid #cbd5e0;
@@ -45,10 +48,6 @@
   transition: border-color 0.15s ease-in-out;
 }
 
-.ledger-filters__input {
-  width: 100%;
-}
-
 .ledger-filters__input:focus,
 .ledger-filters__select:focus,
 .ledger-filters__date:focus {
@@ -56,18 +55,45 @@
   box-shadow: 0 0 0 1px #4299e1;
 }
 
-.ledger-filters__date {
-  min-width: 140px;
-}
-
 .ledger-filters__actions {
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .ledger-filters__reset-btn {
+  width: 100%;
   min-height: 38px;
   background-color: #f7fafc;
   border-color: #e2e8f0;
   color: #4a5568;
+}
+
+/* ⚡ RESPONSIVE BREAKPOINT: TABLET & DESKTOP MONITORS */
+@media (min-width: 768px) {
+  .ledger-filters {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  /* Force search onto its own distinct row line */
+  .ledger-filters__field--search {
+    flex-basis: 100%;
+    max-width: 450px;
+  }
+
+  /* Allow sub-filters to share rows fluidly */
+  .ledger-filters__field {
+    flex: 1 1 160px;
+    width: auto;
+  }
+
+  .ledger-filters__date {
+    min-width: 140px;
+  }
+
+  .ledger-filters__actions {
+    width: auto;
+  }
 }

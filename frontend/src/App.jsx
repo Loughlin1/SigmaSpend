@@ -53,9 +53,11 @@ function App() {
   }, [fetchExpenses, filters]);
 
   // 2. Reacts automatically to Chart specific filter changes
+  // ⚡ OPTIMIZED EFFECT MATCHING
   useEffect(() => {
     fetchSummary(chartFilters);
-  }, [fetchSummary, chartFilters]);
+    // Track individual fields uniquely or serialize to ensure accurate execution tracking
+  }, [fetchSummary, chartFilters.group_by, chartFilters.start_date, chartFilters.end_date, chartFilters.account_id]);
 
   // 3. Fetch Accounts, Categories, and Rules on initial mount
   useEffect(() => {

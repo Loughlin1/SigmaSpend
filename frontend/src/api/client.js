@@ -13,7 +13,7 @@ export const expenseApi = {
   create: (data) => apiClient.post('/expenses/', data).then(res => res.data),
   update: (id, data) => apiClient.put(`/expenses/${id}`, data).then(res => res.data),
   delete: (id) => apiClient.delete(`/expenses/${id}`).then(res => res.data),
-  getSummary: (params) => apiClient.get('/expenses/analytics/summary').then(res => res.data),
+  getSummary: (params) => apiClient.get('/expenses/analytics/summary', { params }).then(res => res.data),
 };
 
 export const ingestionApi = {
@@ -41,5 +41,5 @@ export const categoryApi = {
 export const rulesApi = {
   getAll: (params) => apiClient.get('/rules/', { params }).then(res => res.data),
   create: (payload) => apiClient.post('/rules/', payload).then(res => res.data),
-  delete: (id) => apiClient.delete(`/rules/${id}`)
+  delete: (id) => apiClient.delete(`/rules/${id}`).then(res => res.data),
 };

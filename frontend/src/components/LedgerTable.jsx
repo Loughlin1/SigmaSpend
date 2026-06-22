@@ -1,5 +1,6 @@
 // src/components/LedgerTable.jsx
 import React, { useState } from 'react';
+import { expenseApi } from '../api/client';
 import '../styles/lists.css';
 import '../styles/forms.css';
 
@@ -9,7 +10,8 @@ export default function LedgerTable({
   categories = [], 
   onExpenseSaved, 
   onDelete,
-  onCreateRuleFromTransaction 
+  onCreateRuleFromTransaction,
+  onBulkUpdateSuccess 
 }) {
   const [editingId, setEditingId] = useState(null);
   const [ruleTargetField, setRuleTargetField] = useState("");
@@ -17,7 +19,50 @@ export default function LedgerTable({
     id: '', date: '', description: '', account_id: '', category_id: '', notes: '', is_income: false, amount: ''
   });
 
-  // --- CLEAN EXTRACTED SAVING HANDLER ---
+  // Tracking State for Bulk Actions
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkCategory, setBulkCategory] = useState("");
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+
+  // --- Checkbox Selection Handlers ---
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(expenses.map(exp => exp.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectRow = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkSubmit = async () => {
+    if (selectedIds.length === 0) return;
+    setBulkUpdating(true);
+    try {
+      const catId = bulkCategory === "" ? null : parseInt(bulkCategory, 10);
+      await expenseApi.bulkClassify(selectedIds, catId);
+      
+      alert(`Successfully classified ${selectedIds.length} transactions!`);
+      setSelectedIds([]); 
+      setBulkCategory("");
+      
+      if (typeof onBulkUpdateSuccess === 'function') {
+        onBulkUpdateSuccess(); 
+      }
+            
+    } catch (err) {
+      console.error("[SigmaSpend UI] Bulk classification execution thread halted:", err);
+      alert("Failed to apply bulk classifications.");
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  // --- Row Saving Handler ---
   const handleRowSave = async (e) => {
     if (e && typeof e.preventDefault === 'function') {
       e.preventDefault();
@@ -35,7 +80,6 @@ export default function LedgerTable({
         notes: editFormData.notes
       };
 
-      // 1. Isolated Rule Engine learning step
       if (ruleTargetField !== "" && editFormData.category_id !== "") {
         if (typeof onCreateRuleFromTransaction === 'function') {
           const ruleKeyword = ruleTargetField === 'description' 
@@ -49,19 +93,16 @@ export default function LedgerTable({
               category_id: payload.category_id
             });
           } catch (ruleErr) {
-            // Captures backend error details (like "A rule for this keyword already exists.")
             const errorMsg = ruleErr.response?.data?.detail || "Rule criteria validation failed.";
             alert(`⚠️ Transaction saved, but Rule Creation Failed:\n${errorMsg}`);
           }
         }
       }
 
-      // 2. This now executes successfully even if the rule creation fails!
       if (typeof onExpenseSaved === 'function') {
         await onExpenseSaved(payload);
       }
 
-      // 3. Clean up interaction flags safely
       setEditingId(null);
       setRuleTargetField(""); 
       
@@ -78,7 +119,6 @@ export default function LedgerTable({
       date: exp.date && exp.date.includes('/') ? exp.date.split('/').reverse().join('-') : exp.date || '',
       description: exp.description || '',
       account_id: exp.account_id || '',
-      // Update: Fallback safely to empty string if no category_id is linked yet (Uncategorized)
       category_id: exp.category_id != null ? String(exp.category_id) : '',
       notes: exp.notes || '',
       is_income: !!exp.is_income,
@@ -91,7 +131,6 @@ export default function LedgerTable({
     setRuleTargetField(""); 
   };
 
-  // Find elements dynamically using item ID values instead of unstable strings
   const getCategoryDisplay = (categoryId) => {
     if (!categoryId) return { icon: '❓', name: 'Uncategorized' };
 
@@ -109,37 +148,95 @@ export default function LedgerTable({
 
   const getAccountAbbreviation = (accountName) => {
     if (!accountName) return '';
-
     return accountName
       .replace(/current account/i, 'CA')
       .replace(/credit card/i, 'CC')
-      .trim(); // Cleans up any accidental trailing spaces
+      .trim();
   };
 
   return (
-    <div className="ledger-table-container">
+    <div className="ledger-table-container" style={{ position: 'relative' }}>
+      
+      {/* Floating Sticky Bulk Actions Panel */}
+      {selectedIds.length > 0 && (
+        <div style={{
+          position: 'sticky', top: '10px', zIndex: 10, display: 'flex', flexWrap: 'wrap',
+          alignItems: 'center', justifyContent: 'space-between', gap: '1rem',
+          background: '#ebf8ff', border: '1px solid #bee3f8', padding: '0.75rem 1rem',
+          borderRadius: '6px', marginBottom: '15px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
+        }}>
+          <span style={{ fontSize: '0.9rem', color: '#2b6cb0', fontWeight: '500' }}>
+            Selected <strong>{selectedIds.length}</strong> transactions
+          </span>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <select 
+              value={bulkCategory} 
+              onChange={e => setBulkCategory(e.target.value)}
+              className="form-inline-input"
+              style={{ margin: 0, padding: '0.35rem', width: '200px', fontSize: '0.85rem' }}
+              disabled={bulkUpdating}
+            >
+              <option value="">❓ Move to Uncategorized</option>
+              {categories.map(cat => (
+                <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
+                  <option value={cat.id}>{cat.name} (All)</option>
+                  {cat.subcategories?.map(sub => (
+                    <option key={sub.id} value={sub.id}>🔹 {sub.name}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            <button 
+              onClick={handleBulkSubmit}
+              className="inlineButton"
+              style={{ background: '#3182ce', color: 'white', padding: '0.35rem 1rem' }}
+              disabled={bulkUpdating}
+            >
+              {bulkUpdating ? 'Updating...' : 'Apply Category'}
+            </button>
+            <button 
+              onClick={() => setSelectedIds([])}
+              className="inlineButton" 
+              style={{ padding: '0.35rem 0.75rem' }}
+              disabled={bulkUpdating}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       <table border="1" cellPadding="10" className="table ledger-table-view" style={{ width: '100%' }}>
         <thead>
           <tr>
+            <th style={{ width: '4%', textAlign: 'center' }}>
+              <input 
+                type="checkbox" 
+                onChange={handleSelectAll}
+                checked={expenses.length > 0 && selectedIds.length === expenses.length}
+              />
+            </th>
             <th style={{ width: '10%' }}>Date</th>
-            <th style={{ width: '25%' }}>Description</th>
+            <th style={{ width: '21%' }}>Description</th>
             <th style={{ width: '10%' }}>Account</th>
             <th style={{ width: '15%' }}>Category</th>
             <th style={{ width: '15%' }}>Notes</th>
             <th style={{ width: '8%' }}>Type</th>
-            <th style={{ width: '10%' }}>Amount</th>
+            <th style={{ width: '12%' }}>Amount</th>
             <th style={{ width: '5%', textAlign: 'center' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
           {expenses.map((exp) => {
             const isCurrentRowEditing = editingId === exp.id;
+            const isChecked = selectedIds.includes(exp.id);
             const displayCategory = getCategoryDisplay(exp.category_id);
             const displayAccountName = getAccountAbbreviation(accountNameMap[exp.account_id] || exp.account_id);
 
             if (isCurrentRowEditing) {
               return (
                 <tr key={exp.id} style={{ background: '#f7fafc' }}>
+                  <td></td>
                   <td>
                     <input type="date" value={editFormData.date} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
                       onChange={e => setEditFormData({ ...editFormData, date: e.target.value })} />
@@ -208,17 +305,8 @@ export default function LedgerTable({
                   </td>
                   <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                     <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
-                      <button 
-                        type="button" 
-                        onClick={handleRowSave} 
-                        className="inlineButton" 
-                        style={{ background: '#f0fff4', color: '#22543d', borderColor: '#c6f6d5' }}
-                      >
-                        Save
-                      </button>
-                      <button type="button" onClick={cancelEdit} className="inlineButton">
-                        Cancel
-                      </button>
+                      <button type="button" onClick={handleRowSave} className="inlineButton" style={{ background: '#f0fff4', color: '#22543d', borderColor: '#c6f6d5' }}>Save</button>
+                      <button type="button" onClick={cancelEdit} className="inlineButton">Cancel</button>
                     </div>
                   </td>
                 </tr>
@@ -226,7 +314,14 @@ export default function LedgerTable({
             }
 
             return (
-              <tr key={exp.id}>
+              <tr key={exp.id} style={{ background: isChecked ? '#f7fafc' : 'transparent' }}>
+                <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={isChecked}
+                    onChange={() => handleSelectRow(exp.id)}
+                  />
+                </td>
                 <td className="ledger-table-date" style={{fontSize: '0.85rem'}}>{exp.date}</td>
                 <td style={{fontSize: '0.85rem'}}>{exp.description}</td>
                 <td style={{fontSize: '0.85rem'}}>{displayAccountName}</td>
@@ -238,25 +333,8 @@ export default function LedgerTable({
                 </td>
                 <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                   <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center', fontSize: '0.85rem'}}>
-                    <button 
-                      type="button" 
-                      onClick={() => startEdit(exp)} 
-                      className="inlineButton table-icon-btn"
-                      title="Edit Transaction"
-                      aria-label="Edit Transaction"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      type="button" 
-                      onClick={() => onDelete && onDelete(exp.id)} 
-                      className="inlineButton table-icon-btn table-icon-btn--delete"
-                      style={{ background: '#fff5f5', color: '#c53030', borderColor: '#fed7d7' }}
-                      title="Delete Transaction"
-                      aria-label="Delete Transaction"
-                    >
-                      🗑️
-                    </button>
+                    <button type="button" onClick={() => startEdit(exp)} className="inlineButton table-icon-btn" title="Edit Transaction" aria-label="Edit Transaction">✏️</button>
+                    <button type="button" onClick={() => onDelete && onDelete(exp.id)} className="inlineButton table-icon-btn table-icon-btn--delete" style={{ background: '#fff5f5', color: '#c53030', borderColor: '#fed7d7' }} title="Delete Transaction" aria-label="Delete Transaction">🗑️</button>
                   </div>
                 </td>
               </tr>

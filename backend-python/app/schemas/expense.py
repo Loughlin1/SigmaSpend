@@ -1,6 +1,6 @@
 # app/schemas/expense.py
 import datetime
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, field_serializer, Field, model_validator
 
 class ExpenseBase(BaseModel):
@@ -90,3 +90,8 @@ class AnalyticalBreakdownResponse(BaseModel):
     parent_name: Optional[str] = None    # Direct bridge link for subcategories to group on the UI
     total_income: float
     total_expenses: float
+
+
+class BulkCategoryUpdate(BaseModel):
+    expense_ids: List[int]
+    category_id: Optional[int] = None  # None/null means "Uncategorized"

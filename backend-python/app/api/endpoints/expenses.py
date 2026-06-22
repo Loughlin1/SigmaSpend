@@ -9,7 +9,10 @@ from sqlalchemy.orm import Session, joinedload
 from app.api import deps
 from app.models.expense import Expense as ExpenseModel
 from app.models.category import Category as CategoryModel
-from app.schemas.expense import ExpenseCreate, ExpenseUpdate, ExpenseResponse, AnalyticalBreakdownResponse
+from app.schemas.expense import (
+    ExpenseCreate, ExpenseUpdate, ExpenseResponse, 
+    AnalyticalBreakdownResponse, BulkCategoryUpdate
+)
 from app.services.expense import ExpenseService
 from app.services.analytics import ExpenseAnalyticsService
 from app.services.utilities import parse_uk_date
@@ -163,3 +166,20 @@ def delete_expense(
     
     logger.info(f"Permanently deleted expense ID {expense_id}")
     return None
+
+
+
+@router.post("/bulk-classify", status_code=status.HTTP_200_OK)
+def bulk_classify_expenses(
+    payload: BulkCategoryUpdate, 
+    db: Session = Depends(deps.get_db)
+):
+    logger.info(f"Bulk classifying {len(payload.expense_ids)} transactions to Category ID {payload.category_id}")
+    
+    # Update all targeted records in a single execution query
+    db.query(ExpenseModel).filter(ExpenseModel.id.in_(payload.expense_ids)).update(
+        {ExpenseModel.category_id: payload.category_id},
+        synchronize_session=False
+    )
+    db.commit()
+    return {"message": f"Successfully updated {len(payload.expense_ids)} transactions"}

@@ -224,6 +224,7 @@ function App() {
               await triggerGlobalRefresh(); 
             }}
             onCreateRuleFromTransaction={createRuleFromTransaction}
+            onBulkUpdateSuccess={triggerGlobalRefresh}
           />
         )}
       </section>

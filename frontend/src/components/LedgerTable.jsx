@@ -35,33 +35,39 @@ export default function LedgerTable({
         notes: editFormData.notes
       };
 
-      // 1. Trigger background rule learning if a specific column checkbox is ticked
+      // 1. Isolated Rule Engine learning step
       if (ruleTargetField !== "" && editFormData.category_id !== "") {
         if (typeof onCreateRuleFromTransaction === 'function') {
-          // Extract the matching text based on what checkbox they ticked
           const ruleKeyword = ruleTargetField === 'description' 
             ? editFormData.description 
             : editFormData.notes;
 
-          await onCreateRuleFromTransaction({
-            keyword: ruleKeyword,               // Map to schema 'keyword'
-            match_field: ruleTargetField,       // Map to snake_case 'match_field'
-            category_id: payload.category_id    // Map to schema 'category_id'
-          });
+          try {
+            await onCreateRuleFromTransaction({
+              keyword: ruleKeyword,
+              match_field: ruleTargetField,
+              category_id: payload.category_id
+            });
+          } catch (ruleErr) {
+            // Captures backend error details (like "A rule for this keyword already exists.")
+            const errorMsg = ruleErr.response?.data?.detail || "Rule criteria validation failed.";
+            alert(`⚠️ Transaction saved, but Rule Creation Failed:\n${errorMsg}`);
+          }
         }
-    }
+      }
 
-      // 2. Submit transaction updates directly to the parent layout state handler
+      // 2. This now executes successfully even if the rule creation fails!
       if (typeof onExpenseSaved === 'function') {
         await onExpenseSaved(payload);
       }
 
-      // 3. Clean up interaction flags on successful execution loop
+      // 3. Clean up interaction flags safely
       setEditingId(null);
       setRuleTargetField(""); 
       
     } catch (err) {
       console.error("[SigmaSpend UI] Network thread halted inside handleRowSave:", err);
+      alert("Could not save transaction changes. Please verify network connections.");
     }
   };
 

@@ -57,7 +57,7 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
       <h3>Import Bank Statement</h3>
       {error && <div className="form__error">{error}</div>}
       
-      <form onSubmit={handleUpload} className="form__grid">
+      <form onSubmit={handleUpload} className="form__grid form__grid--wide">
         <label className="form-field-wrapper">
           Select Bank Account
           <select

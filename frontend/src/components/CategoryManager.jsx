@@ -52,7 +52,6 @@ export default function CategoryManager({ categories = [], onCreateCategory, loa
                 <tbody>
                   {categories.map((cat) => (
                     <tr key={cat.id}>
-                      {/* Render the icon right next to the title or in its own block */}
                       <td style={{ fontWeight: 'bold', verticalAlign: 'top', paddingTop: '0.5rem', textAlign: 'left' }}>
                         <span style={{ marginRight: '0.5rem' }}>{cat.icon || '📁'}</span>
                         {cat.name}
@@ -81,8 +80,9 @@ export default function CategoryManager({ categories = [], onCreateCategory, loa
             </button>
             
             {showForm && (
-              <section className="form">
-                <form onSubmit={handleSubmit} className="form__grid">
+              <section className="form" style={{ marginTop: '15px' }}>
+                <form onSubmit={handleSubmit} className="form__grid form__grid--wide">
+                  
                   <label className="form-field-wrapper">
                     Name
                     <input
@@ -92,30 +92,36 @@ export default function CategoryManager({ categories = [], onCreateCategory, loa
                       onChange={(e) => setNewName(e.target.value)}
                       required
                       className='form-inline-input'
-                      style={{width: '300px'}}
                     />
                   </label>
+
                   <label className="form-field-wrapper">
                     Category Type
                     <select 
                       value={targetParentId}
                       onChange={(e) => setTargetParentId(e.target.value)}
                       className='form-inline-input'
-                      style={{width: '300px'}}
-                      >
+                    >
                       <option value="">Treat as Top-Level Category</option>
                       {categories.map(cat => (
                         <option key={cat.id} value={cat.id}>Child of: {cat.name}</option>
                       ))}
                     </select>
                   </label>
-                  <div className="form-field-wrapper">
-                    <button type="button" onClick={() => setShowForm(false)} className='inlineButton form__cancel'>Cancel</button>
+
+                  {saveError && (
+                    <div style={{ gridColumn: '1 / -1', color: '#cc0000', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                      ⚠️ {saveError}
+                    </div>
+                  )}
+
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', gap: '0.5rem', width: '100%', marginTop: '1rem' }}>
+                    <button type="button" onClick={() => setShowForm(false)} className='form__cancel'>Cancel</button>
+                    <button type="submit" disabled={saving} className='form__submit' style={{ background: '#3182ce', color: 'white' }}>
+                      {saving ? 'Saving...' : 'Save'}
+                    </button>
                   </div>
-                  <div className="form-field-wrapper">
-                    <button type="submit" disabled={saving} className='inlineButton form__submit'>Save</button>
-                  </div>
-                  {saveError && <div style={{ color: 'red', fontSize: '0.85rem' }}>{saveError}</div>}
+
                 </form>
               </section>
             )}

@@ -1,5 +1,6 @@
 # app/models/bank_account.py
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, JSON
+from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database.session import Base
 
@@ -16,6 +17,8 @@ class BankAccount(Base):
 
     # Optional legacy profile reference for backward compatibility
     bank_profile = Column(String, nullable=True)
+
+    expenses = relationship("Expense", back_populates="account_rel", cascade="all, delete-orphan")
 
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)

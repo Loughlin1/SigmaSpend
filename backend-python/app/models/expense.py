@@ -8,7 +8,8 @@ class Expense(Base):
     __tablename__ = "expenses"
 
     id = Column(Integer, primary_key=True, index=True)
-    account_id = Column(String, index=True, nullable=False)
+    account_id = Column(String, ForeignKey("bank_accounts.account_id", ondelete="CASCADE"), index=True, nullable=False)
+
     date = Column(Date, index=True, nullable=False)
     amount = Column(Float, nullable=False)
     is_income = Column(Boolean, default=False, nullable=False)
@@ -17,6 +18,8 @@ class Expense(Base):
     
     category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
     category_rel = relationship("Category", uselist=False)
-    
+
+    account_rel = relationship("BankAccount", back_populates="expenses")
+
     # Enforces database-level structural constraint to guarantee no duplicates
     transaction_hash = Column(String, unique=True, index=True, nullable=False)

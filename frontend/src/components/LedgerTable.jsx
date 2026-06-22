@@ -85,7 +85,7 @@ export default function LedgerTable({
     setRuleTargetField(""); 
   };
 
-  // Update: Find elements dynamically using item ID values instead of unstable strings
+  // Find elements dynamically using item ID values instead of unstable strings
   const getCategoryDisplay = (categoryId) => {
     if (!categoryId) return { icon: '❓', name: 'Uncategorized' };
 
@@ -99,6 +99,15 @@ export default function LedgerTable({
       }
     }
     return { icon: '❓', name: 'Uncategorized' };
+  };
+
+  const getAccountAbbreviation = (accountName) => {
+    if (!accountName) return '';
+
+    return accountName
+      .replace(/current account/i, 'CA')
+      .replace(/credit card/i, 'CC')
+      .trim(); // Cleans up any accidental trailing spaces
   };
 
   return (
@@ -120,6 +129,7 @@ export default function LedgerTable({
           {expenses.map((exp) => {
             const isCurrentRowEditing = editingId === exp.id;
             const displayCategory = getCategoryDisplay(exp.category_id);
+            const displayAccountName = getAccountAbbreviation(accountNameMap[exp.account_id] || exp.account_id);
 
             if (isCurrentRowEditing) {
               return (
@@ -213,7 +223,7 @@ export default function LedgerTable({
               <tr key={exp.id}>
                 <td className="ledger-table-date">{exp.date}</td>
                 <td>{exp.description}</td>
-                <td>{accountNameMap[exp.account_id] || exp.account_id}</td>
+                <td>{displayAccountName}</td>
                 <td>{displayCategory.icon} {displayCategory.name}</td>
                 <td>{exp.notes || <span style={{ color: '#ccc' }}>—</span>}</td>
                 <td>{exp.is_income ? 'Income' : 'Expense'}</td>

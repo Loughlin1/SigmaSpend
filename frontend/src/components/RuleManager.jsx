@@ -15,6 +15,7 @@ export default function RuleManager({
 }) {
   const [keyword, setKeyword] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  const [matchField, setMatchField] = useState('description');
   const [showForm, setShowForm] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [saveError, setSaveError] = useState('');
@@ -35,10 +36,11 @@ export default function RuleManager({
       await onCreateRule({
         keyword: keyword.trim().toLowerCase(),
         category_id: parseInt(categoryId, 10),
-        match_field: 'description'
+        match_field: matchField // Updated: Uses dynamic drop-down state value instead of hardcoded string
       });
       setKeyword('');
       setCategoryId('');
+      setMatchField('description'); // Reset back to default
       setShowForm(false);
     } catch (err) {
       setSaveError(err.response?.data?.detail || 'Unable to save rule.');
@@ -51,7 +53,6 @@ export default function RuleManager({
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (typeof fetchRules === 'function') {
-        // Pass both parameters down to useRules hook
         fetchRules(searchQuery, pagination.page);
       }
     }, 300);
@@ -69,7 +70,6 @@ export default function RuleManager({
   return (
     <div className="account-list">
       <div className="account-list__header" onClick={() => setIsCollapsed(!isCollapsed)}>
-        {/* Uses pagination metrics to display true absolute totals across backend data */}
         <h3>Processing Rules ({pagination.total})</h3>
         <button className="collapse-button" type="button">
           {isCollapsed ? 'Show' : 'Hide'}
@@ -85,7 +85,6 @@ export default function RuleManager({
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                // Reset page track index back to 1 instantly when search query alters
                 if (pagination.page !== 1 && typeof fetchRules === 'function') {
                   fetchRules(e.target.value, 1);
                 }
@@ -112,6 +111,19 @@ export default function RuleManager({
                       disabled={saving}
                       className="form-inline-input"
                     />
+                  </label>
+                  
+                  <label className="form-field-wrapper">
+                    Target Field
+                    <select
+                      value={matchField}
+                      onChange={(e) => setMatchField(e.target.value)}
+                      disabled={saving}
+                      className="form-inline-input"
+                    >
+                      <option value="description">Description</option>
+                      <option value="notes">Notes</option>
+                    </select>
                   </label>
                   
                   <label className="form-field-wrapper">
@@ -156,9 +168,11 @@ export default function RuleManager({
               <table className="bank-account-table" style={{ width: '100%', tableLayout: 'fixed' }}>
                 <thead>
                   <tr>
-                    <th className="table-header-cell" style={{ width: '40%', textAlign: 'left' }}>Keyword</th>
-                    <th className="table-header-cell" style={{ width: '40%', textAlign: 'left' }}>Maps To</th>
-                    <th className="table-header-cell" style={{ width: '20%', textAlign: 'center' }}>Actions</th>
+                    {/* Adjusted column widths to smoothly make room for the new field column */}
+                    <th className="table-header-cell" style={{ width: '30%', textAlign: 'left' }}>Keyword</th>
+                    <th className="table-header-cell" style={{ width: '25%', textAlign: 'left' }}>Target Field</th>
+                    <th className="table-header-cell" style={{ width: '30%', textAlign: 'left' }}>Maps To</th>
+                    <th className="table-header-cell" style={{ width: '15%', textAlign: 'center' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -166,6 +180,9 @@ export default function RuleManager({
                     <tr key={rule.id}>
                       <td style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: '#e53e3e', textAlign: 'left' }}>
                         "{rule.keyword}"
+                      </td>
+                      <td style={{ fontSize: '0.85rem', color: '#4a5568', textAlign: 'left', textTransform: 'capitalize' }}>
+                        {rule.match_field || 'Description'}
                       </td>
                       <td style={{ fontWeight: '600', textAlign: 'left' }}>
                         {rule.category?.icon} {rule.category?.name || `Category #${rule.category_id}`}

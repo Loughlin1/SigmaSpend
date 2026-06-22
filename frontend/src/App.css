@@ -16,7 +16,7 @@
 
 /* Reusable Dynamic Section Card Mappings */
 .sectionCard {
-  padding: 1.25rem;
+  padding: 1rem;
   border: 1px solid var(--border-divider);
   border-radius: 8px;
   background: #ffffff;

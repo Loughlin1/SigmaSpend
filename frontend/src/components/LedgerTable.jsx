@@ -221,17 +221,17 @@ export default function LedgerTable({
 
             return (
               <tr key={exp.id}>
-                <td className="ledger-table-date">{exp.date}</td>
-                <td>{exp.description}</td>
-                <td>{displayAccountName}</td>
-                <td>{displayCategory.icon} {displayCategory.name}</td>
-                <td>{exp.notes || <span style={{ color: '#ccc' }}>—</span>}</td>
-                <td>{exp.is_income ? 'Income' : 'Expense'}</td>
-                <td className="ledger-table-amount" style={{ color: exp.is_income ? '#22543d' : '#2d3748' }}>
+                <td className="ledger-table-date" style={{fontSize: '0.85rem'}}>{exp.date}</td>
+                <td style={{fontSize: '0.85rem'}}>{exp.description}</td>
+                <td style={{fontSize: '0.85rem'}}>{displayAccountName}</td>
+                <td style={{fontSize: '0.85rem'}}>{displayCategory.icon} {displayCategory.name}</td>
+                <td style={{fontSize: '0.85rem'}}>{exp.notes || <span style={{ color: '#ccc' }}>—</span>}</td>
+                <td style={{fontSize: '0.85rem'}}>{exp.is_income ? 'Income' : 'Expense'}</td>
+                <td className="ledger-table-amount" style={{ color: exp.is_income ? '#22543d' : '#2d3748', fontSize: '0.85rem'}}>
                   £{Number(exp.amount).toFixed(2)}
                 </td>
                 <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                  <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center', fontSize: '0.85rem'}}>
                     <button 
                       type="button" 
                       onClick={() => startEdit(exp)} 

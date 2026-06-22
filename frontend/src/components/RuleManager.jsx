@@ -3,14 +3,23 @@ import React, { useState, useEffect } from 'react';
 import '../styles/lists.css';
 import '../styles/forms.css';
 
-export default function RuleManager({ rules = [], categories = [], onCreateRule, onDeleteRule, fetchRules, loading, error }) {
+export default function RuleManager({ 
+  rules = [], 
+  categories = [], 
+  pagination = { page: 1, pages: 1, total: 0 },
+  onCreateRule, 
+  onDeleteRule, 
+  fetchRules, 
+  loading, 
+  error 
+}) {
   const [keyword, setKeyword] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
-  
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,7 +35,7 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
       await onCreateRule({
         keyword: keyword.trim().toLowerCase(),
         category_id: parseInt(categoryId, 10),
-        match_field: 'description' // Providing safe schema fallback default
+        match_field: 'description'
       });
       setKeyword('');
       setCategoryId('');
@@ -34,29 +43,34 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
     } catch (err) {
       setSaveError(err.response?.data?.detail || 'Unable to save rule.');
     } finally {
-      // Fix: Replaced broken "locate;" statement with valid "finally" block execution
       setSaving(false);
     }
   };
 
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Automatically trigger a refresh when the user types a search value
+  // Automatically trigger a refresh when search criteria or pagination page updates
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (typeof fetchRules === 'function') {
-        fetchRules(searchQuery);
+        // Pass both parameters down to useRules hook
+        fetchRules(searchQuery, pagination.page);
       }
-    }, 300); // 300ms Debounce prevents slamming your FastAPI instance with requests on every single keystroke
+    }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, fetchRules]);
+  }, [searchQuery, pagination.page, fetchRules]);
 
+  // Helper handling page changing actions safely
+  const handlePageChange = (targetPage) => {
+    if (typeof fetchRules === 'function') {
+      fetchRules(searchQuery, targetPage);
+    }
+  };
 
   return (
     <div className="account-list">
       <div className="account-list__header" onClick={() => setIsCollapsed(!isCollapsed)}>
-        <h3>Processing Rules ({rules.length})</h3>
+        {/* Uses pagination metrics to display true absolute totals across backend data */}
+        <h3>Processing Rules ({pagination.total})</h3>
         <button className="collapse-button" type="button">
           {isCollapsed ? 'Show' : 'Hide'}
         </button>
@@ -64,13 +78,18 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
 
       {!isCollapsed && (
         <>
-          {/* ⚡ SEARCH INPUT BAR LAYER ⚡ */}
           <div style={{ padding: '10px 0', marginBottom: '15px' }}>
             <input
               type="text"
               placeholder="🔍 Search rules by trigger keyword or category destination..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                // Reset page track index back to 1 instantly when search query alters
+                if (pagination.page !== 1 && typeof fetchRules === 'function') {
+                  fetchRules(e.target.value, 1);
+                }
+              }}
               className="rule-search-input"
             />
           </div>
@@ -82,7 +101,7 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
 
             {showForm && (
               <section className="form">
-                <form onSubmit={handleSubmit} className="form__grid">
+                <form onSubmit={handleSubmit} className="form__grid form__grid--wide">
                   <label className="form-field-wrapper">
                     Keyword Trigger
                     <input
@@ -107,7 +126,6 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
                       <option value="" disabled>-- Choose Target --</option>
                       {categories.map(cat => (
                         <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
-                          {/* Update: Option values now pass the internal integer IDs */}
                           <option value={cat.id}>{cat.name} (General)</option>
                           {cat.subcategories?.map(sub => (
                             <option key={sub.id} value={sub.id}>{sub.name}</option>
@@ -116,13 +134,12 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
                       ))}
                     </select>
                   </label>
-                  <div className="form-field-wrapper">
-                    <button type="button" onClick={() => setShowForm(false)} disabled={saving} className="inlineButton form__cancel">Cancel</button>
+
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', gap: '0.5rem', width: '100%', marginTop: '1rem' }}>
+                    <button type="button" onClick={() => setShowForm(false)} disabled={saving} className="form__cancel">Cancel</button>
+                    <button type="submit" disabled={saving} className="form__submit" style={{ background: '#3182ce', color: 'white' }}>Save Rule</button>
                   </div>
-                  <div className="form-field-wrapper">
-                    <button type="submit" disabled={saving} className="inlineButton form__submit">Save Rule</button>
-                  </div>
-                  {saveError && <div style={{ color: 'red', fontSize: '0.85rem' }}>{saveError}</div>}
+                  {saveError && <div style={{ gridColumn: '1 / -1', color: 'red', fontSize: '0.85rem' }}>{saveError}</div>}
                 </form>
               </section>
             )}
@@ -151,7 +168,7 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
                         "{rule.keyword}"
                       </td>
                       <td style={{ fontWeight: '600', textAlign: 'left' }}>
-                        {rule.category.icon} { rule.category.name || `Category #${rule.category_id}`}
+                        {rule.category?.icon} {rule.category?.name || `Category #${rule.category_id}`}
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         <button 
@@ -166,6 +183,33 @@ export default function RuleManager({ rules = [], categories = [], onCreateRule,
                   ))}
                 </tbody>
               </table>
+
+              {/* RESPONSIVE PAGINATION FOOTER UTILITY LAYER */}
+              {pagination.pages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0', borderTop: '1px solid #eee', marginTop: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                    Page <strong>{pagination.page}</strong> of {pagination.pages}
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                      className="inlineButton"
+                      disabled={pagination.page <= 1 || loading}
+                      onClick={() => handlePageChange(pagination.page - 1)}
+                      style={{ padding: '0.25rem 0.75rem', fontSize: '0.85rem' }}
+                    >
+                      ◀ Prev
+                    </button>
+                    <button 
+                      className="inlineButton"
+                      disabled={pagination.page >= pagination.pages || loading}
+                      onClick={() => handlePageChange(pagination.page + 1)}
+                      style={{ padding: '0.25rem 0.75rem', fontSize: '0.85rem' }}
+                    >
+                      Next ▶
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>

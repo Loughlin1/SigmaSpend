@@ -1,6 +1,6 @@
 # app/schemas/category_rules.py
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
 class CategoryMinResponse(BaseModel):
     id: int
@@ -30,3 +30,11 @@ class CategoryRuleResponse(CategoryRuleBase):
 
     class Config:
         from_attributes = True
+
+
+class PaginatedCategoryRuleResponse(BaseModel):
+    items: List[CategoryRuleResponse]
+    total: int
+    page: int
+    page_size: int
+    pages: int

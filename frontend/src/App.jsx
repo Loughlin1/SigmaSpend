@@ -30,7 +30,7 @@ function App() {
   const { showExpenseForm, actionSelect, editingExpense, closeExpenseForm, openEditExpense, handleActionChange } = useExpenseForm();
   const { filters, handleFilterChange } = useExpenseFilters();
   const { categories, loading: categoriesLoading, error: categoriesError, fetchCategories, createCategory } = useCategories();
-  const { rules, loading: rulesLoading, error: rulesError, fetchRules, createRule, deleteRule, createRuleFromTransaction } = useRules();
+  const { rules, pagination, loading: rulesLoading, error: rulesError, fetchRules, createRule, deleteRule, createRuleFromTransaction } = useRules();
   
   // Analytics Hook & Independent Filter State
   const { summaryData, loading: analyticsLoading, error: analyticsError, fetchSummary } = useExpenseAnalytics();
@@ -138,6 +138,7 @@ function App() {
       <section className="sectionCard">
         <RuleManager
           rules={rules}
+          pagination={pagination}
           categories={categories}
           onCreateRule={handleCreateRule}
           onDeleteRule={handleDeleteRule}

@@ -6,7 +6,7 @@ from app.api import deps
 
 from app.models.category_rules import CategoryRule
 from app.models.category import Category
-from app.schemas.category_rules import CategoryRuleCreate, CategoryRuleResponse
+from app.schemas.category_rules import CategoryRuleCreate, CategoryRuleResponse, PaginatedCategoryRuleResponse
 
 import logging
 logger = logging.getLogger("sigmaspend")
@@ -14,28 +14,53 @@ logger = logging.getLogger("sigmaspend")
 router = APIRouter()
 
 
-@router.get("/", response_model=List[CategoryRuleResponse])
+@router.get("/", response_model=PaginatedCategoryRuleResponse)
 def read_rules(
     db: Session = Depends(deps.get_db),
-    q: Optional[str] = Query(None, description="Search keyword trigger or category name")
+    q: Optional[str] = Query(None, description="Search keyword trigger or category name"),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page")
 ):
-    logger.info(f"Fetching category rules with search filter: q={q}")
+    logger.info(f"Fetching category rules with search filter: q={q}, page={page}, page_size={page_size}")
     
     # Eager load the category model context
     relationship_to_load = (
         CategoryRule.category_rel if hasattr(CategoryRule, "category_rel") else CategoryRule.category
     )
-    query = db.query(CategoryRule).options(joinedload(relationship_to_load))
+    
+    # Base query for counting and filtering
+    query = db.query(CategoryRule)
 
     if q:
         search_term = f"%{q.strip().lower()}%"
-        # Search against either the rule keyword or join on the Category table to match category names
         query = query.join(Category).filter(
             (CategoryRule.keyword.ilike(search_term)) |
             (Category.name.ilike(search_term))
         )
 
-    return query.order_by(CategoryRule.keyword).all()
+    # 1. Capture total count before applying limit/offset constraints
+    total_count = query.count()
+
+    # 2. Compute window offsets
+    offset = (page - 1) * page_size
+
+    # 3. Apply sorting and pagination limits to the final results payload
+    items = (
+        query.options(joinedload(relationship_to_load))
+        .order_by(CategoryRule.keyword)
+        .offset(offset)
+        .limit(page_size)
+        .all()
+    )
+
+    # 4. Return the pagination structure envelope
+    return {
+        "items": items,
+        "total": total_count,
+        "page": page,
+        "page_size": page_size,
+        "pages": (total_count + page_size - 1) // page_size if total_count > 0 else 1
+    }
 
 
 @router.post("/", response_model=CategoryRuleResponse, status_code=status.HTTP_201_CREATED)

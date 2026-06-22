@@ -23,7 +23,7 @@ help:
 # Target to create the virtual environment if it doesn't exist
 venv:
 	@echo "[Setup] Creating Python virtual environment..."
-	python3 -m venv venv
+	python3 -m venv .venv
 	@echo "[Setup] Virtual environment active at ./venv/"
 
 # Target to install dependencies

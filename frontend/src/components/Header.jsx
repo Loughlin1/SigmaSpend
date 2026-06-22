@@ -4,7 +4,7 @@ import logo from '../assets/logo.png'; // Adjust this path based on where your l
 
 export default function Header() {
   return (
-    <header style={{ borderBottom: '1px solid #ccc', paddingBottom: '1rem', marginBottom: '2rem' }}>
+    <header style={{ borderBottom: '1px solid #ccc', marginBottom: '2rem' }}>
       <div className="headingRow logo-container">
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <img src={logo} alt="SigmaSpend Logo" width="64" className="logo" />

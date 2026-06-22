@@ -18,7 +18,7 @@ export default function useExpenses() {
 
       // Merge defaults with the active filter state
       const data = await expenseApi.getAll({ 
-        limit: 500, 
+        limit: 50, 
         ...cleanFilters 
       });
       

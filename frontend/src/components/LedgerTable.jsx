@@ -115,14 +115,14 @@ export default function LedgerTable({
       <table border="1" cellPadding="10" className="table ledger-table-view" style={{ width: '100%' }}>
         <thead>
           <tr>
-            <th style={{ width: '10%' }}>Date</th>         {/* e.g., "2026-06-19" */}
-            <th style={{ width: '25%' }}>Description</th>  {/* e.g., "Starbucks Coffee London" */}
-            <th style={{ width: '10%' }}>Account</th>      {/* e.g., "Monzo Card" */}
-            <th style={{ width: '15%' }}>Category</th>     {/* e.g., "📁 Food & Drink" */}
-            <th style={{ width: '15%' }}>Notes</th>        {/* e.g., "Business lunch meeting" */}
-            <th style={{ width: '8%' }}>Type</th>          {/* e.g., "Expense" / "Income" */}
-            <th style={{ width: '10%' }}>Amount</th>        {/* e.g., "£1,240.50" */}
-            <th style={{ width: '5%', textAlign: 'center' }}>Actions</th> {/* Buttons icon/text width */}
+            <th style={{ width: '10%' }}>Date</th>
+            <th style={{ width: '25%' }}>Description</th>
+            <th style={{ width: '10%' }}>Account</th>
+            <th style={{ width: '15%' }}>Category</th>
+            <th style={{ width: '15%' }}>Notes</th>
+            <th style={{ width: '8%' }}>Type</th>
+            <th style={{ width: '10%' }}>Amount</th>
+            <th style={{ width: '5%', textAlign: 'center' }}>Actions</th>
           </tr>
         </thead>
         <tbody>

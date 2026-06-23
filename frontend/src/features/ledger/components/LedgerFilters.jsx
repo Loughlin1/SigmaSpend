@@ -35,7 +35,7 @@ export default function LedgerFilters({ filters, onFilterChange, accountNameMap,
 
   return (
     <div className="ledger-filters">
-      {/* 行 1: Top Row full-width search input */}
+      {/* 1: Top Row full-width search input */}
       <div className="ledger-filters__field ledger-filters__field--search">
         <label className="ledger-filters__label" htmlFor="search_input">Search Ledger</label>
         <input 
@@ -48,7 +48,7 @@ export default function LedgerFilters({ filters, onFilterChange, accountNameMap,
         />
       </div>
 
-      {/* 行 2: Secondary flow wrapping row for specific sub-filters */}
+      {/* 2: Secondary flow wrapping row for specific sub-filters */}
       <div className="ledger-filters__field">
         <label className="ledger-filters__label" htmlFor="filter_is_income">Type</label>
         <select id="filter_is_income" name="is_income" value={String(filters.is_income)} onChange={handleChange} className="ledger-filters__select">

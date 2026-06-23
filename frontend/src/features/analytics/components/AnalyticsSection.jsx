@@ -3,15 +3,18 @@ import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'rea
 import AnalyticsFilters from './AnalyticsFilters';
 import ExpenseChart from './ExpenseChart';
 import useExpenseAnalytics from '../hooks/useExpenseAnalytics';
+import { getCurrentMonthBounds } from '../../../utils/calendarUtils'
 
 const AnalyticsSection = forwardRef(({ accounts }, ref) => {
   const { summaryData, loading: analyticsLoading, error: analyticsError, fetchSummary } = useExpenseAnalytics();
   
+  const { start: defaultStart, end: defaultEnd } = getCurrentMonthBounds();
+
   // Isolate chart-specific filters to this feature context
   const [chartFilters, setChartFilters] = useState({
     group_by: 'month',
-    start_date: '2026-01-01', 
-    end_date: '2026-12-31',
+    start_date: defaultStart, 
+    end_date: defaultEnd,
     account_id: ''
   });
 

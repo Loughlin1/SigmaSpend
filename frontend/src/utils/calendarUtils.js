@@ -90,3 +90,33 @@ export const getGoogleCalendarDayUrl = (dateStr) => {
   // Returns the clean, formatted Google Calendar Day View url safely
   return `https://calendar.google.com/calendar/r/day/${year}/${month}/${day}`;
 };
+
+
+/**
+ * Helper to compute the ISO-standard start and end bounds of the current month.
+ * Automatically accommodates varying day counts (e.g., leap years).
+ * @returns {Object} { start, end } in YYYY-MM-DD format
+ */
+export const getCurrentMonthBounds = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0-indexed (Jan=0, Jun=5)
+
+  // First day of the current month: YYYY-MM-01
+  const startDay = new Date(year, month, 1);
+  // Passing 0 as the day value selects the final day of the prior month, 
+  // so month + 1 with day 0 cleanly lands on the exact last day of the current month.
+  const endDay = new Date(year, month + 1, 0);
+
+  const formatISO = (dateObj) => {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  return {
+    start: formatISO(startDay),
+    end: formatISO(endDay)
+  };
+};

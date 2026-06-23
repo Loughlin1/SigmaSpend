@@ -52,6 +52,59 @@
   box-sizing: border-box;
 }
 
+/* --- CSS Custom Tooltip Framework --- */
+.custom-tooltip {
+  position: relative;
+}
+
+/* Tooltip bubble definition hidden by default */
+.custom-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  transform-origin: bottom center;
+  background-color: #2d3748; /* Dark slate gray background matches theme styles */
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  font-weight: normal;
+  width: 240px;
+  white-space: normal;
+  text-align: left;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+  z-index: 99;
+}
+
+/* Little triangle pointer underneath bubble */
+.custom-tooltip::before {
+  content: "";
+  position: absolute;
+  bottom: 105%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #2d3748 transparent transparent transparent;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-in-out;
+  z-index: 99;
+}
+
+/* Reveal bubble and pointer instantly on cursor hover */
+.custom-tooltip:hover::after,
+.custom-tooltip:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
 /* Buttons adapt securely based on surrounding grid layout */
 .form__submit,
 .form__cancel {

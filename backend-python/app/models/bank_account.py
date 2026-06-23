@@ -13,6 +13,7 @@ class BankAccount(Base):
     bank_name = Column(String, nullable=False)  # e.g., "Chase", "Wells Fargo"
 
     amount_style = Column(String, nullable=False, default="single_column")
+    invert_amounts = Column(Boolean, default=False, nullable=False)
     mappings = Column(JSON, nullable=False)
 
     # Optional legacy profile reference for backward compatibility

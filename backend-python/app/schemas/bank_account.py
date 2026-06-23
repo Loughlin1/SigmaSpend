@@ -9,6 +9,7 @@ class BankAccountBase(BaseModel):
     bank_name: str
     amount_style: str = "single_column"
     mappings: Dict[str, Any]
+    invert_amounts: bool
     bank_profile: Optional[str] = None  # Optional legacy reference to config.yaml profile name
 
 class BankAccountCreate(BankAccountBase):
@@ -20,14 +21,12 @@ class BankAccountUpdate(BaseModel):
     amount_style: Optional[str] = None
     mappings: Optional[Dict[str, Any]] = None
     is_active: Optional[bool] = None
+    invert_amounts: Optional[bool] = None
 
 class BankAccountResponse(BankAccountBase):
     id: int
     created_at: datetime
     is_active: bool
-
-    class Config:
-        from_attributes = True
 
     class Config:
         from_attributes = True

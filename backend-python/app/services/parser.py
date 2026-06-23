@@ -29,11 +29,12 @@ class StatementParserService:
                 detail=f"Bank account '{account_id}' not found. Create it first via POST /accounts"
             )
 
-        if account.mappings:
+        if account.mappings is not None:
             return {
                 "account_id": account.account_id,
                 "amount_style": account.amount_style or "single_column",
                 "mappings": account.mappings,
+                "invert_amounts": account.invert_amounts,
             }
 
         raise HTTPException(
@@ -70,7 +71,7 @@ class StatementParserService:
         return list(set(flat_categories)), category_map
 
     @staticmethod
-    def _parse_amount(row: Dict[str, str], amount_style: str, mappings: Dict[str, str]) -> Tuple[float, bool]:
+    def _parse_amount(row: Dict[str, str], amount_style: str, invert_amounts: bool, mappings: Dict[str, str]) -> Tuple[float, bool]:
         """Handles parsing monetary amounts and determining direction (Income vs Outflow)."""
         amount = 0.0
         is_income = False
@@ -96,7 +97,11 @@ class StatementParserService:
                 is_income = True
             else:
                 raise ValueError("Row contains no valid numeric values in split columns.")
-                
+        
+        # Credit card statement handling
+        if invert_amounts:
+            is_income = not is_income        
+        
         return amount, is_income
 
     @staticmethod
@@ -117,7 +122,7 @@ class StatementParserService:
         return None
 
     @classmethod
-    def process_csv(cls, file_contents: str, db: Session, account_id: str = None, bank_profile: str = None) -> dict:
+    def process_csv(cls, file_contents: str, db: Session, account_id: str = "", bank_profile: str = "") -> dict:
         if not account_id:
             logger.warning("[parser] Aborting CSV processing: No account_id provided to execution thread.")
             return {}
@@ -125,8 +130,9 @@ class StatementParserService:
         bank_config = cls.get_account_bank_config(db, account_id, bank_profile)
         amount_style = bank_config.get("amount_style", "single_column")
         mappings = bank_config["mappings"]
+        invert_amounts = bank_config["invert_amounts"]
         
-        logger.info(f"[parser] Starting CSV ingestion pipeline for account: '{account_id}' (Format: {amount_style})")
+        logger.info(f"[parser] Starting CSV ingestion pipeline for account: '{account_id}' (Format: {amount_style}, invert_amounts: {invert_amounts})")
 
         all_rules = db.query(CategoryRule).all()
         flat_categories, category_map = cls._get_category_cache(db)
@@ -162,7 +168,7 @@ class StatementParserService:
                 notes_key = mappings.get("notes_column")
                 notes = row.get(notes_key, "").strip() if notes_key else ""
 
-                amount, is_income = cls._parse_amount(row, amount_style, mappings)
+                amount, is_income = cls._parse_amount(row, amount_style, invert_amounts, mappings)
 
                 # Deduplication Strategy Evaluation
                 # Determine its specific sequential position in the CURRENT file
@@ -195,7 +201,7 @@ class StatementParserService:
 
                 # Rule Engine & AI Category Assignment
                 cat_id = cls._assign_category(new_expense, all_rules, category_map)
-                new_expense.category_id = cat_id
+                new_expense.category_id = cat_id # type: ignore
                 if cat_id:
                     categorized_count += 1
                 else:

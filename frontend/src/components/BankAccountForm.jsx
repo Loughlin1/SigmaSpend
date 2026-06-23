@@ -13,6 +13,7 @@ export default function BankAccountForm({ onAccountCreated }) {
   const [amountColumn, setAmountColumn] = useState('Amount');
   const [amountInColumn, setAmountInColumn] = useState('Credit');
   const [amountOutColumn, setAmountOutColumn] = useState('Debit');
+  const [invertAmounts, setInvertAmounts] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -66,6 +67,7 @@ export default function BankAccountForm({ onAccountCreated }) {
         account_name: accountName.trim(),
         bank_name: bankName.trim(),
         amount_style: amountStyle,
+        invert_amounts: invertAmounts,
         mappings,
       });
       setSuccessMessage('Bank account added successfully.');
@@ -78,6 +80,7 @@ export default function BankAccountForm({ onAccountCreated }) {
       setAmountColumn('Amount');
       setAmountInColumn('Credit');
       setAmountOutColumn('Debit');
+      setInvertAmounts(false);
       onAccountCreated();
     } catch (err) {
       console.error('Failed creating bank account', err);
@@ -166,6 +169,32 @@ export default function BankAccountForm({ onAccountCreated }) {
             <option value="split_columns">Split Columns</option>
           </select>
         </label>
+
+        <div className="form-field-wrapper" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', minHeight: '60px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: '500' }}>Invert Signs</span>
+            <div
+              className="custom-tooltip"
+              data-tooltip="Enable this for credit card statements where positive charges represent expenses/debt and negative lines represent paying off your card balance (income)."
+              style={{
+                position: 'relative', display: 'inline-block', cursor: 'help',
+                background: '#e2e8f0', borderRadius: '50%', width: '16px', height: '16px',
+                textAlign: 'center', fontSize: '0.7rem', lineHeight: '16px', fontWeight: 'bold', color: '#4a5568'
+              }}
+            >
+              ?
+            </div>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: '0.4rem', fontSize: '0.9rem' }}>
+            <input
+              type="checkbox"
+              checked={invertAmounts}
+              onChange={(e) => setInvertAmounts(e.target.checked)}
+            />
+            Credit Card Mode
+          </label>
+        </div>
+
         <label className="form-field-wrapper">
           Date Column
           <input

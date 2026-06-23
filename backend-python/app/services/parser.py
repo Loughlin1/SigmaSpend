@@ -20,8 +20,8 @@ logger = logging.getLogger("sigmaspend")
 
 class StatementParserService:
     @classmethod
-    def get_account_bank_config(cls, db: Session, account_id: str, bank_profile: Optional[str] = None) -> dict:
-        account = db.query(BankAccount).filter(BankAccount.account_id == account_id).first()
+    def get_account_bank_config(cls, db: Session, account_id: int, bank_profile: Optional[str] = None) -> dict:
+        account = db.query(BankAccount).filter(BankAccount.id == account_id).first()
         if not account:
             logger.error(f"[parser] Ingestion lookup failed: Account '{account_id}' does not exist.")
             raise HTTPException(
@@ -31,7 +31,7 @@ class StatementParserService:
 
         if account.mappings is not None:
             return {
-                "account_id": account.account_id,
+                "account_id": account.id,
                 "amount_style": account.amount_style or "single_column",
                 "mappings": account.mappings,
                 "invert_amounts": account.invert_amounts,
@@ -44,10 +44,10 @@ class StatementParserService:
     
     @staticmethod
     def generate_transaction_hash(
-        account_id: str, date: str, amount: float, is_income: bool, description: str, occurrence: int
+        account_id: int, date: str, amount: float, is_income: bool, description: str, occurrence: int
     ) -> str:
         normalized_desc = description.strip().lower()
-        base_signature = f"{account_id}_{date}_{amount}_{is_income}_{normalized_desc}_occ{occurrence}"
+        base_signature = f"{id}_{date}_{amount}_{is_income}_{normalized_desc}_occ{occurrence}"
         return hashlib.md5(base_signature.encode("utf-8")).hexdigest()
 
     @classmethod
@@ -122,8 +122,8 @@ class StatementParserService:
         return None
 
     @classmethod
-    def process_csv(cls, file_contents: str, db: Session, account_id: str = "", bank_profile: str = "") -> dict:
-        if not account_id:
+    def process_csv(cls, file_contents: str, db: Session, account_id: int, bank_profile: str = "") -> dict:
+        if account_id is None:
             logger.warning("[parser] Aborting CSV processing: No account_id provided to execution thread.")
             return {}
 

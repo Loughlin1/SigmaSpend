@@ -17,7 +17,7 @@ class ExpenseService:
         skip: int = 0,
         limit: int = 100,
         category: Optional[str] = None,
-        account_id: Optional[str] = None,
+        account_id: Optional[int] = None,
         is_income: Optional[bool] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,

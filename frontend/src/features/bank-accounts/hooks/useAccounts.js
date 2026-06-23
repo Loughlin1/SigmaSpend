@@ -23,7 +23,7 @@ export default function useAccounts() {
 
   const accountNameMap = useMemo(() => {
     return accounts.reduce((map, account) => {
-      map[account.account_id] = account.account_name;
+      map[account.id] = account.account_name;
       return map;
     }, {});
   }, [accounts]);

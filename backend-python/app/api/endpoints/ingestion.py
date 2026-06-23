@@ -20,7 +20,7 @@ router = APIRouter()
 @router.post("/upload/csv", status_code=status.HTTP_201_CREATED)
 async def upload_csv_statement(
     files: List[UploadFile] = File(..., description="CSV files to upload"),
-    account_id: str = Query(..., description="Bank account ID to associate with this import"),
+    account_id: int = Query(..., description="Bank account ID to associate with this import"),
     db: Session = Depends(get_db)
 ):
     """
@@ -45,7 +45,7 @@ async def upload_csv_statement(
             )
     
     # Verify account exists
-    account = db.query(BankAccount).filter(BankAccount.account_id == account_id).first()
+    account = db.query(BankAccount).filter(BankAccount.id == account_id).first()
     if not account:
         logger.warning(f"Ingestion rejected: Bank account '{account_id}' does not exist.")
         raise HTTPException(

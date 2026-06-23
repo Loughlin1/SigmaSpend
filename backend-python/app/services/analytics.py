@@ -13,7 +13,7 @@ class ExpenseAnalyticsService:
     def get_multi_tier_summary(
         db: Session,
         logger: logging.Logger,
-        account_id: Optional[str] = None,
+        account_id: Optional[int] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         group_by: str = "month"

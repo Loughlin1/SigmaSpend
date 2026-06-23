@@ -82,7 +82,9 @@ export default function LedgerTable({
   };
 
   const getAccountAbbreviation = (accountName) => {
-    if (!accountName) return '';
+    if (!accountName || typeof accountName !== 'string') {
+      return "UNK"; // Fallback to "Unknown" abbreviation if name is missing or loading
+    }
     return accountName.replace(/current account/i, 'CA').replace(/credit card/i, 'CC').trim();
   };
 

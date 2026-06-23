@@ -25,12 +25,12 @@ def create_bank_account(
     """
     Create a new bank account for CSV uploads.
     """
-    existing = db.query(BankAccount).filter(BankAccount.account_id == account_in.account_id).first()
+    existing = db.query(BankAccount).filter(BankAccount.account_name == account_in.account_name).first()
     if existing:
-        logger.warning(f"Account creation conflict: ID '{account_in.account_id}' already exists")
+        logger.warning(f"Account creation conflict: ID '{account_in.account_name}' already exists")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Account '{account_in.account_id}' already exists"
+            detail=f"Account '{account_in.account_name}' already exists"
         )
     
     db_account = BankAccount(**account_in.dict())
@@ -61,11 +61,11 @@ def list_bank_accounts(
 
 @router.get("/{account_id}", response_model=BankAccountResponse)
 def get_bank_account(
-    account_id: str,
+    account_id: int,
     db: Session = Depends(get_db)
 ):
     """Retrieve details of a specific bank account."""
-    account = db.query(BankAccount).filter(BankAccount.account_id == account_id).first()
+    account = db.query(BankAccount).filter(BankAccount.id == account_id).first()
     if not account:
         logger.warning(f"Lookup failed: Bank account '{account_id}' not found")
         raise HTTPException(
@@ -77,12 +77,12 @@ def get_bank_account(
 
 @router.put("/{account_id}", response_model=BankAccountResponse)
 def update_bank_account(
-    account_id: str,
+    account_id: int,
     account_in: BankAccountUpdate,
     db: Session = Depends(get_db)
 ):
     """Update bank account details."""
-    account = db.query(BankAccount).filter(BankAccount.account_id == account_id).first()
+    account = db.query(BankAccount).filter(BankAccount.id == account_id).first()
     if not account:
         logger.warning(f"Update failed: Bank account '{account_id}' not found")
         raise HTTPException(

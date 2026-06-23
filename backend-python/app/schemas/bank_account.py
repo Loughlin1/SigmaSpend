@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 
 class BankAccountBase(BaseModel):
-    account_id: str
     account_name: str
     bank_name: str
     amount_style: str = "single_column"
@@ -16,6 +15,7 @@ class BankAccountCreate(BankAccountBase):
     pass
 
 class BankAccountUpdate(BaseModel):
+    account_id: int
     account_name: Optional[str] = None
     bank_name: Optional[str] = None
     amount_style: Optional[str] = None

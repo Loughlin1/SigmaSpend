@@ -29,7 +29,7 @@ def read_expenses(
     skip: int = Query(0, ge=0, description="Number of records to skip for pagination"),
     limit: int = Query(100, ge=1, le=500, description="Max number of records to return"),
     category: Optional[str] = Query(None, description="Filter by expense category"),
-    account_id: Optional[str] = Query(None, description="Filter by specific bank account"),
+    account_id: Optional[int] = Query(None, description="Filter by specific bank account"),
     is_income: Optional[bool] = Query(None, description="Filter by type: True for Income, False for Expense"),
     start_date: Optional[str] = Query(None, description="Filter expenses from this date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="Filter expenses up to this date (YYYY-MM-DD)"),
@@ -70,7 +70,7 @@ def create_expense(
 @router.get("/analytics/summary", response_model=List[AnalyticalBreakdownResponse])
 def read_expenses_summary(
     db: Session = Depends(deps.get_db),
-    account_id: Optional[str] = Query(None, description="Filter by specific bank account"),
+    account_id: Optional[int] = Query(None, description="Filter by specific bank account"),
     start_date: Optional[str] = Query(None, description="Filter from date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="Filter up to date (YYYY-MM-DD)"),
     group_by: str = Query("month", regex="^(month|year|day)$", description="Timeline granularity")

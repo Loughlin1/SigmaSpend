@@ -4,7 +4,7 @@ from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, field_serializer, Field, model_validator
 
 class ExpenseBase(BaseModel):
-    account_id: str
+    account_id: int
     date: datetime.date
     amount: float
     is_income: bool = False

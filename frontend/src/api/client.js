@@ -36,8 +36,8 @@ export const ingestionApi = {
 };
 
 export const accountsApi = {
-  getAccounts: (params) => apiClient.get('/accounts', { params }).then(res => res.data),
-  createAccount: (data) => apiClient.post('/accounts', data).then(res => res.data),
+  getAccounts: (params) => apiClient.get('/accounts/', { params }).then(res => res.data),
+  createAccount: (data) => apiClient.post('/accounts/', data).then(res => res.data),
   updateAccount: (accountId, data) => apiClient.put(`/accounts/${encodeURIComponent(accountId)}`, data).then(res => res.data),
 };
 

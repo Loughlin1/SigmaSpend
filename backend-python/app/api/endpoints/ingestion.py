@@ -75,7 +75,6 @@ async def upload_csv_statement(
                 decoded_contents,
                 db,
                 account_id=account_id,
-                bank_profile=str(account.bank_profile)
             )
             
             added = result.get("added", 0)

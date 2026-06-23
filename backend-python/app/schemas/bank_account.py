@@ -9,7 +9,6 @@ class BankAccountBase(BaseModel):
     amount_style: str = "single_column"
     mappings: Dict[str, Any]
     invert_amounts: bool
-    bank_profile: Optional[str] = None  # Optional legacy reference to config.yaml profile name
 
 class BankAccountCreate(BankAccountBase):
     pass

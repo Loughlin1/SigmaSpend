@@ -20,7 +20,7 @@ logger = logging.getLogger("sigmaspend")
 
 class StatementParserService:
     @classmethod
-    def get_account_bank_config(cls, db: Session, account_id: int, bank_profile: Optional[str] = None) -> dict:
+    def get_account_bank_config(cls, db: Session, account_id: int) -> dict:
         account = db.query(BankAccount).filter(BankAccount.id == account_id).first()
         if not account:
             logger.error(f"[parser] Ingestion lookup failed: Account '{account_id}' does not exist.")
@@ -122,12 +122,12 @@ class StatementParserService:
         return None
 
     @classmethod
-    def process_csv(cls, file_contents: str, db: Session, account_id: int, bank_profile: str = "") -> dict:
+    def process_csv(cls, file_contents: str, db: Session, account_id: int) -> dict:
         if account_id is None:
             logger.warning("[parser] Aborting CSV processing: No account_id provided to execution thread.")
             return {}
 
-        bank_config = cls.get_account_bank_config(db, account_id, bank_profile)
+        bank_config = cls.get_account_bank_config(db, account_id)
         amount_style = bank_config.get("amount_style", "single_column")
         mappings = bank_config["mappings"]
         invert_amounts = bank_config["invert_amounts"]

@@ -4,6 +4,7 @@ import RuleForm from './RuleForm';
 import RuleRow from './RuleRow';
 import RuleRowEdit from './RuleRowEdit';
 import RulePagination from './RulePagination';
+import ConfirmationModal from '../../../../components/ui/ConfirmationModal';
 
 import '../../../../styles/lists.css';
 import '../../../../styles/forms.css';
@@ -23,6 +24,7 @@ export default function RuleManager({
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState(null);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -46,6 +48,13 @@ export default function RuleManager({
       await onUpdateRule(ruleId, updatedData);
     }
     setEditingId(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteTargetId && typeof onDeleteRule === 'function') {
+      await onDeleteRule(deleteTargetId);
+    }
+    setDeleteTargetId(null);
   };
 
   return (
@@ -125,7 +134,7 @@ export default function RuleManager({
                           key={rule.id}
                           rule={rule}
                           onStartEdit={(r) => setEditingId(r.id)}
-                          onDeleteRule={onDeleteRule}
+                          onDeleteRule={(id) => setDeleteTargetId(id)}
                         />
                       )
                     ))}
@@ -142,6 +151,14 @@ export default function RuleManager({
           </>
         )}
       </div>
+      {/* Shared Deletion Confirmation Modal Overlay */}
+      <ConfirmationModal
+        isOpen={deleteTargetId !== null}
+        title="Delete Processing Rule"
+        message="Are you sure you want to permanently delete this keyword mapping rule? Future statement uploads matching this criterion will default to Uncategorized."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
     </section>
   );
 }

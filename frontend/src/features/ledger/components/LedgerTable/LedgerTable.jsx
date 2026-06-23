@@ -4,9 +4,9 @@ import { expenseApi } from '../../../../api/client';
 import BulkActionsPanel from './BulkActionsPanel';
 import LedgerRowEdit from './LedgerRowEdit';
 import LedgerRowRead from './LedgerRowRead';
+import ConfirmationModal from '../../../../components/ui/ConfirmationModal';
 import '../../../../styles/lists.css';
 import '../../../../styles/forms.css';
-
 
 export default function LedgerTable({ 
   expenses = [], 
@@ -26,6 +26,7 @@ export default function LedgerTable({
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkCategory, setBulkCategory] = useState("");
   const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
 
   const handleSelectAll = (e) => {
     setSelectedIds(e.target.checked ? expenses.map(exp => exp.id) : []);
@@ -61,6 +62,13 @@ export default function LedgerTable({
       console.error("[SigmaSpend UI] Network thread halted inside handleRowSave:", err);
       alert("Could not save transaction changes. Please verify network connections.");
     }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteTargetId && typeof onDelete === 'function') {
+      await onDelete(deleteTargetId);
+    }
+    setDeleteTargetId(null);
   };
 
   const getCategoryDisplay = (categoryId) => {
@@ -136,12 +144,13 @@ export default function LedgerTable({
                 displayAccountName={getAccountAbbreviation(accountNameMap[exp.account_id] || exp.account_id)}
                 displayCategory={getCategoryDisplay(exp.category_id)}
                 onStartEdit={() => setEditingId(exp.id)}
-                onDelete={onDelete}
+                onDelete={setDeleteTargetId} // ◄ Intercepts the id with local state
               />
             );
           })}
         </tbody>
       </table>
+
       <div className="ledger-pagination-strip" style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         padding: '0.75rem 1rem', background: '#f7fafc', borderTop: '1px solid #e2e8f0',
@@ -204,6 +213,15 @@ export default function LedgerTable({
           </div>
         </div>
       </div>
+
+      {/* Shared Deletion Confirmation Intercept Overlay */}
+      <ConfirmationModal
+        isOpen={deleteTargetId !== null}
+        title="Delete Transaction"
+        message="Are you sure you want to permanently delete this transaction record? This will alter your historical balances and aggregation summaries."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
     </div>
   );
 }

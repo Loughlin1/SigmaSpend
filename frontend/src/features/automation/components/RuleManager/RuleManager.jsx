@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import RuleForm from './RuleForm';
 import RuleRow from './RuleRow';
+import RuleRowEdit from './RuleRowEdit';
 import RulePagination from './RulePagination';
 
 import '../../../../styles/lists.css';
@@ -12,6 +13,7 @@ export default function RuleManager({
   categories = [], 
   pagination = { page: 1, pages: 1, total: 0 },
   onCreateRule, 
+  onUpdateRule,
   onDeleteRule, 
   fetchRules, 
   loading, 
@@ -20,8 +22,8 @@ export default function RuleManager({
   const [showForm, setShowForm] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingId, setEditingId] = useState(null);
 
-  // Automatically trigger a API data refresh when search parameters or pagination page updates
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (typeof fetchRules === 'function') {
@@ -33,9 +35,17 @@ export default function RuleManager({
   }, [searchQuery, pagination.page, fetchRules]);
 
   const handlePageChange = (targetPage) => {
+    setEditingId(null); // Clear editing states on page change
     if (typeof fetchRules === 'function') {
       fetchRules(searchQuery, targetPage);
     }
+  };
+
+  const handleSaveEdit = async (ruleId, updatedData) => {
+    if (typeof onUpdateRule === 'function') {
+      await onUpdateRule(ruleId, updatedData);
+    }
+    setEditingId(null);
   };
 
   return (
@@ -50,6 +60,7 @@ export default function RuleManager({
 
         {!isCollapsed && (
           <>
+            {/* Search and Form sections remain identical... */}
             <div style={{ padding: '10px 0', marginBottom: '15px' }}>
               <input
                 type="text"
@@ -65,7 +76,7 @@ export default function RuleManager({
               />
             </div>
 
-            <div className="account-list__creation-zone" style={{ margin: '15px 0', padding: '15px 0', borderTop: '1px dashed #ccc'}}>
+            <div className="account-list__creation-zone" style={{ margin: '15px 0', padding: '15px 0', borderTop: '1px dashed #ccc' }}>
               <button type="button" onClick={() => setShowForm(!showForm)} className="button" style={{ marginBottom: showForm ? '15px' : 0 }}>
                 {showForm ? 'Hide Form' : 'Create New Keyword Rule'}
               </button>
@@ -101,11 +112,22 @@ export default function RuleManager({
                   </thead>
                   <tbody>
                     {rules.map((rule) => (
-                      <RuleRow 
-                        key={rule.id}
-                        rule={rule}
-                        onDeleteRule={onDeleteRule}
-                      />
+                      editingId === rule.id ? (
+                        <RuleRowEdit
+                          key={rule.id}
+                          rule={rule}
+                          categories={categories}
+                          onSave={handleSaveEdit}
+                          onCancel={() => setEditingId(null)}
+                        />
+                      ) : (
+                        <RuleRow 
+                          key={rule.id}
+                          rule={rule}
+                          onStartEdit={(r) => setEditingId(r.id)}
+                          onDeleteRule={onDeleteRule}
+                        />
+                      )
                     ))}
                   </tbody>
                 </table>

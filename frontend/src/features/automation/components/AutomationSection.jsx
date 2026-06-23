@@ -32,6 +32,13 @@ const AutomationSection = forwardRef(({ categories, triggerGlobalRefresh }, ref)
     if (typeof triggerGlobalRefresh === 'function') await triggerGlobalRefresh();
   };
 
+  const handleUpdateRule = async (ruleId, ruleData) => {
+    if (typeof rulesHook.updateRule === 'function') {
+      await rulesHook.updateRule(ruleId, ruleData);
+      rulesHook.fetchRules();
+    }
+  };
+
   const handleDeleteRule = async (ruleId) => {
     await deleteRule(ruleId);
     await fetchRules();
@@ -44,6 +51,7 @@ const AutomationSection = forwardRef(({ categories, triggerGlobalRefresh }, ref)
       pagination={pagination}
       categories={categories}
       onCreateRule={handleCreateRule}
+      onUpdateRule={handleUpdateRule}
       onDeleteRule={handleDeleteRule}
       fetchRules={fetchRules}
       loading={rulesLoading}

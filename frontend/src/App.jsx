@@ -50,10 +50,7 @@ function App() {
           <DescriptionSection />
           <StatementUpload 
             accounts={accounts} 
-            onUploadSuccess={async () => { 
-              await triggerGlobalRefresh(); 
-              await fetchRules(); 
-            }} 
+            onUploadSuccess={triggerGlobalRefresh} 
           />
         </div>
       </section>

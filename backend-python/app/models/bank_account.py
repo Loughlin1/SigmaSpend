@@ -8,7 +8,6 @@ class BankAccount(Base):
     __tablename__ = "bank_accounts"
 
     id = Column(Integer, primary_key=True, index=True)
-    account_id = Column(String, unique=True, index=True, nullable=False)  # e.g., "checking_001"
     account_name = Column(String, nullable=False)  # e.g., "My Checking Account"
     bank_name = Column(String, nullable=False)  # e.g., "Chase", "Wells Fargo"
 

@@ -4,8 +4,8 @@ import RuleForm from './RuleForm';
 import RuleRow from './RuleRow';
 import RulePagination from './RulePagination';
 
-import '../../../styles/lists.css';
-import '../../../styles/forms.css';
+import '../../../../styles/lists.css';
+import '../../../../styles/forms.css';
 
 export default function RuleManager({ 
   rules = [], 

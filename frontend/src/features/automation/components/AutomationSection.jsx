@@ -1,6 +1,6 @@
 // src/features/automation/components/AutomationSection.jsx
 import React, { useEffect, useImperativeHandle, forwardRef } from 'react';
-import RuleManager from './RuleManager';
+import RuleManager from './RuleManager/RuleManager';
 import useRules from '../hooks/useRules';
 
 const AutomationSection = forwardRef(({ categories, triggerGlobalRefresh }, ref) => {

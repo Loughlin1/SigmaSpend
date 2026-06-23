@@ -1,6 +1,7 @@
 // src/components/StatementUpload.jsx
 import React, { useState } from 'react';
 import { ingestionApi } from '../api/client';
+import MetricsModal from './ui/MetricsModal';
 import '../styles/forms.css';
 
 export default function StatementUpload({ accounts, onUploadSuccess }) {
@@ -9,6 +10,10 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
   const [selectedAccount, setSelectedAccount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const [showMetrics, setShowMetrics] = useState(false);
+  const [uploadedFileCount, setUploadedFileCount] = useState(0);
+  const [uploadMetrics, setUploadMetrics] = useState(null);
 
   const handleUpload = async (e) => {
     e.preventDefault(); // Preventing submission bubbling transitions
@@ -19,6 +24,8 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
 
     setError('');
     setLoading(true);
+    const fileCountSent = files.length;
+
     try {
       const response = await ingestionApi.uploadStatement(files, selectedAccount);
       const metrics = response.summary || response.data || response;
@@ -34,13 +41,15 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
         categorized,
         uncategorized
       });
-      alert(
-        `Import complete for ${files.length} file${files.length === 1 ? '' : 's'}!\n\n` +
-        `• New Transactions Added: ${added}\n` +
-        `• Duplicates Skipped: ${skipped}\n` +
-        `• Automatically Categorised: ${categorized} ✨\n` +
-        `• Left Uncategorised: ${uncategorized} ❓`
-      );
+      setUploadMetrics({
+        added: metrics.added ?? 0,
+        skipped: metrics.skipped ?? 0,
+        categorized: metrics.categorized ?? 0,
+        uncategorized: metrics.uncategorized ?? 0
+      });
+      setUploadedFileCount(fileCountSent);
+      setShowMetrics(true);
+
       onUploadSuccess();
       setFiles([]);
       setInputKey((prev) => prev + 1);
@@ -110,6 +119,13 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
           {loading ? 'Processing...' : `Upload File${files.length === 1 ? '' : 's'}`}
         </button>
       </form>
+
+      <MetricsModal 
+        isOpen={showMetrics}
+        onClose={() => setShowMetrics(false)}
+        fileCount={uploadedFileCount}
+        metrics={uploadMetrics}
+      />
     </section>
   );
 }

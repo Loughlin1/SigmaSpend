@@ -5,6 +5,8 @@ import BulkActionsPanel from './BulkActionsPanel';
 import LedgerRowEdit from './LedgerRowEdit';
 import LedgerRowRead from './LedgerRowRead';
 import ConfirmationModal from '../../../../components/ui/ConfirmationModal';
+import { getAccountAbbreviation, getCategoryDisplay } from '../../../../utils/formatters';
+
 import '../../../../styles/lists.css';
 import '../../../../styles/forms.css';
 
@@ -71,23 +73,6 @@ export default function LedgerTable({
     setDeleteTargetId(null);
   };
 
-  const getCategoryDisplay = (categoryId) => {
-    if (!categoryId) return { icon: '❓', name: 'Uncategorized' };
-    for (let cat of categories) {
-      if (cat.id === categoryId) return { icon: cat.icon || '📁', name: cat.name };
-      const subMatch = cat.subcategories?.find(s => s.id === categoryId);
-      if (subMatch) return { icon: cat.icon || '📁', name: subMatch.name };
-    }
-    return { icon: '❓', name: 'Uncategorized' };
-  };
-
-  const getAccountAbbreviation = (accountName) => {
-    if (!accountName || typeof accountName !== 'string') {
-      return "UNK"; // Fallback to "Unknown" abbreviation if name is missing or loading
-    }
-    return accountName.replace(/current account/i, 'CA').replace(/credit card/i, 'CC').trim();
-  };
-
   return (
     <div className="ledger-table-container" style={{ position: 'relative' }}>
       
@@ -144,9 +129,9 @@ export default function LedgerTable({
                 isChecked={selectedIds.includes(exp.id)}
                 onSelectRow={() => handleSelectRow(exp.id)}
                 displayAccountName={getAccountAbbreviation(accountNameMap[exp.account_id] || exp.account_id)}
-                displayCategory={getCategoryDisplay(exp.category_id)}
+                displayCategory={getCategoryDisplay(exp.category_id, categories)}
                 onStartEdit={() => setEditingId(exp.id)}
-                onDelete={setDeleteTargetId} // ◄ Intercepts the id with local state
+                onDelete={setDeleteTargetId}
               />
             );
           })}

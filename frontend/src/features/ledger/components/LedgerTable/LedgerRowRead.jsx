@@ -1,6 +1,8 @@
 // src/features/ledger/components/LedgerTable/LedgerRowRead.jsx
 import React from 'react';
 
+import { formatTransactionDate, getGoogleCalendarDayUrl } from '../../../../utils/calendarUtils';
+
 export default function LedgerRowRead({ 
   expense, 
   isChecked, 
@@ -15,7 +17,20 @@ export default function LedgerRowRead({
       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         <input type="checkbox" checked={isChecked} onChange={onSelectRow} />
       </td>
-      <td className="ledger-table-date" style={{ fontSize: '0.85rem' }}>{expense.date}</td>
+      {/* <td className="ledger-table-date" style={{ fontSize: '0.85rem' }}>{expense.date}</td> */}
+      <td className="ledger-table-date"  style={{ fontSize: '0.85rem' }}>
+        <span>{formatTransactionDate(expense.date)}</span>
+        <a 
+          href={getGoogleCalendarDayUrl(expense.date)}
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="calendar-icon-btn"
+          title="View day in Google Calendar"
+          style={{ marginLeft: '6px', textDecoration: 'none' }}
+        >
+          📅
+        </a>
+      </td>
       <td style={{ fontSize: '0.85rem' }}>{expense.description}</td>
       <td style={{ fontSize: '0.85rem' }}>{displayAccountName}</td>
       <td style={{ fontSize: '0.85rem' }}>{displayCategory.icon} {displayCategory.name}</td>

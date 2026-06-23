@@ -68,7 +68,7 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
           >
             <option value="">Choose an account</option>
             {accounts.map((account) => (
-              <option key={account.account_id} value={account.account_id}>
+              <option key={account.id} value={account.id}>
                 {account.account_name} ({account.bank_name})
               </option>
             ))}

@@ -144,8 +144,84 @@
 .ledger-table-view {
   width: 100%;
   border-collapse: collapse;
-  min-width: 800px; /* Forces enough breathing room so headers don't squish during desktop scrolling */
+  min-width: 950px; /* Forces enough breathing room so headers don't squish during desktop scrolling */
+  table-layout: fixed;
 }
+
+.ledger-table-view th,
+.ledger-table-view td {
+  padding: 12px 10px; /* Generous 12px top/bottom padding for readability on desktops */
+  border-bottom: 1px solid #edf2f7;
+  text-align: left;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+
+/* Accent header row theme matching standard financial interfaces */
+.ledger-table-view th {
+  background: #f7fafc;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.85rem;
+  padding: 10px;
+}
+
+.ledger-inline-edit-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.ledger-inline-edit-container label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  color: #2b6cb0;
+  cursor: pointer;
+  white-space: normal; /* Allows text to wrap comfortably onto a second line if tight */
+}
+
+/* Optional styling boost to make active inputs pop */
+.form-inline-input:focus {
+  outline: none;
+  border-color: #3182ce;
+  box-shadow: 0 0 0 1px #3182ce;
+}
+
+.table-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px !important;
+  height: 28px;
+  padding: 0;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  border: 1px solid #cbd5e0;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.1s ease;
+  box-sizing: border-box;
+}
+
+.table-icon-btn:hover {
+  transform: scale(1.05);
+}
+
+.table-icon-btn:active {
+  transform: scale(0.95);
+}
+
+/* Responsive Medium Laptop screens (Compact density adjustment) */
+@media (max-width: 1024px) {
+  .ledger-table-view th,
+  .ledger-table-view td {
+    padding: 8px 6px; /* Tightens padding to keep elements from running off compact displays */
+    font-size: 0.8rem;
+  }
+}
+
 
 /* ⚡ MOBILE RESPONSIVE SHIFT: Transform table to standalone cards under 768px viewports */
 @media (max-width: 768px) {

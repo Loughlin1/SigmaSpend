@@ -206,7 +206,7 @@ export default function LedgerTable({
         </div>
       )}
 
-      <table border="1" cellPadding="10" className="table ledger-table-view" style={{ width: '100%' }}>
+      <table className="table ledger-table-view" style={{ width: '100%' }}>
         <thead>
           <tr>
             <th style={{ width: '4%', textAlign: 'center' }}>
@@ -217,13 +217,13 @@ export default function LedgerTable({
               />
             </th>
             <th style={{ width: '10%' }}>Date</th>
-            <th style={{ width: '21%' }}>Description</th>
-            <th style={{ width: '10%' }}>Account</th>
-            <th style={{ width: '15%' }}>Category</th>
-            <th style={{ width: '15%' }}>Notes</th>
+            <th style={{ width: '20%' }}>Description</th>
+            <th style={{ width: '9%' }}>Account</th>
+            <th style={{ width: '14%' }}>Category</th>
+            <th style={{ width: '16%' }}>Notes</th>
             <th style={{ width: '8%' }}>Type</th>
-            <th style={{ width: '12%' }}>Amount</th>
-            <th style={{ width: '5%', textAlign: 'center' }}>Actions</th>
+            <th style={{ width: '11%' }}>Amount</th>
+            <th style={{ width: '7%', textAlign: 'center' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -236,16 +236,32 @@ export default function LedgerTable({
             if (isCurrentRowEditing) {
               return (
                 <tr key={exp.id} style={{ background: '#f7fafc' }}>
+                  {/* 1. Selection Placeholder Cell */}
                   <td></td>
-                  <td>
-                    <input type="date" value={editFormData.date} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                      onChange={e => setEditFormData({ ...editFormData, date: e.target.value })} />
+                  
+                  {/* 2. Date Column Cell */}
+                  <td style={{ verticalAlign: 'top' }}>
+                    <input 
+                      type="date" 
+                      value={editFormData.date} 
+                      className="form-inline-input" 
+                      style={{ padding: '0.35rem', fontSize: '0.85rem', margin: 0 }}
+                      onChange={e => setEditFormData({ ...editFormData, date: e.target.value })} 
+                    />
                   </td>
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <input type="text" value={editFormData.description} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                        onChange={e => setEditFormData({ ...editFormData, description: e.target.value })} />
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.72rem', color: '#2b6cb0', cursor: 'pointer' }}>
+                  
+                  {/* 3. Description Column Cell */}
+                  <td style={{ verticalAlign: 'top' }}>
+                    <div className="ledger-inline-edit-container">
+                      <input 
+                        type="text" 
+                        value={editFormData.description} 
+                        required 
+                        className="form-inline-input" 
+                        style={{ padding: '0.35rem', fontSize: '0.85rem', margin: 0 }}
+                        onChange={e => setEditFormData({ ...editFormData, description: e.target.value })} 
+                      />
+                      <label>
                         <input 
                           type="checkbox" 
                           checked={ruleTargetField === 'description'} 
@@ -255,18 +271,31 @@ export default function LedgerTable({
                       </label>
                     </div>
                   </td>
-                  <td>
-                    <select value={editFormData.account_id} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                      onChange={e => setEditFormData({ ...editFormData, account_id: e.target.value })} >
+                  
+                  {/* 4. Account Column Cell */}
+                  <td style={{ verticalAlign: 'top' }}>
+                    <select 
+                      value={editFormData.account_id} 
+                      required 
+                      className="form-inline-input" 
+                      style={{ padding: '0.35rem', fontSize: '0.85rem', margin: 0 }}
+                      onChange={e => setEditFormData({ ...editFormData, account_id: e.target.value })} 
+                    >
                       <option value="">Select Account</option>
                       {Object.entries(accountNameMap).map(([id, name]) => (
                         <option key={id} value={id}>{name}</option>
                       ))}
                     </select>
                   </td>
-                  <td>
-                    <select value={editFormData.category_id} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                      onChange={e => setEditFormData({ ...editFormData, category_id: e.target.value })} >
+                  
+                  {/* 5. Category Column Cell */}
+                  <td style={{ verticalAlign: 'top' }}>
+                    <select 
+                      value={editFormData.category_id} 
+                      className="form-inline-input" 
+                      style={{ padding: '0.35rem', fontSize: '0.85rem', margin: 0 }}
+                      onChange={e => setEditFormData({ ...editFormData, category_id: e.target.value })} 
+                    >
                       <option value="">❓ Uncategorized</option>
                       {categories.map(cat => (
                         <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
@@ -278,11 +307,19 @@ export default function LedgerTable({
                       ))}
                     </select>
                   </td>
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <input type="text" placeholder="Notes..." value={editFormData.notes} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                        onChange={e => setEditFormData({ ...editFormData, notes: e.target.value })} />
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.72rem', color: '#2b6cb0', cursor: 'pointer' }}>
+                  
+                  {/* 6. Notes Column Cell */}
+                  <td style={{ verticalAlign: 'top' }}>
+                    <div className="ledger-inline-edit-container">
+                      <input 
+                        type="text" 
+                        placeholder="Notes..." 
+                        value={editFormData.notes} 
+                        className="form-inline-input" 
+                        style={{ padding: '0.35rem', fontSize: '0.85rem', margin: 0 }}
+                        onChange={e => setEditFormData({ ...editFormData, notes: e.target.value })} 
+                      />
+                      <label>
                         <input 
                           type="checkbox" 
                           checked={ruleTargetField === 'notes'} 
@@ -292,27 +329,79 @@ export default function LedgerTable({
                       </label>
                     </div>
                   </td>
-                  <td>
-                    <select value={editFormData.is_income} className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem' }}
-                      onChange={e => setEditFormData({ ...editFormData, is_income: e.target.value === 'true' })} >
+                  
+                  {/* 7. Income/Expense Type Column Cell */}
+                  <td style={{ verticalAlign: 'top' }}>
+                    <select 
+                      value={editFormData.is_income} 
+                      className="form-inline-input" 
+                      style={{ padding: '0.35rem', fontSize: '0.85rem', margin: 0 }}
+                      onChange={e => setEditFormData({ ...editFormData, is_income: e.target.value === 'true' })} 
+                    >
                       <option value="false">Expense</option>
                       <option value="true">Income</option>
                     </select>
                   </td>
-                  <td>
-                    <input type="number" step="0.01" value={editFormData.amount} required className="form-inline-input" style={{ padding: '0.25rem', fontSize: '0.85rem', fontWeight: '500' }}
-                      onChange={e => setEditFormData({ ...editFormData, amount: e.target.value })} />
+                  
+                  {/* 8. Amount Column Cell */}
+                  <td style={{ verticalAlign: 'top' }}>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      value={editFormData.amount} 
+                      required 
+                      className="form-inline-input" 
+                      style={{ padding: '0.35rem', fontSize: '0.85rem', fontWeight: '500', margin: 0 }}
+                      onChange={e => setEditFormData({ ...editFormData, amount: e.target.value })} 
+                    />
                   </td>
-                  <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                    <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
-                      <button type="button" onClick={handleRowSave} className="inlineButton" style={{ background: '#f0fff4', color: '#22543d', borderColor: '#c6f6d5' }}>Save</button>
-                      <button type="button" onClick={cancelEdit} className="inlineButton">Cancel</button>
+                  
+                  {/* 9. Save/Cancel Action Trigger Buttons */}
+                  <td style={{ textAlign: 'center', verticalAlign: 'top' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      gap: '0.35rem', 
+                      justifyContent: 'center', 
+                      alignItems: 'center',
+                      height: '32px' /* Aligns perfectly center with single-line inputs */
+                    }}>
+                      <button 
+                        type="button" 
+                        onClick={handleRowSave} 
+                        className="inlineButton table-icon-btn" 
+                        style={{ 
+                          background: '#e6fffa', 
+                          color: '#234e52', 
+                          borderColor: '#b2f5ea',
+                          padding: '0.25rem 0.4rem',
+                          fontSize: '0.9rem'
+                        }}
+                        title="Save Changes"
+                        aria-label="Save Changes"
+                      >
+                        💾
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={cancelEdit} 
+                        className="inlineButton table-icon-btn"
+                        style={{ 
+                          background: '#edf2f7', 
+                          color: '#4a5568', 
+                          borderColor: '#cbd5e0',
+                          padding: '0.25rem 0.4rem',
+                          fontSize: '0.9rem'
+                        }}
+                        title="Cancel Edit"
+                        aria-label="Cancel Edit"
+                      >
+                        ❌
+                      </button>
                     </div>
                   </td>
                 </tr>
               );
             }
-
             return (
               <tr key={exp.id} style={{ background: isChecked ? '#f7fafc' : 'transparent' }}>
                 <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>

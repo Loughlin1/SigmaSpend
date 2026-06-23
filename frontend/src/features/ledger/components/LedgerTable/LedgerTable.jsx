@@ -5,6 +5,7 @@ import BulkActionsPanel from './BulkActionsPanel';
 import LedgerRowEdit from './LedgerRowEdit';
 import LedgerRowRead from './LedgerRowRead';
 import ConfirmationModal from '../../../../components/ui/ConfirmationModal';
+import CustomModal from '../../../../components/ui/CustomModal';
 import { getAccountAbbreviation, getCategoryDisplay } from '../../../../utils/formatters';
 
 import '../../../../styles/lists.css';
@@ -30,6 +31,16 @@ export default function LedgerTable({
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
 
+  // Success Modal States
+  const [showBulkSuccess, setShowBulkSuccess] = useState(false);
+  const [bulkSuccessCount, setBulkSuccessCount] = useState(0);
+
+  const [errorModal, setErrorModal] = useState({ isOpen: false, title: '', message: '' });
+
+  const triggerErrorModal = (title, message) => {
+    setErrorModal({ isOpen: true, title, message });
+  };
+
   const handleSelectAll = (e) => {
     setSelectedIds(e.target.checked ? expenses.map(exp => exp.id) : []);
   };
@@ -39,18 +50,35 @@ export default function LedgerTable({
   };
 
   const handleBulkSubmit = async () => {
-    if (selectedIds.length === 0) return;
+    // 1. Guard check
+    if (!selectedIds || selectedIds.length === 0) return;
+    
     setBulkUpdating(true);
+    
+    // 2. Safely capture the exact length to a local block-scoped variable
+    const totalSelectedCount = selectedIds.length; 
+    
     try {
       const catId = bulkCategory === "" ? null : parseInt(bulkCategory, 10);
+      
+      // 3. Await the network request
       await expenseApi.bulkClassify(selectedIds, catId);
-      alert(`Successfully classified ${selectedIds.length} transactions!`);
+      
+      // 4. CRITICAL: Trigger the local visual modal states FIRST 
+      // This guarantees the modal opens before any parent re-rendering occurs
+      setBulkSuccessCount(totalSelectedCount);
+      setShowBulkSuccess(true);
+  
+      // 5. Clear selections cleanly
       setSelectedIds([]); 
       setBulkCategory("");
-      if (typeof onBulkUpdateSuccess === 'function') onBulkUpdateSuccess();
+
     } catch (err) {
       console.error("[SigmaSpend UI] Bulk classification execution thread halted:", err);
-      alert("Failed to apply bulk classifications.");
+      triggerErrorModal(
+        "Bulk Classification Failed", 
+        "An unexpected error occurred while communicating with the ingestion server. Could not apply batch categories."
+      );
     } finally {
       setBulkUpdating(false);
     }
@@ -62,7 +90,10 @@ export default function LedgerTable({
       setEditingId(null);
     } catch (err) {
       console.error("[SigmaSpend UI] Network thread halted inside handleRowSave:", err);
-      alert("Could not save transaction changes. Please verify network connections.");
+      triggerErrorModal(
+        "Save Interrupted", 
+        "Could not save transaction modifications. Please check your local network connections and verify the backend service port."
+      );
     }
   };
 
@@ -138,6 +169,7 @@ export default function LedgerTable({
         </tbody>
       </table>
 
+      {/* Pagination Controls Strip */}
       <div className="ledger-pagination-strip" style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         padding: '0.75rem 1rem', background: '#f7fafc', borderTop: '1px solid #e2e8f0',
@@ -162,41 +194,13 @@ export default function LedgerTable({
           </div>
 
           <div style={{ display: 'flex', gap: '0.25rem' }}>
-            <button
-              onClick={() => page > 1 && onPageChange(1)}
-              disabled={page === 1}
-              className="inlineButton"
-              style={{ padding: '0.25rem 0.5rem', opacity: page === 1 ? 0.5 : 1 }}
-            >
-              «
-            </button>
-            <button
-              onClick={() => page > 1 && onPageChange(page - 1)}
-              disabled={page === 1}
-              className="inlineButton"
-              style={{ padding: '0.25rem 0.5rem', opacity: page === 1 ? 0.5 : 1 }}
-            >
-              ‹
-            </button>
+            <button onClick={() => page > 1 && onPageChange(1)} disabled={page === 1} className="inlineButton" style={{ padding: '0.25rem 0.5rem', opacity: page === 1 ? 0.5 : 1 }}>«</button>
+            <button onClick={() => page > 1 && onPageChange(page - 1)} disabled={page === 1} className="inlineButton" style={{ padding: '0.25rem 0.5rem', opacity: page === 1 ? 0.5 : 1 }}>‹</button>
             <span style={{ padding: '0.25rem 0.75rem', fontSize: '0.85rem', color: '#2d3748', alignSelf: 'center' }}>
               Page <strong>{page}</strong> of {Math.ceil(totalCount / limit) || 1}
             </span>
-            <button
-              onClick={() => page < Math.ceil(totalCount / limit) && onPageChange(page + 1)}
-              disabled={page >= Math.ceil(totalCount / limit)}
-              className="inlineButton"
-              style={{ padding: '0.25rem 0.5rem', opacity: page >= Math.ceil(totalCount / limit) ? 0.5 : 1 }}
-            >
-              ›
-            </button>
-            <button
-              onClick={() => page < Math.ceil(totalCount / limit) && onPageChange(Math.ceil(totalCount / limit))}
-              disabled={page >= Math.ceil(totalCount / limit)}
-              className="inlineButton"
-              style={{ padding: '0.25rem 0.5rem', opacity: page >= Math.ceil(totalCount / limit) ? 0.5 : 1 }}
-            >
-              »
-            </button>
+            <button onClick={() => page < Math.ceil(totalCount / limit) && onPageChange(page + 1)} disabled={page >= Math.ceil(totalCount / limit)} className="inlineButton" style={{ padding: '0.25rem 0.5rem', opacity: page >= Math.ceil(totalCount / limit) ? 0.5 : 1 }}>›</button>
+            <button onClick={() => page < Math.ceil(totalCount / limit) && onPageChange(Math.ceil(totalCount / limit))} disabled={page >= Math.ceil(totalCount / limit)} className="inlineButton" style={{ padding: '0.25rem 0.5rem', opacity: page >= Math.ceil(totalCount / limit) ? 0.5 : 1 }}>»</button>
           </div>
         </div>
       </div>
@@ -209,6 +213,35 @@ export default function LedgerTable({
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTargetId(null)}
       />
+
+      {/* Bulk Success Confirmation Modal */}
+      <CustomModal
+        isOpen={showBulkSuccess}
+        onClose={async () => {
+          // 1. Close the modal layout locally
+          setShowBulkSuccess(false);
+          
+          // 2. Trigger the parent data update loop now that the modal is safely shut
+          if (typeof onBulkUpdateSuccess === 'function') {
+            await onBulkUpdateSuccess();
+          }
+        }}
+        title="Classification Saved"
+        variant="success"
+      >
+        Successfully bulk-classified and updated <strong>{bulkSuccessCount}</strong> transaction records to your selected categories list tracking segment!
+      </CustomModal>
+
+      {/* ◄ New Generic CustomModal Instance catching operational faults */}
+      <CustomModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal(prev => ({ ...prev, isOpen: false }))}
+        title={errorModal.title}
+        variant="danger"
+        confirmText="Dismiss"
+      >
+        {errorModal.message}
+      </CustomModal>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 // src/hooks/useExpenseAnalytics.js
 import { useState, useCallback } from 'react';
-import { expenseApi } from '../api/client';
+import { expenseApi } from '../../../api/client';
 
 export default function useExpenseAnalytics() {
   const [summaryData, setSummaryData] = useState([]);

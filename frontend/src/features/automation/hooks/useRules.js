@@ -1,6 +1,6 @@
-// src/hooks/useRules.js
+// src/features/automation/hooks/useRules.js
 import { useState, useCallback } from 'react';
-import { rulesApi } from '../api/client';
+import { rulesApi } from '../../../api/client';
 
 export default function useRules() {
   const [rules, setRules] = useState([]);

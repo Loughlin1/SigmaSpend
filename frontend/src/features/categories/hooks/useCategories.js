@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { categoryApi } from '../api/client';
+import { categoryApi } from '../../../api/client';
 
 export default function useCategories() {
   const [categories, setCategories] = useState([]);

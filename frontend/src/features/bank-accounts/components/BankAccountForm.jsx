@@ -1,7 +1,7 @@
-// src/components/BankAccountForm.jsx
+// src/features/bank-accounts/components/BankAccountForm.jsx
 import React, { useState } from 'react';
-import { ingestionApi } from '../api/client';
-import '../styles/forms.css'
+import { ingestionApi } from '../../../api/client';
+import '../../../styles/forms.css'
 
 export default function BankAccountForm({ onAccountCreated }) {
   const [accountId, setAccountId] = useState('');

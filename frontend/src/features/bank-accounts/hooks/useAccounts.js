@@ -1,5 +1,6 @@
+// src/features/bank-accounts/hooks/useAccounts.js
 import { useState, useCallback, useMemo } from 'react';
-import { ingestionApi } from '../api/client';
+import { ingestionApi } from '../../../api/client';
 
 export default function useAccounts() {
   const [accounts, setAccounts] = useState([]);

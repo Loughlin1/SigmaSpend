@@ -15,9 +15,6 @@ class BankAccount(Base):
     invert_amounts = Column(Boolean, default=False, nullable=False)
     mappings = Column(JSON, nullable=False)
 
-    # Optional legacy profile reference for backward compatibility
-    bank_profile = Column(String, nullable=True)
-
     expenses = relationship("Expense", back_populates="account_rel", cascade="all, delete-orphan")
 
     # Metadata

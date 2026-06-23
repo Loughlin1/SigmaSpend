@@ -1,6 +1,6 @@
 // src/components/LedgerFilters.jsx
 import React, { useState, useEffect } from 'react';
-import '../styles/filters.css'
+import '../../../styles/filters.css'
 
 export default function LedgerFilters({ filters, onFilterChange, accountNameMap, categories = [] }) {
   const [localSearch, setLocalSearch] = useState(filters.q || '');

@@ -1,4 +1,4 @@
-// src/components/ExpenseForm.jsx
+// src/features/legdger/components/ExpenseForm.jsx
 import React, { useState, useEffect } from 'react';
 
 export default function ExpenseForm({ 

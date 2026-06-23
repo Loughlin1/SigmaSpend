@@ -26,17 +26,18 @@ export default function useExpenses() {
         page: currentPage,                     // fallback if your client expects page directly
         ...cleanFilters 
       });
+
+      const envelope = response?.items ? response : response?.data;
       
-      // Adapt based on backend schema structure (handles raw array vs paginated envelope)
-      if (response && response.data && Array.isArray(response.data)) {
-        setExpenses(response.data);
-        setTotalCount(response.total || response.data.length);
-      } else if (Array.isArray(response)) {
-        setExpenses(response);
-        // If your backend doesn't return total count yet, assume we hit the end if count < limit
-        setTotalCount(response.length < currentLimit ? (currentPage - 1) * currentLimit + response.length : 1000);
+      if (envelope && Array.isArray(envelope.items)) {
+        setExpenses(envelope.items);
+        setTotalCount(envelope.total_count || 0);
+      } else {
+        // Safe structural fallback if the network payload lands unexpectedly
+        setExpenses([]);
+        setTotalCount(0);
+        console.warn("[SigmaSpend UI] API returned unexpected non-envelope structural data format:", response);
       }
-      
       setError(null);
     } catch (err) {
       console.error('Failed fetching ledger data', err);

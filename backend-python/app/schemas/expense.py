@@ -82,6 +82,15 @@ class ExpenseResponse(ExpenseBase):
 
         return data
 
+class PaginatedExpenseResponse(BaseModel):
+    items: List[ExpenseResponse]
+    total_count: int
+    page: int
+    limit: int
+
+    class Config:
+        from_attributes = True
+
 
 class AnalyticalBreakdownResponse(BaseModel):
     period: str              # e.g., "2026-01" or "2026-Year"

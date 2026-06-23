@@ -1,7 +1,7 @@
 # app/services/expense.py
 import hashlib
 import logging
-from typing import Optional, List
+from typing import Optional, List, Tuple  # ◄ Added Tuple for typing clarity
 from sqlalchemy.orm import Session, joinedload
 from app.models.expense import Expense as ExpenseModel
 from app.models.category import Category as CategoryModel
@@ -21,18 +21,39 @@ class ExpenseService:
         is_income: Optional[bool] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        q: Optional[str] = None  # Search term parameter
+        q: Optional[str] = None
     ) -> List[ExpenseModel]:
-        
-        # Always eager load categories and their parents for the UI layers
+        # Keep this function exactly as it is for backwards compatibility with any remaining endpoints
+        # or use-cases that bypass pagination.
+        items, _ = ExpenseService.get_filtered_expenses_with_count(
+            db, skip, limit, category, account_id, is_income, start_date, end_date, q
+        )
+        return items
+
+    @staticmethod
+    def get_filtered_expenses_with_count(
+        db: Session,
+        skip: int = 0,
+        limit: int = 100,
+        category: Optional[str] = None,
+        account_id: Optional[int] = None,
+        is_income: Optional[bool] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        q: Optional[str] = None
+    ) -> Tuple[List[ExpenseModel], int]:  # ◄ Returns (Items, TotalCount)
+        """
+        Applies filters dynamically and returns a tuple containing the 
+        paginated dataset slice along with a total scalar query match count.
+        """
         query = db.query(ExpenseModel).options(
             joinedload(ExpenseModel.category_rel).joinedload(CategoryModel.parent)
         )
 
+        # Apply all dynamic filter conditions sequentially
         if category:
             cat_clean = category.strip().lower()
             if cat_clean == "uncategorized":
-                # FIX: Check if category_id is missing or points to nothing
                 query = query.filter(
                     (ExpenseModel.category_id.is_(None)) | 
                     (ExpenseModel.category_id == "")
@@ -64,14 +85,18 @@ class ExpenseService:
                 (ExpenseModel.notes.ilike(search_term))
             )
 
-        return query.order_by(ExpenseModel.date.desc()).offset(skip).limit(limit).all()
+        # Execute count operation BEFORE slicing with offset/limit
+        total_count = query.count()
+
+        items = query.order_by(ExpenseModel.date.desc()).offset(skip).limit(limit).all()
+
+        return items, total_count
 
     @staticmethod
     def create_manual_expense(db: Session, expense_in: ExpenseCreate) -> ExpenseModel:
         expense_data = expense_in.dict()
         expense_data["date"] = parse_uk_date(expense_data["date"], logger)
         
-        # Deterministic generation for unique hash requirement
         fallback_seed = f"manual-{expense_in.account_id}-{expense_data['date']}-{expense_in.amount}-{expense_in.description}"
         generated_hash = hashlib.sha256(fallback_seed.encode("utf-8")).hexdigest()
         expense_data["transaction_hash"] = generated_hash
@@ -80,9 +105,4 @@ class ExpenseService:
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
-
-        logger.info(
-            f"Manually created expense ID {db_obj.id} for account {db_obj.account_id} "
-            f"with generated hash: {generated_hash[:8]}..."
-        )
         return db_obj

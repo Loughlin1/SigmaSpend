@@ -11,7 +11,8 @@ from app.models.expense import Expense as ExpenseModel
 from app.models.category import Category as CategoryModel
 from app.schemas.expense import (
     ExpenseCreate, ExpenseUpdate, ExpenseResponse, 
-    AnalyticalBreakdownResponse, BulkCategoryUpdate
+    AnalyticalBreakdownResponse, BulkCategoryUpdate,
+    PaginatedExpenseResponse
 )
 from app.services.expense import ExpenseService
 from app.services.analytics import ExpenseAnalyticsService
@@ -23,7 +24,7 @@ logger = logging.getLogger("sigmaspend")
 router = APIRouter()
 
 
-@router.get("/", response_model=List[ExpenseResponse])
+@router.get("/", response_model=PaginatedExpenseResponse)
 def read_expenses(
     db: Session = Depends(deps.get_db),
     skip: int = Query(0, ge=0, description="Number of records to skip for pagination"),
@@ -45,9 +46,16 @@ def read_expenses(
         f"start_date={start_date}, end_date={end_date}"
         f"q={q}"
     )
-    return ExpenseService.get_filtered_expenses(
+    items, total_count = ExpenseService.get_filtered_expenses_with_count(
         db, skip, limit, category, account_id, is_income, start_date, end_date, q
     )
+    current_page = (skip // limit) + 1
+    return {
+        "items": items,
+        "total_count": total_count,
+        "page": current_page,
+        "limit": limit
+    }
 
 
 @router.post("/", response_model=ExpenseResponse, status_code=status.HTTP_201_CREATED)

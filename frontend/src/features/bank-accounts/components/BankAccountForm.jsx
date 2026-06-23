@@ -1,6 +1,6 @@
 // src/features/bank-accounts/components/BankAccountForm.jsx
 import React, { useState } from 'react';
-import { ingestionApi } from '../../../api/client';
+import { accountsApi } from '../../../api/client';
 import '../../../styles/forms.css'
 
 export default function BankAccountForm({ onAccountCreated }) {
@@ -62,7 +62,7 @@ export default function BankAccountForm({ onAccountCreated }) {
 
     setLoading(true);
     try {
-      await ingestionApi.createAccount({
+      await accountsApi.createAccount({
         account_id: accountId.trim(),
         account_name: accountName.trim(),
         bank_name: bankName.trim(),

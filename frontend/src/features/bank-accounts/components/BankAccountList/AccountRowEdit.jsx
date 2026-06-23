@@ -1,6 +1,6 @@
 // src/features/bank-accounts/components/BankAccountList/AccountRowEdit.jsx
 import React, { useState } from 'react';
-import { ingestionApi } from '../../../../api/client';
+import { accountsApi } from '../../../../api/client';
 
 export default function AccountRowEdit({ account, onAccountUpdated, onCancel }) {
   const [draftName, setDraftName] = useState(account.account_name || '');
@@ -34,7 +34,7 @@ export default function AccountRowEdit({ account, onAccountUpdated, onCancel }) 
     setSaveError('');
 
     try {
-      await ingestionApi.updateAccount(account.account_id, {
+      await accountsApi.updateAccount(account.account_id, {
         account_name: draftName.trim(),
         invert_amounts: draftInvertAmounts,
         mappings: updatedMappings,

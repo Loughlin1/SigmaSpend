@@ -1,6 +1,6 @@
 // src/features/bank-accounts/hooks/useAccounts.js
 import { useState, useCallback, useMemo } from 'react';
-import { ingestionApi } from '../../../api/client';
+import { accountsApi } from '../../../api/client';
 
 export default function useAccounts() {
   const [accounts, setAccounts] = useState([]);
@@ -10,7 +10,7 @@ export default function useAccounts() {
   const fetchAccounts = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await ingestionApi.getAccounts({ active_only: true });
+      const data = await accountsApi.getAccounts({ active_only: true });
       setAccounts(data);
       setError('');
     } catch (err) {

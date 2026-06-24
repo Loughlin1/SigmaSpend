@@ -55,3 +55,32 @@
 .log-row--warning td {
   background: #fffdf0;
 }
+
+.log-row--clickable {
+  cursor: pointer;
+}
+
+.log-row--clickable:hover td {
+  background: #ebf4ff !important;
+}
+
+.log-cell--payload {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.log-payload-badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #e9d8fd;
+  color: #553c9a;
+  letter-spacing: 0.03em;
+}
+
+.log-payload-empty {
+  color: #cbd5e0;
+  font-size: 0.85rem;
+}

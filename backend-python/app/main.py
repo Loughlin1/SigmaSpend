@@ -57,44 +57,80 @@ app.add_middleware(
 
 
 @app.middleware("http")
-async def log_incoming_requests(request: Request, call_next):
+async def log_requests_and_responses(request: Request, call_next):
     """
-    Global interceptor that logs every incoming API request details
-    and records its exact execution time.
+    Global interceptor that logs every request and response with payloads:
+    - Incoming: body for POST/PUT/PATCH, query params for GET/DELETE
+    - Outgoing: response body (buffered and reconstructed so the client still receives it)
     """
+    import json as _json
+    from starlette.responses import Response as StarletteResponse
+
     start_time = time.time()
-    
-    # Extract request metadata
     method = request.method
     path = request.url.path
     client_host = request.client.host if request.client else "unknown"
-    
-    # Log the incoming call step
-    logger.info(f"📥 Incoming: {method} {path} | Client IP: {client_host}")
-    
-    # Process the request down the router chain
+
+    # --- Capture incoming payload ---
+    request_payload = None
+    if method in ("POST", "PUT", "PATCH"):
+        body_bytes = await request.body()
+        if body_bytes:
+            try:
+                request_payload = _json.loads(body_bytes)
+            except _json.JSONDecodeError:
+                request_payload = body_bytes.decode("utf-8", errors="replace")
+
+        async def _replay_receive():
+            return {"type": "http.request", "body": body_bytes, "more_body": False}
+        request = Request(request.scope, _replay_receive)
+
+    elif method in ("GET", "DELETE"):
+        params = dict(request.query_params)
+        if params:
+            request_payload = params
+
+    logger.info(
+        f"📥 Incoming: {method} {path} | Client IP: {client_host}",
+        extra={"payload": request_payload},
+    )
+
+    # --- Call the route handler ---
     try:
         response = await call_next(request)
-        
-        # Calculate execution latency
         process_time = (time.time() - start_time) * 1000
-        
-        # Log completion with tracking status code
         status_code = response.status_code
+
+        # Buffer the response body so we can log it, then reconstruct
+        response_body = b""
+        async for chunk in response.body_iterator:
+            response_body += chunk
+
+        response_payload = None
+        content_type = response.headers.get("content-type", "")
+        if "application/json" in content_type and response_body:
+            try:
+                response_payload = _json.loads(response_body)
+            except _json.JSONDecodeError:
+                response_payload = response_body.decode("utf-8", errors="replace")
+
         log_msg = f"📤 Response: {method} {path} -> Status: {status_code} | Latency: {process_time:.2f}ms"
-        
-        # Colour-code or flag warning alerts in your console stream based on status
-        if status_code >= 400:
-            logger.warning(log_msg)
-        else:
-            logger.info(log_msg)
-            
-        return response
-        
+        log_level = logger.warning if status_code >= 400 else logger.info
+        log_level(log_msg, extra={"payload": response_payload})
+
+        return StarletteResponse(
+            content=response_body,
+            status_code=status_code,
+            headers=dict(response.headers),
+            media_type=response.media_type,
+        )
+
     except Exception as e:
-        # Catch unexpected pipeline crashes safely
         process_time = (time.time() - start_time) * 1000
-        logger.error(f"💥 Pipeline Crash: {method} {path} failed after {process_time:.2f}ms | Error: {str(e)}")
+        logger.error(
+            f"💥 Pipeline Crash: {method} {path} failed after {process_time:.2f}ms | Error: {str(e)}",
+            extra={"payload": request_payload},
+        )
         raise e
 
 @app.exception_handler(RequestValidationError)

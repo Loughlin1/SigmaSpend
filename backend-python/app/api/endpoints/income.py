@@ -32,5 +32,8 @@ def update_income(payload: IncomeSettingsUpdate, db: Session = Depends(deps.get_
     row.monthly_net_income = payload.monthly_net_income
     db.commit()
     db.refresh(row)
-    logger.info(f"Updated monthly net income to £{payload.monthly_net_income}")
+    logger.info(
+        f"Updated monthly net income to £{payload.monthly_net_income}",
+        extra={"payload": {"monthly_net_income": float(payload.monthly_net_income)}},
+    )
     return row

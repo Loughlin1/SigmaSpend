@@ -51,5 +51,8 @@ def update_bucket(category_id: int, payload: CategoryBucketUpdate, db: Session =
     cat.bucket = payload.bucket
     db.commit()
     db.refresh(cat)
-    logger.info(f"Set bucket='{payload.bucket}' on category '{cat.name}' (id={category_id})")
+    logger.info(
+        f"Set bucket='{payload.bucket}' on category '{cat.name}' (id={category_id})",
+        extra={"payload": {"category_id": category_id, "category_name": cat.name, "bucket": payload.bucket}},
+    )
     return cat

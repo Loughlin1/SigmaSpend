@@ -17,7 +17,7 @@ function formatTimestamp(ts) {
   }
 }
 
-export default function LogTable({ entries }) {
+export default function LogTable({ entries, onSelectEntry }) {
   if (!entries.length) {
     return <p style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No log entries match the current filters.</p>;
   }
@@ -31,11 +31,17 @@ export default function LogTable({ entries }) {
             <th>Level</th>
             <th>Module</th>
             <th>Message</th>
+            <th>Payload</th>
           </tr>
         </thead>
         <tbody>
           {entries.map((entry, i) => (
-            <tr key={i} className={`log-row log-row--${(entry.level || 'unknown').toLowerCase()}`}>
+            <tr
+              key={i}
+              className={`log-row log-row--${(entry.level || 'unknown').toLowerCase()} log-row--clickable`}
+              onClick={() => onSelectEntry(entry)}
+              title="Click to view details"
+            >
               <td data-label="Timestamp" className="log-cell--timestamp">
                 {formatTimestamp(entry.timestamp)}
               </td>
@@ -46,6 +52,11 @@ export default function LogTable({ entries }) {
               </td>
               <td data-label="Module" className="log-cell--module">{entry.module}</td>
               <td data-label="Message" className="log-cell--message">{entry.message}</td>
+              <td data-label="Payload" className="log-cell--payload">
+                {entry.payload != null
+                  ? <span className="log-payload-badge">JSON</span>
+                  : <span className="log-payload-empty">—</span>}
+              </td>
             </tr>
           ))}
         </tbody>

@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import useLogs from '../hooks/useLogs';
 import LogFilters from './LogFilters';
 import LogTable from './LogTable';
+import LogDetailSidebar from './LogDetailSidebar';
 import '../../../styles/lists.css';
 
 export default function LogsSection() {
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const [selectedEntry, setSelectedEntry] = useState(null);
 
   const {
     entries,
@@ -61,10 +63,15 @@ export default function LogsSection() {
           {loading ? (
             <p>Loading logs...</p>
           ) : (
-            <LogTable entries={entries} />
+            <LogTable entries={entries} onSelectEntry={setSelectedEntry} />
           )}
         </>
       )}
+
+      <LogDetailSidebar
+        entry={selectedEntry}
+        onClose={() => setSelectedEntry(null)}
+      />
     </section>
   );
 }

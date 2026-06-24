@@ -13,6 +13,8 @@ class JsonFormatter(logging.Formatter):
             "module": record.name,
             "message": record.getMessage(),
         }
+        if hasattr(record, "payload") and record.payload is not None:
+            log_entry["payload"] = record.payload
         if record.exc_info:
             log_entry["exception"] = self.formatException(record.exc_info)
         return json.dumps(log_entry)

@@ -24,20 +24,21 @@ def upsert_budget(category_id: int, payload: BudgetUpsert, db: Session = Depends
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 
+    log_payload = {"category_id": category_id, "amount": float(payload.amount), "period": payload.period, "category_name": category.name}
     existing = db.query(BudgetModel).filter(BudgetModel.category_id == category_id).first()
     if existing:
         existing.amount = payload.amount
         existing.period = payload.period
         db.commit()
         db.refresh(existing)
-        logger.info(f"Updated budget for category_id={category_id}: £{payload.amount} ({payload.period})")
+        logger.info(f"Updated budget for category_id={category_id}: £{payload.amount} ({payload.period})", extra={"payload": log_payload})
         return existing
 
     new_budget = BudgetModel(category_id=category_id, amount=payload.amount, period=payload.period)
     db.add(new_budget)
     db.commit()
     db.refresh(new_budget)
-    logger.info(f"Created budget for category_id={category_id}: £{payload.amount} ({payload.period})")
+    logger.info(f"Created budget for category_id={category_id}: £{payload.amount} ({payload.period})", extra={"payload": log_payload})
     return new_budget
 
 
@@ -48,4 +49,4 @@ def delete_budget(category_id: int, db: Session = Depends(deps.get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No budget found for this category")
     db.delete(existing)
     db.commit()
-    logger.info(f"Deleted budget for category_id={category_id}")
+    logger.info(f"Deleted budget for category_id={category_id}", extra={"payload": {"category_id": category_id}})

@@ -2,128 +2,249 @@
 
 A modern local expense tracker.
 
-**SigmaSpend** is built with a decoupled, API-first architecture designed to practice modern web development workflows. The project is deliberately split into distinct phases: starting with a **React (Vite)** frontend powered by a rapid **Python** prototype backend, before transitioning to a production-hardened **Java** enterprise backend—all while keeping the core frontend UI completely intact.
+**SigmaSpend** is built with a decoupled, API-first architecture designed to practice modern web development workflows. The project is split into a **React (Vite)** frontend and a **Python (FastAPI)** backend, with a planned future migration to a **Java (Spring Boot)** backend — the API contract is kept identical so the frontend requires no changes during the swap.
 
-The name draws inspiration from the mathematical summation symbol ($\\Sigma$), representing the precise aggregation of your financial data.
+The name draws inspiration from the mathematical summation symbol ($\Sigma$), representing the precise aggregation of financial data.
 
 ---
 
-## The Architectural Roadmap
+## Tech Stack
 
-To ensure a seamless transition between backend languages, the project strictly adheres to an **API-First Design**. The React frontend communicates with an identical API contract, meaning the backend can be swapped simply by changing an environment port variable.
+| Layer | Technology |
+|---|---|
+| Frontend | React 18 (Vite) |
+| Backend | Python 3.11, FastAPI, SQLAlchemy 2.0 |
+| Database | SQLite (via Alembic migrations) |
+| PDF Parsing | pdfplumber |
+| AI Classification | Ollama (Llama 3 / Mistral) — optional |
+| Testing | pytest |
+
+---
 
 ## Project Structure
 
 ```
 sigmaspend/
-├── frontend/               # React (Vite) Application
-│   ├── src/
-│   │   ├── components/     # UI Components (Form, History, Chart)
-│   │   ├── hooks/          # Data Fetching and Business logic
-│   │   ├── styles/         # CSS files
-│   │   ├── api/            # Centralised API client logic
-│   │   └── App.jsx
-│   └── package.json
+├── frontend/                         # React (Vite) application
+│   └── src/
+│       ├── api/                      # Centralised Axios API client
+│       ├── components/               # Shared UI components (modals, upload)
+│       ├── features/
+│       │   ├── ledger/               # Transaction ledger, filters, bulk actions
+│       │   ├── analytics/            # Charts and summary views
+│       │   ├── automation/           # Category rule management
+│       │   ├── bank-accounts/        # Account creation and management
+│       │   └── categories/           # Category manager
+│       ├── styles/                   # Global CSS files
+│       └── utils/                    # Date formatters, category helpers
 │
-├── backend-python/         # Phase 1: FastAPI Backend             
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py                 # Application configuration and server lifecycle
-│   │   ├── api/
-│   │   │   ├── __init__.py
-│   │   │   ├── deps.py             # Global dependencies (e.g., database sessions)
-│   │   │   └── endpoints/
-│   │   │       ├── __init__.py
-│   │   │       ├── expenses.py     # HTTP routes for standard expense CRUD
-│   │   │       └── ingestion.py    # HTTP routes for CSV/PDF uploads
-│   │   │       └── rules.py        # HTTP routes to create/delete explicit rules
-│   │   ├── core/
-│   │   │   ├── __init__.py
-│   │   │   ├── config.py           # Environment variables and app configurations
-│   │   ├── database/
-│   │   │   ├── __init__.py
-│   │   │   ├── session.py          # SQLAlchemy engine and session initialization
-│   │   │   └── base_class.py       # Declarative base for models
-│   │   ├── models/
-│   │   │   ├── __init__.py
-│   │   │   └── bank_account.py     # SQLAlchemy database tables
-│   │   │   └── category_rules.py   # SQLAlchemy database tables
-│   │   │   └── category.py         # SQLAlchemy database tables
-│   │   │   └── expense.py          # SQLAlchemy database tables
-│   │   ├── schemas/
-│   │   │   ├── __init__.py
-│   │   │   └── bank_account.py     # Pydantic data validation schemas
-│   │   │   └── category_rules.py   # Pydantic data validation schemas
-│   │   │   └── category.py         # Pydantic data validation schemas
-│   │   │   └── expense.py          # Pydantic data validation schemas
-│   │   └── services/
-│   │       ├── __init__.py
-│   │       └── parser.py           # Core business logic for processing CSV/PDF statements
-│   │       └── classifier.py       # Core categorization worker engine (Rules + Ollama)
-│   ├── requirements.txt
-│   └── sigmaspend.db               # SQLite database file (generated automatically)
-
-│
-└── backend-java/           # Phase 2: Spring Boot Backend (Upcoming)
-    └── src/
+└── backend-python/                   # FastAPI backend
+    ├── app/
+    │   ├── main.py                   # App entrypoint and router registration
+    │   ├── api/
+    │   │   ├── deps.py               # Shared dependencies (DB session injection)
+    │   │   └── endpoints/
+    │   │       ├── accounts.py       # Bank account CRUD
+    │   │       ├── categories.py     # Category management
+    │   │       ├── expenses.py       # Expense CRUD + bulk actions
+    │   │       ├── ingestion.py      # CSV / PDF statement upload
+    │   │       └── rules.py          # Automation rule engine
+    │   ├── core/
+    │   │   ├── config.py             # Environment config (pydantic-settings)
+    │   │   └── logging_config.py     # Structured logging setup
+    │   ├── database/
+    │   │   ├── session.py            # SQLAlchemy engine and session factory
+    │   │   └── seeder.py             # Dev data seeder
+    │   ├── models/                   # SQLAlchemy ORM models (see Database Schema)
+    │   ├── schemas/                  # Pydantic request/response schemas
+    │   └── services/
+    │       ├── analytics.py          # Aggregation and summary queries
+    │       ├── classifier.py         # Rule-based + Ollama AI categorisation
+    │       ├── expense.py            # Expense query and creation logic
+    │       ├── parser.py             # CSV statement parser
+    │       ├── pdf_parser.py         # PDF spatial layout parser
+    │       └── utilities.py          # Shared helpers (date parsing etc.)
+    ├── alembic/                      # Database migration scripts
+    ├── tests/                        # pytest test suite
+    └── requirements.txt
 ```
 
+---
+
+## Database Schema
+
+### `bank_accounts`
+Stores per-account parser configuration. Each account carries its own bank-specific settings so the parser knows how to read that bank's statement format.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | Integer PK | |
+| `account_name` | String | User-facing name (e.g. "My Current Account") |
+| `bank_name` | String | Bank display name (e.g. "Monzo") |
+| `amount_style` | String | `single_column` or `split_columns` |
+| `invert_amounts` | Boolean | Flips income/expense direction (for credit cards) |
+| `mappings` | JSON | CSV header names, pdf_regex, bypass keywords |
+| `is_active` | Boolean | Soft-delete flag |
+| `created_at` | DateTime | |
+
+### `expenses`
+Core transaction table. Every imported or manually created transaction lives here.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | Integer PK | |
+| `date` | Date | Transaction date |
+| `amount` | Float | Absolute value |
+| `is_income` | Boolean | `true` = income, `false` = expense |
+| `description` | String | Raw merchant/description text |
+| `notes` | String | Optional user notes |
+| `category_id` | Integer FK → `categories` | `NULL` = Uncategorized |
+| `account_id` | Integer FK → `bank_accounts` | |
+| `transaction_hash` | String (unique) | Deduplication fingerprint |
+
+### `categories`
+Self-referential table supporting a two-level hierarchy (parent → subcategory).
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | Integer PK | |
+| `name` | String (unique) | Category name |
+| `icon` | String | Emoji icon (e.g. `🏠`) |
+| `parent_id` | Integer FK → `categories` | `NULL` = top-level category |
+
+### `category_rules`
+Keyword-based automation rules. When a transaction description or notes field matches a keyword, the transaction is automatically assigned the linked category.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | Integer PK | |
+| `keyword` | String | Match string (e.g. `starbucks`, `tfl`) |
+| `match_field` | String | `description` or `notes` |
+| `category_id` | Integer FK → `categories` | Category to assign on match |
+
+Unique constraint on `(keyword, match_field)`.
+
+---
+
 ## Data Flow
-When a user uploads a statement, the system reads it, extracts individual lines, runs them through a deduplication engine, and saves only the new records to the database.
 
-[ Upload Statement (CSV/PDF) ] ──► [ Parse File ] ──► [ Deduplication Engine ] ──► [Categorisation]  ──► [ SQLite DB ]
-                                                              ▲
-                                                    (Checks Existing Hashes)
+### Statement Upload
 
-## Bank Account Configuration
-SigmaSpend now stores bank-specific parser configuration on every bank account record instead of depending on bank profiles in `backend-python/app/core/config.yaml`.
+```
+Upload CSV / PDF
+      │
+      ▼
+Parse file using account's bank config (mappings / pdf_regex)
+      │
+      ▼
+For each row → generate transaction_hash
+      │
+      ▼
+Deduplication check (query existing hashes)
+      │
+      ├── Hash exists → skip
+      │
+      └── Hash new → run categorisation → save to DB
+```
 
-Each account includes:
-- `account_id`: unique identifier used for uploads
-- `bank_name`: visible bank display name
-- `amount_style`: either `single_column` or `split_columns`
-- `mappings`: CSV header mappings such as `date_column`, `description_column`, `amount_column`, `amount_in_column`, and `amount_out_column`
+### Transaction Categorisation
 
-The frontend account form collects these settings during account creation. When a statement is uploaded, the selected account's configuration is used to parse the CSV and deduplicate transactions.
+```
+New transaction
+      │
+      ▼
+Rule-based engine (keyword match on description / notes)
+      │
+      ├── Match found → assign category
+      │
+      └── No match → Ollama AI fallback (optional, requires local daemon)
+                          │
+                          └── Returns category name → look up ID → assign
+```
 
-## Transaction Deduplication Strategy
+---
 
-A major challenge when importing raw bank statements is preventing duplicate entries. This is especially true when overlapping statement periods are uploaded (e.g., uploading a standard monthly statement followed by a custom date-range export).
+## Deduplication Strategy
 
-We cannot rely on a simple string combination of `Date + Amount + Description` to form a unique identifier, because real-world spending often includes valid, identical transactions on the exact same day (e.g., buying two separate coffees for £3.50 at the same cafe sequentially).
+A simple `Date + Amount + Description` key is insufficient — identical transactions can occur legitimately on the same day (e.g. two coffees at the same café). SigmaSpend uses an **occurrence counter** strategy:
 
-### The Solution: The "Occurrence Counter" Strategy
+1. During ingestion, a running count is maintained per `(account_id, date, amount, is_income, description)` combination within the current file.
+2. The occurrence number is included in the hash input, so the 1st and 2nd identical transaction produce different hashes.
+3. The hash is stored on the `expenses` table with a unique constraint — re-uploading the same file simply fails the constraint check and skips the row.
 
-To make identical transactions uniquely identifiable while remaining completely deterministic across different file uploads, **SigmaSpend** implements an sequential occurrence tracking algorithm during file ingestion.
+---
 
-### Categorisation of transactions
-[ Raw CSV Row ] 
-       │
-       ▼
- ┌───────────┐         Matches?
- │ Rule-Based│ ──────────────────────► [ Auto-Categorised ]
- │  Engine   │                                 │
- └───────────┘                                 │ No
-       │                                       ▼
-       │                          ┌─────────────────────────┐
-       │                          │   Ollama AI Fallback    │
-       └────────────────────────► │ (Llama 3 / Mistral)     │
-                                  └─────────────────────────┘
-                                               │
-                                               ▼
-                                       [ AI-Categorised ]
+## API Reference
 
+All endpoints are prefixed with `/api/v1`.
 
+### Accounts — `/accounts`
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/accounts/` | List all bank accounts |
+| `POST` | `/accounts/` | Create a new bank account |
+| `GET` | `/accounts/{id}` | Get a single account |
+| `PUT` | `/accounts/{id}` | Update account settings |
 
-## API Backend
-The FastAPI backend exposes the main ingestion endpoints used by the frontend:
+### Expenses — `/expenses`
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/expenses/` | Paginated + filtered transaction list |
+| `POST` | `/expenses/` | Create a manual transaction |
+| `GET` | `/expenses/{id}` | Get a single transaction |
+| `PUT` | `/expenses/{id}` | Update a transaction |
+| `DELETE` | `/expenses/{id}` | Delete a transaction |
+| `GET` | `/expenses/analytics/summary` | Aggregated category/period breakdown |
+| `POST` | `/expenses/bulk-classify` | Bulk assign a category |
+| `POST` | `/expenses/bulk-delete` | Bulk delete transactions |
+| `POST` | `/expenses/bulk-update-type` | Bulk toggle income / expense type |
+| `POST` | `/expenses/bulk-reclassify` | Re-run automation rules on selected rows |
 
-- `POST /api/v1/accounts` — create a new bank account record with parser settings
-- `GET /api/v1/accounts` — list existing bank accounts
-- `POST /api/v1/upload/csv?account_id=...` — upload a CSV statement for a selected account
+### Categories — `/categories`
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/categories/` | List all categories and subcategories |
+| `POST` | `/categories/` | Create a category or subcategory |
 
-Bank-specific parsing information is now stored on every bank account in the database. This allows the parser to use per-account `amount_style` and `mappings` when ingesting statements.
+### Automation Rules — `/rules`
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/rules/` | List all keyword rules (paginated) |
+| `POST` | `/rules/` | Create a new keyword rule |
+| `DELETE` | `/rules/{id}` | Delete a rule |
 
+### Ingestion — `/upload`
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/upload/statement?account_id=N` | Upload a CSV or PDF bank statement |
+
+---
+
+## Running Locally
+
+### Backend
+
+```bash
+cd backend-python
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+Interactive API docs available at `http://localhost:8000/docs`.
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+App available at `http://localhost:5173`.
+
+---
 
 ## License
+
 This project is open-source and available under the MIT license.

@@ -27,10 +27,9 @@ def setup_logging() -> None:
 
     root_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.DEBUG)
 
-    if settings.LOG_FORMAT == "json":
-        file_formatter: logging.Formatter = JsonFormatter()
-    else:
-        file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s - %(message)s")
+    # File always uses JSON so the /logs endpoint can parse structured fields.
+    # LOG_FORMAT=plain only affects the console handler.
+    file_formatter: logging.Formatter = JsonFormatter()
 
     file_handler = logging.handlers.RotatingFileHandler(
         log_file,

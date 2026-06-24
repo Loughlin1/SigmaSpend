@@ -13,6 +13,7 @@ import LedgerSection from './features/ledger/components/LedgerSection';
 import AutomationSection from './features/automation/components/AutomationSection';
 import AnalyticsSection from './features/analytics/components/AnalyticsSection';
 import CategoryManager from './features/categories/components/CategoryManager';
+import LogsSection from './features/logs-viewer/components/LogsSection';
 
 // Master Shared Hooks
 import useAccounts from './features/bank-accounts/hooks/useAccounts';
@@ -90,6 +91,8 @@ function App() {
           if (automationRef.current) automationRef.current.refreshRules();
         }}
       />
+      <LogsSection />
+
       <Footer />
     </div>
   );

@@ -1,0 +1,70 @@
+import { useEffect, useState } from 'react';
+import useLogs from '../hooks/useLogs';
+import LogFilters from './LogFilters';
+import LogTable from './LogTable';
+import '../../../styles/lists.css';
+
+export default function LogsSection() {
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+  const {
+    entries,
+    total,
+    modules,
+    loading,
+    error,
+    filters,
+    fetchLogs,
+    fetchModules,
+    handleFilterChange,
+    resetFilters,
+  } = useLogs();
+
+  useEffect(() => {
+    if (!isCollapsed) {
+      fetchModules();
+      fetchLogs();
+    }
+  }, [isCollapsed, fetchModules, fetchLogs]);
+
+  const handleReset = () => {
+    resetFilters();
+    fetchLogs({ level: '', module: '', since: '', limit: 200 });
+  };
+
+  return (
+    <section className="sectionCard">
+      <div className="account-list__header" onClick={() => setIsCollapsed(prev => !prev)}>
+        <h3>Application Logs</h3>
+        <button className="collapse-button" type="button">
+          {isCollapsed ? 'Show' : 'Hide'}
+        </button>
+      </div>
+
+      {!isCollapsed && (
+        <>
+          <div className="headingRow" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
+            {!loading && <p style={{ margin: 0, fontSize: '0.85rem' }}>{total} entries</p>}
+            <button className="inlineButton" onClick={() => fetchLogs()}>Refresh</button>
+          </div>
+
+          <LogFilters
+            filters={filters}
+            modules={modules}
+            onChange={handleFilterChange}
+            onSearch={() => fetchLogs()}
+            onReset={handleReset}
+          />
+
+          {error && <p className="errorText">Failed to load logs: {error.message}</p>}
+
+          {loading ? (
+            <p>Loading logs...</p>
+          ) : (
+            <LogTable entries={entries} />
+          )}
+        </>
+      )}
+    </section>
+  );
+}

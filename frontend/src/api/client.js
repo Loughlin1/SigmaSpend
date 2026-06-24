@@ -61,3 +61,9 @@ export const rulesApi = {
   create: (payload) => apiClient.post('/rules/', payload).then(res => res.data),
   delete: (id) => apiClient.delete(`/rules/${id}`).then(res => res.data),
 };
+
+export const logsApi = {
+  getLogs: (params) => apiClient.get('/logs', { params }).then(res => res.data),
+  getModules: () => apiClient.get('/logs/modules').then(res => res.data),
+  getLevels: () => apiClient.get('/logs/levels').then(res => res.data),
+};

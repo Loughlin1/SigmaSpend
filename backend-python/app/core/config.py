@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     # 🌟 Becomes dynamic. Pydantic checks the environment or matching .env file first.
     DATABASE_URL: str = "sqlite:///./dev_data/sigmaspend_dev.db"
 
-    # Logging
+    # Logging — LOG_FORMAT controls console output only; file is always JSON
     LOG_FORMAT: str = "json"
     LOG_LEVEL: str = "DEBUG"
     LOG_DIR: str = "logs"

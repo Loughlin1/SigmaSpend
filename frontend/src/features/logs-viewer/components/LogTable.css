@@ -1,0 +1,57 @@
+.log-table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.log-table {
+  font-size: 0.85rem;
+}
+
+.log-table th {
+  white-space: nowrap;
+}
+
+.log-cell--timestamp {
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.log-cell--module {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.log-cell--message {
+  word-break: break-word;
+  max-width: 600px;
+}
+
+/* Level badge */
+.log-level-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.log-level--debug   { background: #e9ecef; color: #495057; }
+.log-level--info    { background: #dbeafe; color: #1d4ed8; }
+.log-level--warning { background: #fef9c3; color: #92400e; }
+.log-level--error   { background: #fee2e2; color: #b91c1c; }
+.log-level--critical{ background: #4b0000; color: #ffffff; }
+
+/* Row tinting */
+.log-row--error td,
+.log-row--critical td {
+  background: #fff8f8;
+}
+
+.log-row--warning td {
+  background: #fffdf0;
+}

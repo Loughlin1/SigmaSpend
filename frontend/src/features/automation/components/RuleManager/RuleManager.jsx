@@ -1,5 +1,5 @@
 // src/features/automation/components/RuleManager.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import RuleForm from './RuleForm';
 import RuleRow from './RuleRow';
 import RuleRowEdit from './RuleRowEdit';

@@ -1,5 +1,4 @@
 // src/components/ui/MetricsModal.jsx
-import React from 'react';
 
 export default function MetricsModal({ isOpen, onClose, fileCount, metrics }) {
   if (!isOpen || !metrics) return null;

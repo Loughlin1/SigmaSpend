@@ -1,5 +1,5 @@
 // src/components/StatementUpload.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ingestionApi } from '../api/client';
 import MetricsModal from './ui/MetricsModal';
 import '../styles/forms.css';

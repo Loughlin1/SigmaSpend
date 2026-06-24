@@ -1,5 +1,4 @@
 // src/features/automation/components/RulePagination.jsx
-import React from 'react';
 
 export default function RulePagination({ pagination, loading, onPageChange }) {
   if (pagination.pages <= 1) return null;

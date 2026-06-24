@@ -1,5 +1,4 @@
 // src/features/automation/components/RuleRow.jsx
-import React from 'react';
 
 export default function RuleRow({ rule, onStartEdit, onDeleteRule }) {
   return (

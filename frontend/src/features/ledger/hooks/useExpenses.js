@@ -16,7 +16,7 @@ export default function useExpenses() {
     setLoading(true);
     try {
       const cleanFilters = Object.fromEntries(
-        Object.entries(filters).filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+        Object.entries(filters).filter(([, value]) => value !== '' && value !== null && value !== undefined)
       );
 
       // Pass pagination parameters to the API client

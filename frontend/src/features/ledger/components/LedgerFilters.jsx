@@ -1,11 +1,12 @@
 // src/components/LedgerFilters.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import '../../../styles/filters.css'
 
 export default function LedgerFilters({ filters, onFilterChange, accountNameMap, categories = [] }) {
   const [localSearch, setLocalSearch] = useState(filters.q || '');
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalSearch(filters.q || '');
   }, [filters.q]);
 

@@ -1,5 +1,5 @@
 // src/features/bank-accounts/components/BankAccountForm.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { accountsApi } from '../../../api/client';
 import useBanks from '../hooks/useBanks';
 import '../../../styles/forms.css'

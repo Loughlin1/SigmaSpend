@@ -1,7 +1,5 @@
 // src/components/Description.jsx
-import React, { useState, useEffect } from 'react';
-
-export default function DescriptionSection({}) {
+export default function DescriptionSection() {
   return (
     <div style={{maxWidth: '500px'}}>
       <h3>Sigma Spend </h3>

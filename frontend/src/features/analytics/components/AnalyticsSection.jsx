@@ -1,5 +1,5 @@
 // src/features/analytics/components/AnalyticsSection.jsx
-import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import AnalyticsFilters from './AnalyticsFilters';
 import ExpenseChart from './ExpenseChart';
 import useExpenseAnalytics from '../hooks/useExpenseAnalytics';
@@ -21,7 +21,7 @@ const AnalyticsSection = forwardRef(({ accounts }, ref) => {
   // Automatically react to local filter modifications
   useEffect(() => {
     fetchSummary(chartFilters);
-  }, [fetchSummary, chartFilters.group_by, chartFilters.start_date, chartFilters.end_date, chartFilters.account_id]);
+  }, [fetchSummary, chartFilters]);
 
   // Expose an explicit refresh capability up to App.jsx
   useImperativeHandle(ref, () => ({

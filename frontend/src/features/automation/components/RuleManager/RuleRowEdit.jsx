@@ -1,5 +1,5 @@
 // src/features/automation/components/RuleRowEdit.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export default function RuleRowEdit({ rule, categories, onSave, onCancel }) {
   const [keyword, setKeyword] = useState(rule.keyword || '');

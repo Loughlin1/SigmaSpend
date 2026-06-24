@@ -1,6 +1,6 @@
 // src/App.jsx
 import './App.css';
-import React, { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -8,7 +8,6 @@ import DescriptionSection from './components/Description';
 import StatementUpload from './components/StatementUpload';
 
 // Features
-import ExpenseChart from './features/analytics/components/ExpenseChart';
 import BankAccountList from './features/bank-accounts/components/BankAccountList/BankAccountList';
 import LedgerSection from './features/ledger/components/LedgerSection';
 import AutomationSection from './features/automation/components/AutomationSection';

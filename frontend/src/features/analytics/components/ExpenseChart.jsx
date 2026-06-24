@@ -1,9 +1,9 @@
 // src/components/ExpenseChart.jsx
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 import '../../../styles/charts.css';
 
-export default function ExpenseChart({ expenses = [], accounts = [], loading }) {
+export default function ExpenseChart({ expenses = [], loading }) {
   const [groupBy, setGroupBy] = useState('parent-category'); 
   const [transactionType, setTransactionType] = useState('expenses'); 
 

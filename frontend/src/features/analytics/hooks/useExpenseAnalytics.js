@@ -16,7 +16,7 @@ export default function useExpenseAnalytics() {
     try {
       // Clean up empty strings or null values so they don't pollute query params
       const cleanFilters = Object.fromEntries(
-        Object.entries(filters).filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+        Object.entries(filters).filter(([, value]) => value !== '' && value !== null && value !== undefined)
       );
 
       // Default grouping to 'month' if the user hasn't explicitly overridden it

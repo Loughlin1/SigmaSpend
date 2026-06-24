@@ -1,5 +1,5 @@
 // src/features/ledger/components/LedgerSection.jsx
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import LedgerFilters from './LedgerFilters';
 import ExpenseForm from './ExpenseForm';
 import LedgerTable from './LedgerTable/LedgerTable';
@@ -9,13 +9,11 @@ import useExpenses from '../hooks/useExpenses';
 import useExpenseFilters from '../hooks/useExpenseFilters';
 import useExpenseForm from '../hooks/useExpenseForm';
 
-export default function LedgerSection({ 
-  accountNameMap, 
-  categories, 
-  categoriesLoading, 
-  categoriesError,
+export default function LedgerSection({
+  accountNameMap,
+  categories,
   triggerGlobalRefresh,
-  createRuleFromTransaction 
+  createRuleFromTransaction
 }) {
   
   // 1. Fully isolated features states
@@ -47,14 +45,14 @@ export default function LedgerSection({
   // 3. React automatically to filter and pagination page bounds changes
   useEffect(() => {
     const cleanParams = Object.fromEntries(
-      Object.entries(filters).filter(([_, val]) => val !== '' && val !== null)
+      Object.entries(filters).filter(([, val]) => val !== '' && val !== null)
     );
     fetchExpenses(cleanParams, page, limit);
   }, [fetchExpenses, filters, page, limit]);
 
   const handleLocalRefresh = async () => {
     const cleanParams = Object.fromEntries(
-      Object.entries(filters).filter(([_, val]) => val !== '' && val !== null)
+      Object.entries(filters).filter(([, val]) => val !== '' && val !== null)
     );
     await fetchExpenses(cleanParams, page, limit);
     await triggerGlobalRefresh(); 

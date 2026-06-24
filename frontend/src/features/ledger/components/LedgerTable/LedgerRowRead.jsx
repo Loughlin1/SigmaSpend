@@ -1,5 +1,4 @@
 // src/features/ledger/components/LedgerTable/LedgerRowRead.jsx
-import React from 'react';
 
 import { formatTransactionDate, getGoogleCalendarDayUrl } from '../../../../utils/calendarUtils';
 

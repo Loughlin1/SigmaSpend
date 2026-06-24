@@ -1,5 +1,5 @@
 // src/features/bank-accounts/components/BankAccountList/BankAccountList.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import BankAccountForm from '../BankAccountForm'; // Relative step over to form layout sibling
 import AccountRowRead from './AccountRowRead';
 import AccountRowEdit from './AccountRowEdit';

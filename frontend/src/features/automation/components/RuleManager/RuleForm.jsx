@@ -1,5 +1,5 @@
 // src/features/automation/components/RuleForm.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export default function RuleForm({ categories, onCreateRule, onCancel }) {
   const [keyword, setKeyword] = useState('');

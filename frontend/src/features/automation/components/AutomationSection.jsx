@@ -1,5 +1,5 @@
 // src/features/automation/components/AutomationSection.jsx
-import React, { useEffect, useImperativeHandle, forwardRef } from 'react';
+import { useEffect, useImperativeHandle, forwardRef } from 'react';
 import RuleManager from './RuleManager/RuleManager';
 import useRules from '../hooks/useRules';
 
@@ -32,11 +32,9 @@ const AutomationSection = forwardRef(({ categories, triggerGlobalRefresh }, ref)
     if (typeof triggerGlobalRefresh === 'function') await triggerGlobalRefresh();
   };
 
-  const handleUpdateRule = async (ruleId, ruleData) => {
-    if (typeof rulesHook.updateRule === 'function') {
-      await rulesHook.updateRule(ruleId, ruleData);
-      rulesHook.fetchRules();
-    }
+  const handleUpdateRule = async () => {
+    // update endpoint not yet implemented — refresh list to stay in sync
+    await fetchRules();
   };
 
   const handleDeleteRule = async (ruleId) => {

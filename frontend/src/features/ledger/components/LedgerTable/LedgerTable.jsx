@@ -1,5 +1,5 @@
 // src/features/ledger/components/LedgerTable/LedgerTable.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { expenseApi } from '../../../../api/client';
 import BulkActionsPanel from './BulkActionsPanel';
 import LedgerRowEdit from './LedgerRowEdit';

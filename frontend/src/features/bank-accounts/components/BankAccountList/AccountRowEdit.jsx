@@ -1,5 +1,5 @@
 // src/features/bank-accounts/components/BankAccountList/AccountRowEdit.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { accountsApi } from '../../../../api/client';
 
 export default function AccountRowEdit({ account, onAccountUpdated, onCancel }) {

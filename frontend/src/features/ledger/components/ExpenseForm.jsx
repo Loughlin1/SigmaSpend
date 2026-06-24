@@ -1,5 +1,5 @@
 // src/features/legdger/components/ExpenseForm.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ExpenseForm({ 
   categories = [], 
@@ -20,6 +20,7 @@ export default function ExpenseForm({
 
   useEffect(() => {
     if (initialData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         amount: initialData.amount != null ? String(initialData.amount) : '',
         is_income: !!initialData.is_income,

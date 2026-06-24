@@ -1,5 +1,4 @@
 // src/components/Header.jsx
-import React from 'react';
 import logo from '../assets/logo.png'; // Adjust this path based on where your logo file sits
 
 export default function Header() {

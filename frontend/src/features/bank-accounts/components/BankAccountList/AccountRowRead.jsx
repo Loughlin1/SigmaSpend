@@ -1,5 +1,4 @@
 // src/features/bank-accounts/components/BankAccountList/AccountRowRead.jsx
-import React from 'react';
 
 export default function AccountRowRead({ account, onStartEdit }) {
   return (

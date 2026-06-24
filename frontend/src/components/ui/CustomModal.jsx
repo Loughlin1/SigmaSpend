@@ -1,5 +1,4 @@
 // src/components/ui/CustomModal.jsx
-import React from 'react';
 
 export default function CustomModal({ 
   isOpen, 

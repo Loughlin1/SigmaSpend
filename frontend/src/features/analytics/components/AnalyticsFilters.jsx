@@ -1,5 +1,4 @@
 // src/components/AnalyticsFilters.jsx
-import React from 'react';
 
 export default function AnalyticsFilters({ chartFilters, onFilterChange, accounts = [] }) {
   const handleUpdate = (field, value) => {

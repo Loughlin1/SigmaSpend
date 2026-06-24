@@ -1,5 +1,5 @@
 // src/features/ledger/components/LedgerTable/BulkActionsPanel.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 const ACTION_CATEGORIZE = 'categorize';
 const ACTION_DELETE     = 'delete';

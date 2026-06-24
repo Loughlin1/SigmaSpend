@@ -52,6 +52,10 @@ export const categoryApi = {
   create: (data) => apiClient.post('/categories/', data).then(res => res.data),
 };
 
+export const banksApi = {
+  getAll: () => apiClient.get('/banks/').then(res => res.data),
+};
+
 export const rulesApi = {
   getAll: (params) => apiClient.get('/rules/', { params }).then(res => res.data),
   create: (payload) => apiClient.post('/rules/', payload).then(res => res.data),

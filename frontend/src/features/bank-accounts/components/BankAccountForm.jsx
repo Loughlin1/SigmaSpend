@@ -1,9 +1,12 @@
 // src/features/bank-accounts/components/BankAccountForm.jsx
 import React, { useState } from 'react';
 import { accountsApi } from '../../../api/client';
+import useBanks from '../hooks/useBanks';
 import '../../../styles/forms.css'
 
 export default function BankAccountForm({ onAccountCreated }) {
+  const { banks, loading: banksLoading } = useBanks();
+
   const [accountId, setAccountId] = useState('');
   const [accountName, setAccountName] = useState('');
   const [bankName, setBankName] = useState('');
@@ -17,6 +20,22 @@ export default function BankAccountForm({ onAccountCreated }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  const handleBankSelect = (selectedName) => {
+    setBankName(selectedName);
+    const profile = banks.find(b => b.name === selectedName);
+    if (!profile) return;
+    if (profile.default_amount_style) setAmountStyle(profile.default_amount_style);
+    if (profile.default_invert_amounts != null) setInvertAmounts(profile.default_invert_amounts);
+    if (profile.default_mappings) {
+      const m = profile.default_mappings;
+      if (m.date_column) setDateColumn(m.date_column);
+      if (m.description_column) setDescriptionColumn(m.description_column);
+      if (m.amount_column) setAmountColumn(m.amount_column);
+      if (m.amount_in_column) setAmountInColumn(m.amount_in_column);
+      if (m.amount_out_column) setAmountOutColumn(m.amount_out_column);
+    }
+  };
 
   const buildMappings = () => {
     const mappings = {
@@ -120,42 +139,18 @@ export default function BankAccountForm({ onAccountCreated }) {
           Bank Name
           <select
             value={bankName}
-            onChange={(e) => setBankName(e.target.value)}
+            onChange={(e) => handleBankSelect(e.target.value)}
             required
             aria-label="Bank Name"
             className="form-inline-input"
+            disabled={banksLoading}
           >
-            <option value="" disabled>Select a bank</option>
-            <option value="Lloyds Bank">Lloyds Bank</option>
-            <option value="Halifax">Halifax</option>
-            <option value="Bank of Scotland">Bank of Scotland</option>
-            <option value="NatWest">NatWest</option>
-            <option value="Royal Bank of Scotland (RBS)">Royal Bank of Scotland (RBS)</option>
-            <option value="Ulster Bank">Ulster Bank</option>
-            <option value="Barclays">Barclays</option>
-            <option value="HSBC">HSBC</option>
-            <option value="First Direct">First Direct</option>
-            <option value="Nationwide Building Society">Nationwide Building Society</option>
-            <option value="Santander">Santander</option>
-            <option value="Cater Allen">Cater Allen</option>
-            <option value="Virgin Money">Virgin Money</option>
-            <option value="Clydesdale Bank">Clydesdale Bank</option>
-            <option value="Yorkshire Bank">Yorkshire Bank</option>
-            <option value="TSB">TSB</option>
-            <option value="The Co-operative Bank">The Co-operative Bank</option>
-            <option value="Metro Bank">Metro Bank</option>
-            <option value="Monzo">Monzo</option>
-            <option value="Starling Bank">Starling Bank</option>
-            <option value="Revolut">Revolut</option>
-            <option value="Chase UK">Chase UK</option>
-            <option value="Kroo">Kroo</option>
-            <option value="Atom Bank">Atom Bank</option>
-            <option value="Zopa">Zopa</option>
-            <option value="Tesco Bank">Tesco Bank</option>
-            <option value="M&S Bank">M&S Bank</option>
-            <option value="Danske Bank">Danske Bank</option>
-            <option value="Bank of Ireland UK">Bank of Ireland UK</option>
-            <option value="Allied Irish Bank (GB)">Allied Irish Bank (GB)</option>
+            <option value="" disabled>{banksLoading ? 'Loading banks...' : 'Select a bank'}</option>
+            {banks.map(b => (
+              <option key={b.name} value={b.name}>
+                {b.name}{b.default_mappings ? ' ✓' : ''}
+              </option>
+            ))}
           </select>
         </label>
         <label className="form-field-wrapper">

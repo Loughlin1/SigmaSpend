@@ -1,0 +1,198 @@
+banks:
+  - name: "Allied Irish Bank (GB)"
+    country: GB
+
+  - name: "Atom Bank"
+    country: GB
+
+  - name: "Bank of Ireland UK"
+    country: GB
+
+  - name: "Bank of Scotland"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Transaction Description"
+      amount_in_column: "Credit Amount"
+      amount_out_column: "Debit Amount"
+
+  - name: "Barclays"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Memo"
+      amount_in_column: "Value"
+      amount_out_column: "Value"
+
+  - name: "Cater Allen"
+    country: GB
+
+  - name: "Chase UK"
+    country: GB
+    default_amount_style: single_column
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Transaction Date"
+      description_column: "Description"
+      amount_column: "Amount"
+
+  - name: "Clydesdale Bank"
+    country: GB
+
+  - name: "Danske Bank"
+    country: GB
+
+  - name: "First Direct"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Description"
+      amount_in_column: "Credit"
+      amount_out_column: "Debit"
+
+  - name: "Halifax"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Transaction Description"
+      amount_in_column: "Credit Amount"
+      amount_out_column: "Debit Amount"
+
+  - name: "HSBC"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Description"
+      amount_in_column: "Credit"
+      amount_out_column: "Debit"
+
+  - name: "Kroo"
+    country: GB
+
+  - name: "Lloyds Bank"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Transaction Date"
+      description_column: "Transaction Description"
+      amount_in_column: "Credit Amount"
+      amount_out_column: "Debit Amount"
+
+  - name: "M&S Bank"
+    country: GB
+
+  - name: "Metro Bank"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Description"
+      amount_in_column: "Money In"
+      amount_out_column: "Money Out"
+
+  - name: "Monzo"
+    country: GB
+    default_amount_style: single_column
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Name"
+      amount_column: "Amount"
+
+  - name: "Nationwide Building Society"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Transactions"
+      amount_in_column: "Paid in"
+      amount_out_column: "Payments"
+
+  - name: "NatWest"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Description"
+      amount_in_column: "Credit"
+      amount_out_column: "Debit"
+
+  - name: "Revolut"
+    country: GB
+    default_amount_style: single_column
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Started Date"
+      description_column: "Description"
+      amount_column: "Amount"
+
+  - name: "Royal Bank of Scotland (RBS)"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Description"
+      amount_in_column: "Credit"
+      amount_out_column: "Debit"
+
+  - name: "Santander"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Description"
+      amount_in_column: "Credit"
+      amount_out_column: "Debit"
+
+  - name: "Starling Bank"
+    country: GB
+    default_amount_style: single_column
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Counter Party"
+      amount_column: "Amount (GBP)"
+
+  - name: "Tesco Bank"
+    country: GB
+
+  - name: "The Co-operative Bank"
+    country: GB
+
+  - name: "TSB"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Transaction Date"
+      description_column: "Transaction Description"
+      amount_in_column: "Credit Amount"
+      amount_out_column: "Debit Amount"
+
+  - name: "Ulster Bank"
+    country: GB
+
+  - name: "Virgin Money"
+    country: GB
+
+  - name: "Yorkshire Bank"
+    country: GB
+
+  - name: "Zopa"
+    country: GB

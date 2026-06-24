@@ -84,6 +84,9 @@ class PDFStatementParser:
                     if any(kw in reconstructed_line.lower() for kw in bypass_keywords):
                         continue
 
+                    logger.info(f"[PDF DEBUG] Attempting match with regex: {row_pattern.pattern}")
+                    logger.info(f"[PDF DEBUG] Testing reconstructed target line: '{reconstructed_line}'")
+
                     match = row_pattern.match(reconstructed_line)
                     if match:
                         raw_date_cell, raw_desc_cell, raw_amount_cell = match.groups()

@@ -44,7 +44,6 @@ def seed_database_if_empty(db: Session):
         logger.info("[Seeder] Populating default bank accounts...")
         for acc in seed_definitions.get("bank_accounts", []):
             db_account = BankAccount(
-                account_id=acc["account_id"],
                 account_name=acc["account_name"],
                 bank_name=acc["bank_name"],
                 amount_style=acc["amount_style"],

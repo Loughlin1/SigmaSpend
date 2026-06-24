@@ -140,7 +140,7 @@ def test_parse_and_ingest_successful_flow():
         # Setup Account Mapping Profile Configuration
         mock_parser_service.get_account_bank_config.return_value = {
             "mappings": {
-                "pdf_regex": r"^(\d{2}\s+[A-Z]+)\s+(.+?)\s+(-?[\d,]+\.\d{2}CR?)$",
+                "pdf_regex": r"^(\d{2}\s+[A-Z]+)\s+(.+?)\s+(-?[\d,]+\.\d{2}(?:CR)?)$",
                 "pdf_header_bypass": "date of transaction,page"
             }
         }

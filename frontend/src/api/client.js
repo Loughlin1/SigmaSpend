@@ -14,11 +14,17 @@ export const expenseApi = {
   update: (id, data) => apiClient.put(`/expenses/${id}`, data).then(res => res.data),
   delete: (id) => apiClient.delete(`/expenses/${id}`).then(res => res.data),
   getSummary: (params) => apiClient.get('/expenses/analytics/summary', { params }).then(res => res.data),
-  bulkClassify: (expenseIds, categoryId) => 
-    apiClient.post('/expenses/bulk-classify', { 
-      expense_ids: expenseIds, 
-      category_id: categoryId 
+  bulkClassify: (expenseIds, categoryId) =>
+    apiClient.post('/expenses/bulk-classify', {
+      expense_ids: expenseIds,
+      category_id: categoryId
     }).then(res => res.data),
+  bulkDelete: (expenseIds) =>
+    apiClient.post('/expenses/bulk-delete', { expense_ids: expenseIds }).then(res => res.data),
+  bulkUpdateType: (expenseIds, isIncome) =>
+    apiClient.post('/expenses/bulk-update-type', { expense_ids: expenseIds, is_income: isIncome }).then(res => res.data),
+  bulkReclassify: (expenseIds) =>
+    apiClient.post('/expenses/bulk-reclassify', { expense_ids: expenseIds }).then(res => res.data),
 };
 
 export const ingestionApi = {

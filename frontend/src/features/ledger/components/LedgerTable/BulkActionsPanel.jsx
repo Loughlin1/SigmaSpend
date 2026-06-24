@@ -1,16 +1,128 @@
 // src/features/ledger/components/LedgerTable/BulkActionsPanel.jsx
-import React from 'react';
+import React, { useState } from 'react';
 
-export default function BulkActionsPanel({ 
-  selectedCount, 
-  bulkCategory, 
-  setBulkCategory, 
-  bulkUpdating, 
-  onBulkSubmit, 
-  onClearSelection, 
-  categories 
+const ACTION_CATEGORIZE = 'categorize';
+const ACTION_DELETE     = 'delete';
+const ACTION_TYPE       = 'type';
+const ACTION_RECLASSIFY = 'reclassify';
+const ACTION_EXPORT     = 'export';
+
+export default function BulkActionsPanel({
+  selectedCount,
+  bulkCategory,
+  setBulkCategory,
+  bulkUpdating,
+  onBulkCategorize,
+  onBulkDelete,
+  onBulkUpdateType,
+  onBulkReclassify,
+  onBulkExport,
+  onClearSelection,
+  categories
 }) {
+  const [activeAction, setActiveAction] = useState('');
+
   if (selectedCount === 0) return null;
+
+  const handleActionSelect = (e) => {
+    setActiveAction(e.target.value);
+  };
+
+  const renderActionControls = () => {
+    switch (activeAction) {
+      case ACTION_CATEGORIZE:
+        return (
+          <>
+            <select
+              value={bulkCategory}
+              onChange={e => setBulkCategory(e.target.value)}
+              className="form-inline-input"
+              style={{ margin: 0, padding: '0.35rem', width: '200px', fontSize: '0.85rem' }}
+              disabled={bulkUpdating}
+            >
+              <option value="">❓ Move to Uncategorized</option>
+              {categories.map(cat => (
+                <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
+                  <option value={cat.id}>{cat.name} (All)</option>
+                  {cat.subcategories?.map(sub => (
+                    <option key={sub.id} value={sub.id}>🔹 {sub.name}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            <button
+              onClick={onBulkCategorize}
+              className="inlineButton"
+              style={{ background: '#3182ce', color: 'white', padding: '0.35rem 1rem' }}
+              disabled={bulkUpdating}
+            >
+              {bulkUpdating ? 'Updating...' : 'Apply Category'}
+            </button>
+          </>
+        );
+
+      case ACTION_TYPE:
+        return (
+          <>
+            <button
+              onClick={() => onBulkUpdateType(false)}
+              className="inlineButton"
+              style={{ background: '#2d3748', color: 'white', padding: '0.35rem 1rem' }}
+              disabled={bulkUpdating}
+            >
+              {bulkUpdating ? 'Updating...' : '🔴 Mark as Expense'}
+            </button>
+            <button
+              onClick={() => onBulkUpdateType(true)}
+              className="inlineButton"
+              style={{ background: '#276749', color: 'white', padding: '0.35rem 1rem' }}
+              disabled={bulkUpdating}
+            >
+              {bulkUpdating ? 'Updating...' : '🟢 Mark as Income'}
+            </button>
+          </>
+        );
+
+      case ACTION_RECLASSIFY:
+        return (
+          <button
+            onClick={onBulkReclassify}
+            className="inlineButton"
+            style={{ background: '#6b46c1', color: 'white', padding: '0.35rem 1rem' }}
+            disabled={bulkUpdating}
+          >
+            {bulkUpdating ? 'Reclassifying...' : '⚡ Re-run Automation Rules'}
+          </button>
+        );
+
+      case ACTION_EXPORT:
+        return (
+          <button
+            onClick={onBulkExport}
+            className="inlineButton"
+            style={{ background: '#276749', color: 'white', padding: '0.35rem 1rem' }}
+            disabled={bulkUpdating}
+          >
+            📥 Export to CSV
+          </button>
+        );
+
+      case ACTION_DELETE:
+        return (
+          <button
+            onClick={onBulkDelete}
+            className="inlineButton"
+            style={{ background: '#c53030', color: 'white', padding: '0.35rem 1rem' }}
+            disabled={bulkUpdating}
+          >
+            {bulkUpdating ? 'Deleting...' : '🗑️ Delete Selected'}
+          </button>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div style={{
@@ -20,37 +132,27 @@ export default function BulkActionsPanel({
       borderRadius: '6px', marginBottom: '15px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
     }}>
       <span style={{ fontSize: '0.9rem', color: '#2b6cb0', fontWeight: '500' }}>
-        Selected <strong>{selectedCount}</strong> transactions
+        Selected <strong>{selectedCount}</strong> transaction{selectedCount !== 1 ? 's' : ''}
       </span>
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        <select 
-          value={bulkCategory} 
-          onChange={e => setBulkCategory(e.target.value)}
+        <select
+          value={activeAction}
+          onChange={handleActionSelect}
           className="form-inline-input"
-          style={{ margin: 0, padding: '0.35rem', width: '200px', fontSize: '0.85rem' }}
+          style={{ margin: 0, padding: '0.35rem', fontSize: '0.85rem', minWidth: '160px' }}
           disabled={bulkUpdating}
         >
-          <option value="">❓ Move to Uncategorized</option>
-          {categories.map(cat => (
-            <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
-              <option value={cat.id}>{cat.name} (All)</option>
-              {cat.subcategories?.map(sub => (
-                <option key={sub.id} value={sub.id}>🔹 {sub.name}</option>
-              ))}
-            </optgroup>
-          ))}
+          <option value="">Actions ▾</option>
+          <option value={ACTION_CATEGORIZE}>🏷️ Categorize</option>
+          <option value={ACTION_TYPE}>🔄 Toggle Type</option>
+          <option value={ACTION_RECLASSIFY}>⚡ Re-run Rules</option>
+          <option value={ACTION_EXPORT}>📥 Export CSV</option>
+          <option value={ACTION_DELETE}>🗑️ Delete</option>
         </select>
-        <button 
-          onClick={onBulkSubmit}
+        {renderActionControls()}
+        <button
+          onClick={() => { onClearSelection(); setActiveAction(''); }}
           className="inlineButton"
-          style={{ background: '#3182ce', color: 'white', padding: '0.35rem 1rem' }}
-          disabled={bulkUpdating}
-        >
-          {bulkUpdating ? 'Updating...' : 'Apply Category'}
-        </button>
-        <button 
-          onClick={onClearSelection}
-          className="inlineButton" 
           style={{ padding: '0.35rem 0.75rem' }}
           disabled={bulkUpdating}
         >

@@ -104,3 +104,16 @@ class AnalyticalBreakdownResponse(BaseModel):
 class BulkCategoryUpdate(BaseModel):
     expense_ids: List[int]
     category_id: Optional[int] = None  # None/null means "Uncategorized"
+
+
+class BulkDeleteRequest(BaseModel):
+    expense_ids: List[int]
+
+
+class BulkTypeUpdate(BaseModel):
+    expense_ids: List[int]
+    is_income: bool
+
+
+class BulkReclassifyRequest(BaseModel):
+    expense_ids: List[int]

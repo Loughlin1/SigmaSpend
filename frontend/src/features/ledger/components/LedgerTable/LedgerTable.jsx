@@ -30,10 +30,11 @@ export default function LedgerTable({
   const [bulkCategory, setBulkCategory] = useState("");
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [bulkDeletePending, setBulkDeletePending] = useState(false);
 
   // Success Modal States
   const [showBulkSuccess, setShowBulkSuccess] = useState(false);
-  const [bulkSuccessCount, setBulkSuccessCount] = useState(0);
+  const [bulkSuccessMessage, setBulkSuccessMessage] = useState('');
 
   const [errorModal, setErrorModal] = useState({ isOpen: false, title: '', message: '' });
 
@@ -49,39 +50,92 @@ export default function LedgerTable({
     setSelectedIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
   };
 
-  const handleBulkSubmit = async () => {
-    // 1. Guard check
-    if (!selectedIds || selectedIds.length === 0) return;
-    
+  const finishBulkSuccess = (message) => {
+    setBulkSuccessMessage(message);
+    setShowBulkSuccess(true);
+    setSelectedIds([]);
+    setBulkCategory("");
+  };
+
+  const handleBulkCategorize = async () => {
+    if (!selectedIds.length) return;
     setBulkUpdating(true);
-    
-    // 2. Safely capture the exact length to a local block-scoped variable
-    const totalSelectedCount = selectedIds.length; 
-    
     try {
       const catId = bulkCategory === "" ? null : parseInt(bulkCategory, 10);
-      
-      // 3. Await the network request
       await expenseApi.bulkClassify(selectedIds, catId);
-      
-      // 4. CRITICAL: Trigger the local visual modal states FIRST 
-      // This guarantees the modal opens before any parent re-rendering occurs
-      setBulkSuccessCount(totalSelectedCount);
-      setShowBulkSuccess(true);
-  
-      // 5. Clear selections cleanly
-      setSelectedIds([]); 
-      setBulkCategory("");
-
+      finishBulkSuccess(`Categorized ${selectedIds.length} transaction${selectedIds.length !== 1 ? 's' : ''}.`);
     } catch (err) {
-      console.error("[SigmaSpend UI] Bulk classification execution thread halted:", err);
-      triggerErrorModal(
-        "Bulk Classification Failed", 
-        "An unexpected error occurred while communicating with the ingestion server. Could not apply batch categories."
-      );
+      console.error("[SigmaSpend UI] Bulk classify failed:", err);
+      triggerErrorModal("Bulk Classification Failed", "Could not apply batch categories.");
     } finally {
       setBulkUpdating(false);
     }
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    setBulkDeletePending(false);
+    setBulkUpdating(true);
+    try {
+      await expenseApi.bulkDelete(selectedIds);
+      finishBulkSuccess(`Deleted ${selectedIds.length} transaction${selectedIds.length !== 1 ? 's' : ''}.`);
+    } catch (err) {
+      console.error("[SigmaSpend UI] Bulk delete failed:", err);
+      triggerErrorModal("Bulk Delete Failed", "Could not delete selected transactions.");
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  const handleBulkUpdateType = async (isIncome) => {
+    if (!selectedIds.length) return;
+    setBulkUpdating(true);
+    try {
+      await expenseApi.bulkUpdateType(selectedIds, isIncome);
+      finishBulkSuccess(`Marked ${selectedIds.length} transaction${selectedIds.length !== 1 ? 's' : ''} as ${isIncome ? 'Income' : 'Expense'}.`);
+    } catch (err) {
+      console.error("[SigmaSpend UI] Bulk type update failed:", err);
+      triggerErrorModal("Bulk Update Failed", "Could not update transaction types.");
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  const handleBulkReclassify = async () => {
+    if (!selectedIds.length) return;
+    setBulkUpdating(true);
+    try {
+      const result = await expenseApi.bulkReclassify(selectedIds);
+      finishBulkSuccess(`Re-ran automation rules on ${result.updated} transaction${result.updated !== 1 ? 's' : ''}.`);
+    } catch (err) {
+      console.error("[SigmaSpend UI] Bulk reclassify failed:", err);
+      triggerErrorModal("Re-classification Failed", "Could not re-run automation rules.");
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  const handleBulkExport = () => {
+    if (!selectedIds.length) return;
+    const selected = expenses.filter(e => selectedIds.includes(e.id));
+    const headers = ['ID', 'Date', 'Description', 'Amount', 'Type', 'Category', 'Notes', 'Account'];
+    const rows = selected.map(e => [
+      e.id,
+      e.date,
+      `"${(e.description || '').replace(/"/g, '""')}"`,
+      e.amount,
+      e.is_income ? 'Income' : 'Expense',
+      `"${(e.category_metadata?.full_path || 'Uncategorized').replace(/"/g, '""')}"`,
+      `"${(e.notes || '').replace(/"/g, '""')}"`,
+      e.account_id,
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sigmaspend_export_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleRowSave = async (payload) => {
@@ -107,12 +161,16 @@ export default function LedgerTable({
   return (
     <div className="ledger-table-container" style={{ position: 'relative' }}>
       
-      <BulkActionsPanel 
+      <BulkActionsPanel
         selectedCount={selectedIds.length}
         bulkCategory={bulkCategory}
         setBulkCategory={setBulkCategory}
         bulkUpdating={bulkUpdating}
-        onBulkSubmit={handleBulkSubmit}
+        onBulkCategorize={handleBulkCategorize}
+        onBulkDelete={() => setBulkDeletePending(true)}
+        onBulkUpdateType={handleBulkUpdateType}
+        onBulkReclassify={handleBulkReclassify}
+        onBulkExport={handleBulkExport}
         onClearSelection={() => setSelectedIds([])}
         categories={categories}
       />
@@ -205,7 +263,7 @@ export default function LedgerTable({
         </div>
       </div>
 
-      {/* Shared Deletion Confirmation Intercept Overlay */}
+      {/* Single-row delete confirmation */}
       <ConfirmationModal
         isOpen={deleteTargetId !== null}
         title="Delete Transaction"
@@ -214,22 +272,28 @@ export default function LedgerTable({
         onCancel={() => setDeleteTargetId(null)}
       />
 
-      {/* Bulk Success Confirmation Modal */}
+      {/* Bulk delete confirmation */}
+      <ConfirmationModal
+        isOpen={bulkDeletePending}
+        title={`Delete ${selectedIds.length} Transaction${selectedIds.length !== 1 ? 's' : ''}`}
+        message={`Are you sure you want to permanently delete ${selectedIds.length} selected transaction${selectedIds.length !== 1 ? 's' : ''}? This cannot be undone and will affect your historical totals.`}
+        onConfirm={handleBulkDeleteConfirm}
+        onCancel={() => setBulkDeletePending(false)}
+      />
+
+      {/* Bulk action success modal */}
       <CustomModal
         isOpen={showBulkSuccess}
         onClose={async () => {
-          // 1. Close the modal layout locally
           setShowBulkSuccess(false);
-          
-          // 2. Trigger the parent data update loop now that the modal is safely shut
           if (typeof onBulkUpdateSuccess === 'function') {
             await onBulkUpdateSuccess();
           }
         }}
-        title="Classification Saved"
+        title="Bulk Action Complete"
         variant="success"
       >
-        Successfully bulk-classified and updated <strong>{bulkSuccessCount}</strong> transaction records to your selected categories list tracking segment!
+        {bulkSuccessMessage}
       </CustomModal>
 
       {/* ◄ New Generic CustomModal Instance catching operational faults */}

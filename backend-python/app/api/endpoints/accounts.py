@@ -38,7 +38,7 @@ def create_bank_account(
     db.commit()
     db.refresh(db_account)
     
-    logger.info(f"Successfully created bank account: {db_account.account_id} ({db_account.bank_name})")
+    logger.info(f"Successfully created bank account: ID {db_account.id} ({db_account.bank_name})")
     return db_account
 
 

@@ -71,15 +71,28 @@ async def log_requests_and_responses(request: Request, call_next):
     path = request.url.path
     client_host = request.client.host if request.client else "unknown"
 
+    # Skip logging for log-viewer requests to avoid a self-referential feedback loop
+    if path.startswith(f"{settings.API_V1_STR}/logs"):
+        return await call_next(request)
+
+    # Payload size cap: truncate anything larger than 8 KB to keep log entries small
+    MAX_PAYLOAD_BYTES = 8 * 1024
+
+    def _truncate(raw: bytes) -> object:
+        if len(raw) > MAX_PAYLOAD_BYTES:
+            preview = raw[:MAX_PAYLOAD_BYTES].decode("utf-8", errors="replace")
+            return {"_truncated": True, "preview": preview, "original_bytes": len(raw)}
+        try:
+            return _json.loads(raw)
+        except _json.JSONDecodeError:
+            return raw.decode("utf-8", errors="replace")
+
     # --- Capture incoming payload ---
     request_payload = None
     if method in ("POST", "PUT", "PATCH"):
         body_bytes = await request.body()
         if body_bytes:
-            try:
-                request_payload = _json.loads(body_bytes)
-            except _json.JSONDecodeError:
-                request_payload = body_bytes.decode("utf-8", errors="replace")
+            request_payload = _truncate(body_bytes)
 
         async def _replay_receive():
             return {"type": "http.request", "body": body_bytes, "more_body": False}
@@ -90,9 +103,11 @@ async def log_requests_and_responses(request: Request, call_next):
         if params:
             request_payload = params
 
+    http_extra = {"http_method": method, "http_path": path}
+
     logger.info(
         f"📥 Incoming: {method} {path} | Client IP: {client_host}",
-        extra={"payload": request_payload},
+        extra={"payload": request_payload, **http_extra},
     )
 
     # --- Call the route handler ---
@@ -106,17 +121,18 @@ async def log_requests_and_responses(request: Request, call_next):
         async for chunk in response.body_iterator:
             response_body += chunk
 
+        # Only log response payloads for mutations and errors — GET responses
+        # can be large lists that inflate the log file significantly
         response_payload = None
+        is_mutation = method in ("POST", "PUT", "PATCH", "DELETE")
+        is_error = status_code >= 400
         content_type = response.headers.get("content-type", "")
-        if "application/json" in content_type and response_body:
-            try:
-                response_payload = _json.loads(response_body)
-            except _json.JSONDecodeError:
-                response_payload = response_body.decode("utf-8", errors="replace")
+        if (is_mutation or is_error) and "application/json" in content_type and response_body:
+            response_payload = _truncate(response_body)
 
         log_msg = f"📤 Response: {method} {path} -> Status: {status_code} | Latency: {process_time:.2f}ms"
         log_level = logger.warning if status_code >= 400 else logger.info
-        log_level(log_msg, extra={"payload": response_payload})
+        log_level(log_msg, extra={"payload": response_payload, **http_extra})
 
         return StarletteResponse(
             content=response_body,
@@ -129,7 +145,7 @@ async def log_requests_and_responses(request: Request, call_next):
         process_time = (time.time() - start_time) * 1000
         logger.error(
             f"💥 Pipeline Crash: {method} {path} failed after {process_time:.2f}ms | Error: {str(e)}",
-            extra={"payload": request_payload},
+            extra={"payload": request_payload, **http_extra},
         )
         raise e
 

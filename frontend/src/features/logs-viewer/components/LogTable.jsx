@@ -29,7 +29,8 @@ export default function LogTable({ entries, onSelectEntry }) {
           <tr>
             <th>Timestamp</th>
             <th>Level</th>
-            <th>Module</th>
+            <th>Method</th>
+            <th>Endpoint</th>
             <th>Message</th>
             <th>Payload</th>
           </tr>
@@ -50,7 +51,12 @@ export default function LogTable({ entries, onSelectEntry }) {
                   {entry.level || 'UNKNOWN'}
                 </span>
               </td>
-              <td data-label="Module" className="log-cell--module">{entry.module}</td>
+              <td data-label="Method">
+                {entry.http_method
+                  ? <span className={`log-method-badge log-method--${entry.http_method.toLowerCase()}`}>{entry.http_method}</span>
+                  : <span className="log-payload-empty">—</span>}
+              </td>
+              <td data-label="Endpoint" className="log-cell--module">{entry.http_path || '—'}</td>
               <td data-label="Message" className="log-cell--message">{entry.message}</td>
               <td data-label="Payload" className="log-cell--payload">
                 {entry.payload != null

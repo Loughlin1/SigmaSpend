@@ -13,6 +13,7 @@ export default function LogsSection() {
     entries,
     total,
     modules,
+    httpMethods,
     loading,
     error,
     filters,
@@ -46,13 +47,20 @@ export default function LogsSection() {
       {!isCollapsed && (
         <>
           <div className="headingRow" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
-            {!loading && <p style={{ margin: 0, fontSize: '0.85rem' }}>{total} entries</p>}
+            {!loading && (
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#4a5568' }}>
+                {filters.search
+                  ? <>{entries.length} of {total} entries</>
+                  : <>{total} entries</>}
+              </p>
+            )}
             <button className="inlineButton" onClick={() => fetchLogs()}>Refresh</button>
           </div>
 
           <LogFilters
             filters={filters}
             modules={modules}
+            httpMethods={httpMethods}
             onChange={handleFilterChange}
             onSearch={() => fetchLogs()}
             onReset={handleReset}

@@ -1,4 +1,5 @@
 import './LogDetailSidebar.css';
+import './LogTable.css';
 
 const LEVEL_CLASSES = {
   DEBUG: 'log-level--debug',
@@ -51,6 +52,22 @@ export default function LogDetailSidebar({ entry, onClose }) {
               <dt>Module</dt>
               <dd className="log-sidebar__mono">{entry.module || '—'}</dd>
             </div>
+            {entry.http_method && (
+              <div className="log-sidebar__field">
+                <dt>Method</dt>
+                <dd>
+                  <span className={`log-method-badge log-method--${entry.http_method.toLowerCase()}`}>
+                    {entry.http_method}
+                  </span>
+                </dd>
+              </div>
+            )}
+            {entry.http_path && (
+              <div className="log-sidebar__field">
+                <dt>Endpoint</dt>
+                <dd className="log-sidebar__mono">{entry.http_path}</dd>
+              </div>
+            )}
             <div className="log-sidebar__field log-sidebar__field--full">
               <dt>Message</dt>
               <dd className="log-sidebar__message">{entry.message}</dd>

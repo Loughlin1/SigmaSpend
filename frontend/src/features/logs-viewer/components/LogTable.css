@@ -84,3 +84,19 @@
   color: #cbd5e0;
   font-size: 0.85rem;
 }
+
+.log-method-badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-family: var(--mono, monospace);
+}
+
+.log-method--get    { background: #c6f6d5; color: #276749; }
+.log-method--post   { background: #bee3f8; color: #2a69ac; }
+.log-method--put    { background: #fefcbf; color: #744210; }
+.log-method--patch  { background: #e9d8fd; color: #553c9a; }
+.log-method--delete { background: #fed7d7; color: #9b2335; }

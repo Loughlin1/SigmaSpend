@@ -15,6 +15,10 @@ class JsonFormatter(logging.Formatter):
         }
         if hasattr(record, "payload") and record.payload is not None:
             log_entry["payload"] = record.payload
+        if hasattr(record, "http_method"):
+            log_entry["http_method"] = record.http_method
+        if hasattr(record, "http_path"):
+            log_entry["http_path"] = record.http_path
         if record.exc_info:
             log_entry["exception"] = self.formatException(record.exc_info)
         return json.dumps(log_entry)

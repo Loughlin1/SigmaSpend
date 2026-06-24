@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/.env*)",
+      "Read(**/*.secret)",
+      "Read(**/node_modules/**)",
+      "Read(**/dist/**)",
+      "Read(**/build/**)",
+      "Read(**/*.db)",
+      "Read(**/config.yaml)",
+      "Grep(**/.env*)",
+      "Grep(**/*.db)",
+      "Grep(**/*.secret)",
+      "Grep(**/node_modules/**)",
+      "Grep(**/dist/**)",
+      "Grep(**/build/**)",
+      "Grep(**/config.yaml)",
+      "Write(**/.env*)",
+      "Write(**/*.db)",
+      "Write(**/config/production.json)",
+      "Write(**/config.yaml)"
+    ]
+  },
+  "ignorePatterns": [
+    "*.log",
+    "tmp/",
+    ".cursor/",
+    ".vscode/"
+  ],
+  "preferences": {
+    "autoFormat": true,
+    "preferredLanguage": "en"
+  }
+}

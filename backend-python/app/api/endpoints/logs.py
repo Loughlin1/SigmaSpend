@@ -5,7 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.core.logging_config import LOG_DIR, LOG_FILE
+from app.core.logging_config import get_log_file
 
 router = APIRouter()
 
@@ -43,7 +43,7 @@ def get_logs(
     Query params: level, module (partial), since (ISO datetime), limit.
     """
     try:
-        entries = _iter_log_lines(LOG_FILE)
+        entries = _iter_log_lines(get_log_file())
     except OSError as e:
         raise HTTPException(status_code=500, detail=f"Could not read log file: {e}")
 
@@ -88,7 +88,7 @@ def get_log_levels():
 def get_log_modules():
     """Return the distinct module names seen in the current log file."""
     try:
-        entries = _iter_log_lines(LOG_FILE)
+        entries = _iter_log_lines(get_log_file())
     except OSError:
         return {"modules": []}
 

@@ -4,20 +4,6 @@ import logging.handlers
 import os
 from datetime import datetime, timezone
 
-LOG_DIR = os.getenv("LOG_DIR", "logs")
-LOG_FORMAT = os.getenv("LOG_FORMAT", "json")  # "json" or "plain"
-LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG")
-LOG_FILE = os.path.join(LOG_DIR, "sigmaspend.log")
-
-MODULE_LOG_LEVELS: dict[str, str] = {
-    "pdf_parser": os.getenv("LOG_LEVEL_PDF_PARSER", "DEBUG"),
-    "parser": os.getenv("LOG_LEVEL_PARSER", "DEBUG"),
-    "classifier": os.getenv("LOG_LEVEL_CLASSIFIER", "INFO"),
-    "expenses": os.getenv("LOG_LEVEL_EXPENSES", "INFO"),
-    "ingestion": os.getenv("LOG_LEVEL_INGESTION", "INFO"),
-    "analytics": os.getenv("LOG_LEVEL_ANALYTICS", "INFO"),
-}
-
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
@@ -33,22 +19,26 @@ class JsonFormatter(logging.Formatter):
 
 
 def setup_logging() -> None:
-    os.makedirs(LOG_DIR, exist_ok=True)
+    # Import here to avoid circular import (main.py calls setup_logging before settings is used elsewhere)
+    from app.core.config import settings
 
-    root_level = getattr(logging, LOG_LEVEL.upper(), logging.DEBUG)
+    os.makedirs(settings.LOG_DIR, exist_ok=True)
+    log_file = os.path.join(settings.LOG_DIR, "sigmaspend.log")
 
-    if LOG_FORMAT == "json":
-        formatter: logging.Formatter = JsonFormatter()
+    root_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.DEBUG)
+
+    if settings.LOG_FORMAT == "json":
+        file_formatter: logging.Formatter = JsonFormatter()
     else:
-        formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s - %(message)s")
+        file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s - %(message)s")
 
     file_handler = logging.handlers.RotatingFileHandler(
-        LOG_FILE,
-        maxBytes=5 * 1024 * 1024,  # 5 MB per file
+        log_file,
+        maxBytes=5 * 1024 * 1024,
         backupCount=3,
         encoding="utf-8",
     )
-    file_handler.setFormatter(formatter)
+    file_handler.setFormatter(file_formatter)
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(
@@ -57,13 +47,25 @@ def setup_logging() -> None:
 
     logging.basicConfig(level=root_level, handlers=[console_handler, file_handler])
 
-    # Per-module overrides
-    for module, level_str in MODULE_LOG_LEVELS.items():
-        level = getattr(logging, level_str.upper(), root_level)
-        logging.getLogger(f"sigmaspend.{module}").setLevel(level)
+    module_overrides = {
+        "pdf_parser": settings.LOG_LEVEL_PDF_PARSER,
+        "parser": settings.LOG_LEVEL_PARSER,
+        "classifier": settings.LOG_LEVEL_CLASSIFIER,
+        "expenses": settings.LOG_LEVEL_EXPENSES,
+        "ingestion": settings.LOG_LEVEL_INGESTION,
+        "analytics": settings.LOG_LEVEL_ANALYTICS,
+    }
+    for module, level_str in module_overrides.items():
+        logging.getLogger(f"sigmaspend.{module}").setLevel(
+            getattr(logging, level_str.upper(), root_level)
+        )
 
-    # Suppress noisy third-party loggers
     logging.getLogger("uvicorn.access").setLevel(logging.INFO)
     logging.getLogger("python_multipart").setLevel(logging.INFO)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("pdfminer").setLevel(logging.WARNING)
+
+
+def get_log_file() -> str:
+    from app.core.config import settings
+    return os.path.join(settings.LOG_DIR, "sigmaspend.log")

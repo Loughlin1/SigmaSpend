@@ -1,0 +1,122 @@
+/* src/styles/budget.css */
+
+.budgetTableWrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.budgetTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  color: #2d3748;
+}
+
+.budgetTable th {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #4a5568;
+  white-space: nowrap;
+}
+
+.budgetTable td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.budgetCategoryCell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.budgetIcon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.budgetInput {
+  width: 110px;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #2d3748;
+  background: #fff;
+}
+
+.budgetInput:focus {
+  outline: none;
+  border-color: #2b6cb0;
+  box-shadow: 0 0 0 2px rgba(43, 108, 176, 0.15);
+}
+
+.budgetActualCell {
+  min-width: 120px;
+}
+
+.budgetProgressTrack {
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 120px;
+}
+
+.budgetProgressFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.budgetProgressFill--safe   { background: #38a169; }
+.budgetProgressFill--warning { background: #d69e2e; }
+.budgetProgressFill--over   { background: #e53e3e; }
+
+.budgetBadge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.budgetBadge--safe    { background: #c6f6d5; color: #276749; }
+.budgetBadge--warning { background: #fefcbf; color: #744210; }
+.budgetBadge--over    { background: #fed7d7; color: #9b2335; }
+.budgetBadge--none    { background: #edf2f7; color: #718096; }
+
+.budgetRow--over td { background: #fff5f5; }
+.budgetRow--warning td { background: #fffff0; }
+
+.budgetOver  { color: #e53e3e; font-weight: 600; }
+.budgetUnder { color: #38a169; font-weight: 600; }
+
+.budgetTotalsRow td {
+  border-top: 2px solid #e2e8f0;
+  padding-top: 0.75rem;
+  background: #f7fafc;
+}
+
+.noDataMessage {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .budgetTable th:nth-child(4),
+  .budgetTable td:nth-child(4) {
+    display: none;
+  }
+}

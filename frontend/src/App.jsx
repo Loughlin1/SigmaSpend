@@ -14,6 +14,7 @@ import AutomationSection from './features/automation/components/AutomationSectio
 import AnalyticsSection from './features/analytics/components/AnalyticsSection';
 import CategoryManager from './features/categories/components/CategoryManager';
 import LogsSection from './features/logs-viewer/components/LogsSection';
+import BudgetSection from './features/budget/components/BudgetSection';
 
 // Master Shared Hooks
 import useAccounts from './features/bank-accounts/hooks/useAccounts';
@@ -28,6 +29,7 @@ function App() {
   // Feature component communication boundaries
   const automationRef = useRef(null);
   const analyticsRef = useRef(null);
+  const budgetRef = useRef(null);
 
   // App Mount Prefetch
  useEffect(() => {
@@ -78,6 +80,12 @@ function App() {
 
       <AnalyticsSection
         ref={analyticsRef}
+        accounts={accounts}
+      />
+
+      <BudgetSection
+        ref={budgetRef}
+        categories={categories}
         accounts={accounts}
       />
 

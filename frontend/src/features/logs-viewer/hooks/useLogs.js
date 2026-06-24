@@ -47,7 +47,8 @@ export default function useLogs() {
     setLoading(true);
     setError(null);
     // Strip client-only keys before sending to the API
-    const { search: _s, http_method: _m, http_path: _p, ...serverFilters } = { ...filters, ...overrides };
+    // eslint-disable-next-line no-unused-vars
+    const { search, http_method, http_path, ...serverFilters } = { ...filters, ...overrides };
     const params = Object.fromEntries(
       Object.entries(serverFilters).filter(([, v]) => v !== '' && v !== null)
     );

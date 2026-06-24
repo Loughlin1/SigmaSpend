@@ -93,11 +93,13 @@ export default function useBudget() {
     }
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchBudgets();
     fetchIncome();
     fetchActuals();
   }, [fetchBudgets, fetchIncome, fetchActuals]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   return { budgets, updateBudget, actuals, monthlyIncome, updateIncome, updateBucket, loading, error, fetchActuals };
 }

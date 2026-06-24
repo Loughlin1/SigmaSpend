@@ -78,7 +78,7 @@ export default function BudgetPieChart({ categories, budgets, actuals }) {
               contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px' }}
             />
             <Legend
-              formatter={(value, entry) => {
+              formatter={(value) => {
                 const d = data.find(x => x.name === value);
                 return d ? `${d.icon} ${value}` : value;
               }}

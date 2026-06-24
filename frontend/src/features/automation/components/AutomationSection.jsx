@@ -4,14 +4,15 @@ import RuleManager from './RuleManager/RuleManager';
 import useRules from '../hooks/useRules';
 
 const AutomationSection = forwardRef(({ categories, triggerGlobalRefresh }, ref) => {
-  const { 
-    rules, 
-    pagination, 
-    loading: rulesLoading, 
-    error: rulesError, 
-    fetchRules, 
-    createRule, 
-    deleteRule 
+  const {
+    rules,
+    pagination,
+    loading: rulesLoading,
+    error: rulesError,
+    fetchRules,
+    createRule,
+    deleteRule,
+    createRuleFromTransaction,
   } = useRules();
 
   // Initial Fetch on load
@@ -21,9 +22,8 @@ const AutomationSection = forwardRef(({ categories, triggerGlobalRefresh }, ref)
 
   // Expose fetchRules upward to App.jsx via a ref template
   useImperativeHandle(ref, () => ({
-    refreshRules: () => {
-      fetchRules();
-    }
+    refreshRules: () => fetchRules(),
+    createRuleFromTransaction: (ruleData) => createRuleFromTransaction(ruleData),
   }));
 
   const handleCreateRule = async (ruleData) => {

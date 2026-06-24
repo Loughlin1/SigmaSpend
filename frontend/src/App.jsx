@@ -96,8 +96,8 @@ function App() {
         categoriesLoading={categoriesLoading}
         categoriesError={categoriesError}
         triggerGlobalRefresh={triggerGlobalRefresh}
-        createRuleFromTransaction={async () => {
-          if (automationRef.current) automationRef.current.refreshRules();
+        createRuleFromTransaction={async (ruleData) => {
+          if (automationRef.current) await automationRef.current.createRuleFromTransaction(ruleData);
         }}
       />
       <LogsSection />

@@ -1,0 +1,124 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {
+  formatTransactionDate,
+  getGoogleCalendarDayUrl,
+  getCurrentMonthBounds,
+} from './calendarUtils';
+
+// ============================================================================
+// formatTransactionDate
+// ============================================================================
+
+describe('formatTransactionDate', () => {
+  it('formats an ISO YYYY-MM-DD date to UK short format', () => {
+    expect(formatTransactionDate('2024-06-15')).toBe('Sat, 15 Jun 2024');
+  });
+
+  it('formats a YYYY/MM/DD date', () => {
+    expect(formatTransactionDate('2024/06/15')).toBe('Sat, 15 Jun 2024');
+  });
+
+  it('formats a DD/MM/YYYY date', () => {
+    expect(formatTransactionDate('15/06/2024')).toBe('Sat, 15 Jun 2024');
+  });
+
+  it('formats a DD-MM-YYYY date', () => {
+    expect(formatTransactionDate('15-06-2024')).toBe('Sat, 15 Jun 2024');
+  });
+
+  it('returns empty string for null input', () => {
+    expect(formatTransactionDate(null)).toBe('');
+  });
+
+  it('returns empty string for undefined input', () => {
+    expect(formatTransactionDate(undefined)).toBe('');
+  });
+
+  it('returns "Invalid Date" for a nonsense string', () => {
+    expect(formatTransactionDate('not-a-date')).toBe('Invalid Date');
+  });
+
+  it('handles first day of year correctly', () => {
+    expect(formatTransactionDate('2024-01-01')).toBe('Mon, 1 Jan 2024');
+  });
+
+  it('handles last day of year correctly', () => {
+    expect(formatTransactionDate('2024-12-31')).toBe('Tue, 31 Dec 2024');
+  });
+});
+
+// ============================================================================
+// getGoogleCalendarDayUrl
+// ============================================================================
+
+describe('getGoogleCalendarDayUrl', () => {
+  it('builds the correct URL from an ISO YYYY-MM-DD date', () => {
+    expect(getGoogleCalendarDayUrl('2024-06-15')).toBe(
+      'https://calendar.google.com/calendar/r/day/2024/06/15'
+    );
+  });
+
+  it('builds the correct URL from a YYYY/MM/DD date', () => {
+    expect(getGoogleCalendarDayUrl('2024/06/15')).toBe(
+      'https://calendar.google.com/calendar/r/day/2024/06/15'
+    );
+  });
+
+  it('builds the correct URL from a DD/MM/YYYY date', () => {
+    expect(getGoogleCalendarDayUrl('15/06/2024')).toBe(
+      'https://calendar.google.com/calendar/r/day/2024/06/15'
+    );
+  });
+
+  it('pads single-digit months and days', () => {
+    expect(getGoogleCalendarDayUrl('2024-01-03')).toBe(
+      'https://calendar.google.com/calendar/r/day/2024/01/03'
+    );
+  });
+
+  it('returns "#" for null input', () => {
+    expect(getGoogleCalendarDayUrl(null)).toBe('#');
+  });
+
+  it('returns "#" for an unparseable string', () => {
+    expect(getGoogleCalendarDayUrl('garbage')).toBe('#');
+  });
+});
+
+// ============================================================================
+// getCurrentMonthBounds
+// ============================================================================
+
+describe('getCurrentMonthBounds', () => {
+  beforeEach(() => {
+    // Fix time to 15 June 2024
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2024-06-15'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('returns the first day of the current month as start', () => {
+    expect(getCurrentMonthBounds().start).toBe('2024-06-01');
+  });
+
+  it('returns the last day of the current month as end', () => {
+    expect(getCurrentMonthBounds().end).toBe('2024-06-30');
+  });
+
+  it('handles February in a leap year correctly', () => {
+    vi.setSystemTime(new Date('2024-02-10'));
+    const { start, end } = getCurrentMonthBounds();
+    expect(start).toBe('2024-02-01');
+    expect(end).toBe('2024-02-29');
+  });
+
+  it('handles December correctly', () => {
+    vi.setSystemTime(new Date('2024-12-01'));
+    const { start, end } = getCurrentMonthBounds();
+    expect(start).toBe('2024-12-01');
+    expect(end).toBe('2024-12-31');
+  });
+});

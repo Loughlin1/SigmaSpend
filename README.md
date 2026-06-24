@@ -17,7 +17,8 @@ The name draws inspiration from the mathematical summation symbol ($\Sigma$), re
 | Database | SQLite (via Alembic migrations) |
 | PDF Parsing | pdfplumber |
 | AI Classification | Ollama (Llama 3 / Mistral) — optional |
-| Testing | pytest |
+| Backend Testing | pytest, pytest-asyncio |
+| Frontend Testing | Vitest, React Testing Library |
 
 ---
 
@@ -36,6 +37,7 @@ sigmaspend/
 │       │   ├── bank-accounts/        # Account creation and management
 │       │   └── categories/           # Category manager
 │       ├── styles/                   # Global CSS files
+│       ├── test/                      # Vitest setup and shared test utilities
 │       └── utils/                    # Date formatters, category helpers
 │
 └── backend-python/                   # FastAPI backend
@@ -65,7 +67,7 @@ sigmaspend/
     │       ├── pdf_parser.py         # PDF spatial layout parser
     │       └── utilities.py          # Shared helpers (date parsing etc.)
     ├── alembic/                      # Database migration scripts
-    ├── tests/                        # pytest test suite
+    ├── tests/                        # pytest test suite (86 tests)
     └── requirements.txt
 ```
 
@@ -217,6 +219,51 @@ All endpoints are prefixed with `/api/v1`.
 | Method | Path | Description |
 |---|---|---|
 | `POST` | `/upload/statement?account_id=N` | Upload a CSV or PDF bank statement |
+
+---
+
+## Testing
+
+### Backend (pytest)
+
+86 tests covering API endpoints, service logic, and ORM models. Uses an in-memory SQLite database so no external setup is required.
+
+```bash
+cd backend-python
+source .venv/bin/activate
+python -m pytest                  # run all tests
+python -m pytest --tb=short -q   # compact output
+```
+
+Test layout:
+
+| Directory | Coverage |
+|---|---|
+| `tests/api/v1/` | All REST endpoints (accounts, expenses, rules, categories, ingestion) |
+| `tests/services/` | Parser, PDF parser, and AI classifier logic |
+| `tests/test_models.py` | SQLAlchemy model constraints and relationships |
+| `tests/core/` | Config loading |
+
+### Frontend (Vitest + React Testing Library)
+
+68 tests covering utility functions, UI components, and custom hooks. Runs against a jsdom environment with no browser required.
+
+```bash
+cd frontend
+npm test                  # run once
+npm run test:watch        # watch mode during development
+npm run test:coverage     # generate coverage report
+```
+
+Test layout:
+
+| File | Coverage |
+|---|---|
+| `src/utils/formatters.test.js` | `getAccountAbbreviation`, `getCategoryDisplay` |
+| `src/utils/calendarUtils.test.js` | `formatTransactionDate`, `getGoogleCalendarDayUrl`, `getCurrentMonthBounds` |
+| `src/components/ui/ConfirmationModal.test.jsx` | Render, callbacks, body scroll side-effect |
+| `src/features/ledger/components/LedgerTable/BulkActionsPanel.test.jsx` | All 5 bulk action flows, disabled state |
+| `src/features/ledger/hooks/useExpenses.test.js` | Fetch, create, update, delete, pagination, error handling |
 
 ---
 

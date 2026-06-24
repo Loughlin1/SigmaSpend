@@ -3,11 +3,18 @@ import { forwardRef, useImperativeHandle, useState } from 'react';
 import useBudget from '../hooks/useBudget';
 import BudgetTable from './BudgetTable';
 import BudgetPieChart from './BudgetPieChart';
+import RulesSummary from './RulesSummary';
 import { getCurrentMonthBounds } from '../../../utils/calendarUtils';
 
-const BudgetSection = forwardRef(({ categories = [], accounts = [] }, ref) => {
+const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUpdated }, ref) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const { budgets, updateBudget, actuals, loading, error, fetchActuals } = useBudget();
+  const {
+    budgets, updateBudget,
+    actuals, fetchActuals,
+    monthlyIncome, updateIncome,
+    updateBucket,
+    loading, error,
+  } = useBudget();
 
   const { start, end } = getCurrentMonthBounds();
   const [filters, setFilters] = useState({ account_id: '', start_date: start, end_date: end });
@@ -20,6 +27,11 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [] }, ref) => {
     const next = { ...filters, account_id: e.target.value };
     setFilters(next);
     fetchActuals(next);
+  };
+
+  const handleBucketChange = async (categoryId, bucket) => {
+    await updateBucket(categoryId, bucket);
+    if (onCategoryUpdated) onCategoryUpdated();
   };
 
   const parentCategories = categories.filter(c => !c.parent_id);
@@ -35,10 +47,23 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [] }, ref) => {
 
       {!isCollapsed && (
         <>
-          <div className="headingRow" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
-            <p style={{ margin: 0, fontSize: '0.875rem', color: '#4a5568' }}>
-              Set monthly budget limits per category. Actuals are pulled from the current month's transactions.
-            </p>
+          <div className="headingRow" style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <label style={{ fontSize: '0.875rem', color: '#4a5568', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                Monthly net income (£)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="e.g. 3000"
+                value={monthlyIncome}
+                onChange={e => updateIncome(e.target.value)}
+                className="budgetInput"
+                style={{ width: '140px' }}
+                aria-label="Monthly net income"
+              />
+            </div>
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
               {accounts.length > 0 && (
                 <select
@@ -57,6 +82,12 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [] }, ref) => {
             </div>
           </div>
 
+          <RulesSummary
+            categories={parentCategories}
+            actuals={actuals}
+            monthlyIncome={monthlyIncome}
+          />
+
           {error && <p className="errorText">Error loading actuals: {error.message}</p>}
 
           {loading ? (
@@ -70,6 +101,7 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [] }, ref) => {
                 budgets={budgets}
                 actuals={actuals}
                 onBudgetChange={updateBudget}
+                onBucketChange={handleBucketChange}
               />
               <BudgetPieChart
                 categories={parentCategories}

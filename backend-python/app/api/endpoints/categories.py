@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.api import deps
 from app.models.category import Category as CategoryModel
-from app.schemas.category import CategoryCreate, CategoryResponse
+from app.schemas.category import CategoryCreate, CategoryResponse, CategoryBucketUpdate
 
 import logging
 logger = logging.getLogger("sigmaspend")
@@ -40,3 +40,16 @@ def create_category(category_in: CategoryCreate, db: Session = Depends(deps.get_
     db.refresh(db_obj)
     logger.info(f"Successfully created category '{db_obj.name}' with ID {db_obj.id}")
     return db_obj
+
+
+@router.patch("/{category_id}/bucket", response_model=CategoryResponse)
+def update_bucket(category_id: int, payload: CategoryBucketUpdate, db: Session = Depends(deps.get_db)):
+    cat = db.query(CategoryModel).filter(CategoryModel.id == category_id).first()
+    if not cat:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Category not found")
+    cat.bucket = payload.bucket
+    db.commit()
+    db.refresh(cat)
+    logger.info(f"Set bucket='{payload.bucket}' on category '{cat.name}' (id={category_id})")
+    return cat

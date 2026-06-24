@@ -8,7 +8,8 @@ class Category(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False, unique=True)
-    icon = Column(String, nullable=True) # New field to hold the emoji string (e.g., "🏠")
+    icon = Column(String, nullable=True)
+    bucket = Column(String, nullable=True)  # '50_needs' | '30_wants' | '20_savings' | None
     # If parent_id is null, it's a top-level category. If filled, it's a subcategory.
     parent_id = Column(Integer, ForeignKey("categories.id", ondelete="CASCADE"), nullable=True)
     parent = relationship(

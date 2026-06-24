@@ -1,6 +1,13 @@
 // src/features/budget/components/BudgetTable.jsx
 import '../../../styles/budget.css';
 
+const BUCKET_OPTIONS = [
+  { value: '', label: '— untagged —' },
+  { value: '50_needs',   label: '🏠 Needs (50%)' },
+  { value: '30_wants',   label: '🎉 Wants (30%)' },
+  { value: '20_savings', label: '💰 Savings (20%)' },
+];
+
 function getStatus(actual, budget) {
   if (!budget) return null;
   const pct = actual / budget;
@@ -26,11 +33,9 @@ function ProgressBar({ actual, budget }) {
   );
 }
 
-export default function BudgetTable({ categories, budgets, actuals, onBudgetChange }) {
-  const parentCategories = categories.filter(c => !c.parent_id);
-
-  const totalBudget = parentCategories.reduce((sum, c) => sum + (parseFloat(budgets[c.id]?.amount) || 0), 0);
-  const totalActual = parentCategories.reduce((sum, c) => sum + (actuals[c.name] || 0), 0);
+export default function BudgetTable({ categories, budgets, actuals, onBudgetChange, onBucketChange }) {
+  const totalBudget = categories.reduce((sum, c) => sum + (parseFloat(budgets[c.id]?.amount) || 0), 0);
+  const totalActual = categories.reduce((sum, c) => sum + (actuals[c.name] || 0), 0);
 
   return (
     <div className="budgetTableWrapper">
@@ -38,6 +43,7 @@ export default function BudgetTable({ categories, budgets, actuals, onBudgetChan
         <thead>
           <tr>
             <th>Category</th>
+            <th>50/30/20 Bucket</th>
             <th>Monthly Budget (£)</th>
             <th>Actual Spend</th>
             <th>Remaining</th>
@@ -45,7 +51,7 @@ export default function BudgetTable({ categories, budgets, actuals, onBudgetChan
           </tr>
         </thead>
         <tbody>
-          {parentCategories.map(cat => {
+          {categories.map(cat => {
             const actual = actuals[cat.name] || 0;
             const budget = parseFloat(budgets[cat.id]?.amount) || 0;
             const remaining = budget > 0 ? budget - actual : null;
@@ -56,6 +62,19 @@ export default function BudgetTable({ categories, budgets, actuals, onBudgetChan
                 <td className="budgetCategoryCell">
                   <span className="budgetIcon">{cat.icon || '📁'}</span>
                   {cat.name}
+                </td>
+                <td>
+                  <select
+                    value={cat.bucket || ''}
+                    onChange={e => onBucketChange(cat.id, e.target.value)}
+                    className="budgetInput"
+                    aria-label={`Bucket for ${cat.name}`}
+                    style={{ width: '140px' }}
+                  >
+                    {BUCKET_OPTIONS.map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
                 </td>
                 <td>
                   <input
@@ -87,10 +106,11 @@ export default function BudgetTable({ categories, budgets, actuals, onBudgetChan
             );
           })}
         </tbody>
-        {parentCategories.length > 0 && (
+        {categories.length > 0 && (
           <tfoot>
             <tr className="budgetTotalsRow">
               <td><strong>Total</strong></td>
+              <td />
               <td><strong>{totalBudget > 0 ? `£${totalBudget.toFixed(2)}` : '—'}</strong></td>
               <td><strong>£{totalActual.toFixed(2)}</strong></td>
               <td className={totalBudget > 0 ? (totalActual > totalBudget ? 'budgetOver' : 'budgetUnder') : ''}>

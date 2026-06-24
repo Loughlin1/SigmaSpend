@@ -114,9 +114,67 @@
   font-size: 0.9rem;
 }
 
+.rulesSummary {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.rulesBuckets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.rulesBucket {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.875rem;
+}
+
+.rulesBucketHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.rulesBucketLabel {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.rulesBucketPct {
+  font-weight: 400;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+.rulesBucketTarget {
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+.rulesBucketStats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #4a5568;
+  margin-top: 0.25rem;
+}
+
 @media (max-width: 768px) {
-  .budgetTable th:nth-child(4),
-  .budgetTable td:nth-child(4) {
+  .rulesBuckets {
+    grid-template-columns: 1fr;
+  }
+
+  .budgetTable th:nth-child(5),
+  .budgetTable td:nth-child(5) {
     display: none;
   }
 }

@@ -87,6 +87,7 @@ function App() {
         ref={budgetRef}
         categories={categories}
         accounts={accounts}
+        onCategoryUpdated={fetchCategories}
       />
 
       <LedgerSection

@@ -50,6 +50,13 @@ export const accountsApi = {
 export const categoryApi = {
   getAll: () => apiClient.get('/categories/').then(res => res.data),
   create: (data) => apiClient.post('/categories/', data).then(res => res.data),
+  updateBucket: (categoryId, bucket) =>
+    apiClient.patch(`/categories/${categoryId}/bucket`, { bucket }).then(res => res.data),
+};
+
+export const incomeApi = {
+  get: () => apiClient.get('/income/').then(res => res.data),
+  update: (monthly_net_income) => apiClient.put('/income/', { monthly_net_income }).then(res => res.data),
 };
 
 export const banksApi = {

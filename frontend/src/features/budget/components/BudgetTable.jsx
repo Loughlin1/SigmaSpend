@@ -29,7 +29,7 @@ function ProgressBar({ actual, budget }) {
 export default function BudgetTable({ categories, budgets, actuals, onBudgetChange }) {
   const parentCategories = categories.filter(c => !c.parent_id);
 
-  const totalBudget = parentCategories.reduce((sum, c) => sum + (parseFloat(budgets[c.name]) || 0), 0);
+  const totalBudget = parentCategories.reduce((sum, c) => sum + (parseFloat(budgets[c.id]?.amount) || 0), 0);
   const totalActual = parentCategories.reduce((sum, c) => sum + (actuals[c.name] || 0), 0);
 
   return (
@@ -47,7 +47,7 @@ export default function BudgetTable({ categories, budgets, actuals, onBudgetChan
         <tbody>
           {parentCategories.map(cat => {
             const actual = actuals[cat.name] || 0;
-            const budget = parseFloat(budgets[cat.name]) || 0;
+            const budget = parseFloat(budgets[cat.id]?.amount) || 0;
             const remaining = budget > 0 ? budget - actual : null;
             const status = getStatus(actual, budget);
 
@@ -63,8 +63,8 @@ export default function BudgetTable({ categories, budgets, actuals, onBudgetChan
                     min="0"
                     step="0.01"
                     placeholder="—"
-                    value={budgets[cat.name] ?? ''}
-                    onChange={e => onBudgetChange(cat.name, e.target.value)}
+                    value={budgets[cat.id]?.amount ?? ''}
+                    onChange={e => onBudgetChange(cat.id, e.target.value)}
                     className="budgetInput"
                     aria-label={`Budget for ${cat.name}`}
                   />

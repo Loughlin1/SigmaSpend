@@ -37,7 +37,7 @@ export default function BudgetPieChart({ categories, budgets, actuals }) {
     return parentCategories
       .map(cat => {
         const actual = actuals[cat.name] || 0;
-        return { name: cat.name, icon: cat.icon || '📁', actual, budget: budgets[cat.name] || 0 };
+        return { name: cat.name, icon: cat.icon || '📁', actual, budget: parseFloat(budgets[cat.id]?.amount) || 0 };
       })
       .filter(d => d.actual > 0);
   }, [categories, budgets, actuals]);

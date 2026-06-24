@@ -28,6 +28,7 @@ from app.models.expense import Expense
 from app.models.bank_account import BankAccount
 from app.models.category import Category
 from app.models.category_rules import CategoryRule
+from app.models.budget import Budget
 
 target_metadata = Base.metadata
 

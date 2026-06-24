@@ -1,36 +1,57 @@
 // src/features/budget/hooks/useBudget.js
 import { useState, useCallback, useEffect } from 'react';
-import { expenseApi } from '../../../api/client';
+import { expenseApi, budgetApi } from '../../../api/client';
 import { getCurrentMonthBounds } from '../../../utils/calendarUtils';
 
-const STORAGE_KEY = 'sigmaSpend_budgets';
-
-function loadBudgets() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveBudgets(budgets) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(budgets));
-}
-
 export default function useBudget() {
-  const [budgets, setBudgetsState] = useState(loadBudgets);
+  // budgets keyed by category_id: { [category_id]: { amount, period } }
+  const [budgets, setBudgets] = useState({});
   const [actuals, setActuals] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const updateBudget = useCallback((categoryName, amount) => {
-    setBudgetsState(prev => {
-      const next = { ...prev, [categoryName]: amount === '' ? '' : parseFloat(amount) || 0 };
-      saveBudgets(next);
-      return next;
-    });
+  const fetchBudgets = useCallback(async () => {
+    try {
+      const data = await budgetApi.getAll();
+      const map = {};
+      data.forEach(b => { map[b.category_id] = { amount: b.amount, period: b.period }; });
+      setBudgets(map);
+    } catch (err) {
+      console.error('Failed to load budgets', err);
+    }
   }, []);
+
+  const updateBudget = useCallback(async (categoryId, amount, period = 'monthly') => {
+    const parsed = parseFloat(amount);
+    if (isNaN(parsed) || amount === '') {
+      // Empty input — delete the budget row
+      try {
+        await budgetApi.delete(categoryId);
+        setBudgets(prev => {
+          const next = { ...prev };
+          delete next[categoryId];
+          return next;
+        });
+      } catch {
+        // If there was no budget to delete, that's fine
+        setBudgets(prev => {
+          const next = { ...prev };
+          delete next[categoryId];
+          return next;
+        });
+      }
+      return;
+    }
+
+    // Optimistic update
+    setBudgets(prev => ({ ...prev, [categoryId]: { amount: parsed, period } }));
+    try {
+      await budgetApi.upsert(categoryId, { amount: parsed, period });
+    } catch (err) {
+      console.error('Failed to save budget', err);
+      fetchBudgets(); // Revert on failure
+    }
+  }, [fetchBudgets]);
 
   const fetchActuals = useCallback(async (filters = {}) => {
     setLoading(true);
@@ -44,7 +65,6 @@ export default function useBudget() {
         ...(filters.account_id ? { account_id: filters.account_id } : {}),
       };
       const data = await expenseApi.getSummary(params);
-      // Build a map of category name → total_expenses for parent categories
       const map = {};
       (data || [])
         .filter(row => String(row.type).toLowerCase() === 'category')
@@ -61,8 +81,9 @@ export default function useBudget() {
   }, []);
 
   useEffect(() => {
+    fetchBudgets();
     fetchActuals();
-  }, [fetchActuals]);
+  }, [fetchBudgets, fetchActuals]);
 
   return { budgets, updateBudget, actuals, loading, error, fetchActuals };
 }

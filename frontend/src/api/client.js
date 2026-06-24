@@ -62,6 +62,12 @@ export const rulesApi = {
   delete: (id) => apiClient.delete(`/rules/${id}`).then(res => res.data),
 };
 
+export const budgetApi = {
+  getAll: () => apiClient.get('/budgets/').then(res => res.data),
+  upsert: (categoryId, data) => apiClient.put(`/budgets/${categoryId}`, data).then(res => res.data),
+  delete: (categoryId) => apiClient.delete(`/budgets/${categoryId}`).then(res => res.data),
+};
+
 export const logsApi = {
   getLogs: (params) => apiClient.get('/logs', { params }).then(res => res.data),
   getModules: () => apiClient.get('/logs/modules').then(res => res.data),

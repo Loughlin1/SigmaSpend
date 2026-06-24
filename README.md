@@ -12,7 +12,7 @@ The name draws inspiration from the mathematical summation symbol ($\Sigma$), re
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18 (Vite) |
+| Frontend | React 19 (Vite) |
 | Backend | Python 3.11, FastAPI, SQLAlchemy 2.0 |
 | Database | SQLite (via Alembic migrations) |
 | PDF Parsing | pdfplumber |
@@ -35,6 +35,7 @@ sigmaspend/
 │       │   ├── analytics/            # Charts and summary views
 │       │   ├── automation/           # Category rule management
 │       │   ├── bank-accounts/        # Account creation and management
+│       │   ├── budget/               # Budget planner (limits, actuals, pie chart)
 │       │   └── categories/           # Category manager
 │       ├── styles/                   # Global CSS files
 │       ├── test/                      # Vitest setup and shared test utilities
@@ -47,6 +48,7 @@ sigmaspend/
     │   │   ├── deps.py               # Shared dependencies (DB session injection)
     │   │   └── endpoints/
     │   │       ├── accounts.py       # Bank account CRUD
+    │   │       ├── budgets.py        # Budget limits per category (upsert / delete)
     │   │       ├── categories.py     # Category management
     │   │       ├── expenses.py       # Expense CRUD + bulk actions
     │   │       ├── ingestion.py      # CSV / PDF statement upload
@@ -113,6 +115,17 @@ Self-referential table supporting a two-level hierarchy (parent → subcategory)
 | `name` | String (unique) | Category name |
 | `icon` | String | Emoji icon (e.g. `🏠`) |
 | `parent_id` | Integer FK → `categories` | `NULL` = top-level category |
+
+### `budgets`
+One row per parent category storing the user's monthly or yearly spend limit.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | Integer PK | |
+| `category_id` | Integer FK → `categories` (unique) | One budget per category |
+| `amount` | Numeric(10,2) | Budget limit |
+| `period` | String | `monthly` or `yearly` |
+| `updated_at` | DateTime | Last modified timestamp |
 
 ### `category_rules`
 Keyword-based automation rules. When a transaction description or notes field matches a keyword, the transaction is automatically assigned the linked category.
@@ -207,6 +220,13 @@ All endpoints are prefixed with `/api/v1`.
 |---|---|---|
 | `GET` | `/categories/` | List all categories and subcategories |
 | `POST` | `/categories/` | Create a category or subcategory |
+
+### Budgets — `/budgets`
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/budgets/` | List all budget limits |
+| `PUT` | `/budgets/{category_id}` | Create or update a budget limit (upsert) |
+| `DELETE` | `/budgets/{category_id}` | Remove a budget limit |
 
 ### Automation Rules — `/rules`
 | Method | Path | Description |

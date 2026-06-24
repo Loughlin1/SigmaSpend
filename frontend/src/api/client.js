@@ -29,7 +29,7 @@ export const ingestionApi = {
     } else {
       formData.append('files', files);
     }
-    return apiClient.post(`/upload/csv?account_id=${encodeURIComponent(accountId)}`, formData, {
+    return apiClient.post(`/upload/statement?account_id=${encodeURIComponent(accountId)}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).then(res => res.data);
   },

@@ -47,7 +47,7 @@ class StatementParserService:
         account_id: int, date: str, amount: float, is_income: bool, description: str, occurrence: int
     ) -> str:
         normalized_desc = description.strip().lower()
-        base_signature = f"{id}_{date}_{amount}_{is_income}_{normalized_desc}_occ{occurrence}"
+        base_signature = f"{account_id}_{date}_{amount}_{is_income}_{normalized_desc}_occ{occurrence}"
         return hashlib.md5(base_signature.encode("utf-8")).hexdigest()
 
     @classmethod

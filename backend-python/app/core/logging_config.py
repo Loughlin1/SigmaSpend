@@ -15,3 +15,4 @@ def setup_logging():
     logging.getLogger("uvicorn.access").setLevel(logging.INFO)
     logging.getLogger("python_multipart").setLevel(logging.INFO)
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("pdfminer").setLevel(logging.WARNING)

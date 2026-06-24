@@ -89,7 +89,7 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
           <input
             key={inputKey}
             type="file"
-            accept=".csv"
+            accept=".csv, .pdf"
             multiple
             onChange={(e) => setFiles(Array.from(e.target.files))}
             className="form-inline-input"

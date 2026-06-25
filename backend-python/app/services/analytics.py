@@ -94,4 +94,9 @@ class ExpenseAnalyticsService:
         # 4. Execute the statement with clean sorting properties
         raw_results = db.execute(combined.order_by(period_field, text("type"))).mappings().all()
 
-        return [dict(row) for row in raw_results]
+        results = []
+        for row in raw_results:
+            d = dict(row)
+            d["net"] = round(float(d.get("total_income", 0)) - float(d.get("total_expenses", 0)), 2)
+            results.append(d)
+        return results

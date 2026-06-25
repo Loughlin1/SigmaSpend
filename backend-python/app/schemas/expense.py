@@ -99,6 +99,7 @@ class AnalyticalBreakdownResponse(BaseModel):
     parent_name: Optional[str] = None    # Direct bridge link for subcategories to group on the UI
     total_income: float
     total_expenses: float
+    net: float
 
 
 class BulkCategoryUpdate(BaseModel):

@@ -1,11 +1,12 @@
 // src/components/ExpenseChart.jsx
 import { useState, useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Cell, ReferenceLine } from 'recharts';
 import '../../../styles/charts.css';
 
 export default function ExpenseChart({ expenses = [], loading }) {
-  const [groupBy, setGroupBy] = useState('parent-category'); 
-  const [transactionType, setTransactionType] = useState('expenses'); 
+  const [groupBy, setGroupBy] = useState('parent-category');
+  const [transactionType, setTransactionType] = useState('net');
+  const [sortBy, setSortBy] = useState('amount');
 
   const chartData = useMemo(() => {
     if (!Array.isArray(expenses) || expenses.length === 0) return [];
@@ -33,21 +34,28 @@ export default function ExpenseChart({ expenses = [], loading }) {
         // ⚡ FIX: Make the name unique per time period slot to resolve the Tooltip mapping bug
         const uniqueDisplayName = `${baseName}${periodStr}`;
 
-        // Safe metric balance extraction
-        const isIncome = transactionType.toLowerCase() === 'income' || transactionType.toLowerCase() === 'all';
-        const valueField = isIncome ? item.total_income : item.total_expenses;
+        const isNet = transactionType.toLowerCase() === 'net';
+        const isIncome = transactionType.toLowerCase() === 'income';
+        const rawValue = isNet
+          ? (item.net ?? (item.total_income - item.total_expenses))
+          : isIncome ? item.total_income : item.total_expenses;
 
         return {
-          name: uniqueDisplayName, // Displayed clearly next to the bar
-          pureName: baseName,       // Clean category name saved for tooltips
-          value: parseFloat((valueField || 0).toFixed(2)),
+          name: uniqueDisplayName,
+          pureName: baseName,
+          value: parseFloat((rawValue || 0).toFixed(2)),
           period: item.period || ''
         };
       })
-      .filter(node => node.value > 0) 
-      .sort((a, b) => b.value - a.value);
-  }, [expenses, groupBy, transactionType]);
+      .filter(node => transactionType.toLowerCase() === 'net' ? node.value !== 0 : node.value > 0)
+      .sort((a, b) =>
+        sortBy === 'alpha'
+          ? a.pureName.localeCompare(b.pureName)
+          : b.value - a.value
+      );
+  }, [expenses, groupBy, transactionType, sortBy]);
 
+  const isNetView = transactionType.toLowerCase() === 'net';
   const dynamicHeight = Math.max(chartData.length * 45, 300);
 
   if (loading) {
@@ -80,14 +88,28 @@ export default function ExpenseChart({ expenses = [], loading }) {
 
           <div className="controlGroup">
             <label htmlFor="transactionType">Metric:</label>
-            <select 
-              id="transactionType" 
-              value={transactionType} 
+            <select
+              id="transactionType"
+              value={transactionType}
               onChange={(e) => setTransactionType(e.target.value)}
               className="chartSelect"
             >
               <option value="expenses">Expenses Only</option>
               <option value="income">Income Only</option>
+              <option value="net">Net (Income − Expenses)</option>
+            </select>
+          </div>
+
+          <div className="controlGroup">
+            <label htmlFor="sortBy">Sort:</label>
+            <select
+              id="sortBy"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="chartSelect"
+            >
+              <option value="amount">By Amount</option>
+              <option value="alpha">Alphabetically</option>
             </select>
           </div>
         </div>
@@ -128,17 +150,21 @@ export default function ExpenseChart({ expenses = [], loading }) {
                 ]} 
                 contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px' }}
               />
-              <Bar 
-                dataKey="value" 
-                fill={transactionType.toLowerCase() === 'income' ? '#38a169' : '#2b6cb0'} 
-                radius={[0, 4, 4, 0]} 
-              >
-                {/* ⚡ OPTION: Displays numerical text amounts cleanly on the far edge of the bar canvas layout */}
-                <LabelList 
-                  dataKey="value" 
-                  position="right" 
-                  formatter={(val) => `£${val.toFixed(2)}`}
-                  style={{ fill: '#4a5568', fontSize: 11, fontWeight: 500 }} 
+              {isNetView && <ReferenceLine x={0} stroke="#cbd5e0" strokeWidth={1.5} />}
+              <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                {chartData.map((entry) => (
+                  <Cell
+                    key={entry.name}
+                    fill={isNetView
+                      ? (entry.value >= 0 ? '#38a169' : '#e53e3e')
+                      : transactionType.toLowerCase() === 'income' ? '#38a169' : '#2b6cb0'}
+                  />
+                ))}
+                <LabelList
+                  dataKey="value"
+                  position="right"
+                  formatter={(val) => `£${Math.abs(val).toFixed(2)}${isNetView && val < 0 ? ' ▼' : ''}`}
+                  style={{ fill: '#4a5568', fontSize: 11, fontWeight: 500 }}
                 />
               </Bar>
             </BarChart>

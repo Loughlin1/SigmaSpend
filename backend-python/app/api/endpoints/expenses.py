@@ -37,7 +37,10 @@ def read_expenses(
     is_income: Optional[bool] = Query(None, description="Filter by type: True for Income, False for Expense"),
     start_date: Optional[str] = Query(None, description="Filter expenses from this date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="Filter expenses up to this date (YYYY-MM-DD)"),
-    q: Optional[str] = Query(None, description="Search transaction descriptions or notes")
+    q: Optional[str] = Query(None, description="Search transaction descriptions or notes"),
+    min_amount: Optional[float] = Query(None, description="Filter expenses with amount >= this value"),
+    max_amount: Optional[float] = Query(None, description="Filter expenses with amount <= this value"),
+    sort_date: Optional[str] = Query("desc", description="Sort by date: 'asc' or 'desc'"),
 ):
     """
     Retrieve a paginated and filtered list of expenses.
@@ -46,11 +49,11 @@ def read_expenses(
     logger.info(
         f"Fetching expenses (skip={skip}, limit={limit}) with filters: "
         f"category={category}, account_id={account_id}, is_income={is_income}, "
-        f"start_date={start_date}, end_date={end_date}"
-        f"q={q}"
+        f"start_date={start_date}, end_date={end_date}, q={q}, "
+        f"min_amount={min_amount}, max_amount={max_amount}"
     )
     items, total_count = ExpenseService.get_filtered_expenses_with_count(
-        db, skip, limit, category, account_id, is_income, start_date, end_date, q
+        db, skip, limit, category, account_id, is_income, start_date, end_date, q, min_amount, max_amount, sort_date
     )
     current_page = (skip // limit) + 1
     return {

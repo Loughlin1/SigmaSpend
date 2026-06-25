@@ -7,7 +7,10 @@ const INITIAL_FILTERS = {
   is_income: '',
   start_date: '',
   end_date: '',
-  q: '' // ⚡ NEW: Tracking the search string parameter globally
+  q: '',
+  min_amount: '',
+  max_amount: '',
+  sort_date: 'desc',
 };
 
 export default function useExpenseFilters() {

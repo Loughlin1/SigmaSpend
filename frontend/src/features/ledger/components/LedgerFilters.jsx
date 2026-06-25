@@ -95,6 +95,24 @@ export default function LedgerFilters({ filters, onFilterChange, accountNameMap,
         <input id="filter_end_date" type="date" name="end_date" value={filters.end_date} onChange={handleChange} className="ledger-filters__date"/>
       </div>
 
+      <div className="ledger-filters__field">
+        <label className="ledger-filters__label" htmlFor="filter_min_amount">Min Amount (£)</label>
+        <input id="filter_min_amount" type="number" name="min_amount" value={filters.min_amount} onChange={handleChange} className="ledger-filters__input" min="0" step="0.01" placeholder="0.00"/>
+      </div>
+
+      <div className="ledger-filters__field">
+        <label className="ledger-filters__label" htmlFor="filter_max_amount">Max Amount (£)</label>
+        <input id="filter_max_amount" type="number" name="max_amount" value={filters.max_amount} onChange={handleChange} className="ledger-filters__input" min="0" step="0.01" placeholder="Any"/>
+      </div>
+
+      <div className="ledger-filters__field">
+        <label className="ledger-filters__label" htmlFor="filter_sort_date">Date Order</label>
+        <select id="filter_sort_date" name="sort_date" value={filters.sort_date} onChange={handleChange} className="ledger-filters__select">
+          <option value="desc">Newest First</option>
+          <option value="asc">Oldest First</option>
+        </select>
+      </div>
+
       <div className="ledger-filters__actions">
         <button type="button" onClick={resetFilters} className="inlineButton ledger-filters__reset-btn">
           Clear Filters

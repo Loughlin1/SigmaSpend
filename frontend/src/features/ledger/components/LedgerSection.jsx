@@ -63,6 +63,15 @@ export default function LedgerSection({
       <div className="headingRow" style={{ marginBottom: '1rem' }}>
         <h3 style={{ margin: 0 }}>Transaction Ledger</h3>
         <div className="actionsRow">
+          <button
+            type="button"
+            onClick={handleLocalRefresh}
+            className="inlineButton"
+            disabled={expensesLoading}
+            title="Refresh transactions"
+          >
+            {expensesLoading ? '...' : '↻ Refresh'}
+          </button>
           <select value={actionSelect} onChange={(e) => handleActionChange(e.target.value)} className="inlineButton">
             <option value="none">Actions</option>
             <option value="add_manual">Add Manual Transaction</option>

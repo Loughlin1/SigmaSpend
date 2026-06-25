@@ -18,14 +18,15 @@ const BUCKET_OPTIONS = [
 function getStatus(actual, budget) {
   if (!budget) return null;
   const pct = actual / budget;
-  if (pct >= 1) return 'over';
+  if (pct > 1) return 'over';
+  if (pct === 1) return 'exact';
   if (pct >= 0.8) return 'warning';
   return 'safe';
 }
 
 function StatusBadge({ status }) {
   if (!status) return <span className="budgetBadge budgetBadge--none">No limit</span>;
-  const labels = { safe: 'On track', warning: 'Approaching', over: 'Over budget' };
+  const labels = { safe: 'On track', warning: 'Approaching', exact: 'On budget', over: 'Over budget' };
   return <span className={`budgetBadge budgetBadge--${status}`}>{labels[status]}</span>;
 }
 

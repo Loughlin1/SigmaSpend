@@ -53,8 +53,8 @@ export default function BudgetPieChart({ categories, budgets, actuals }) {
   return (
     <div className="chartWrapper">
       <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', color: '#2d3748' }}>Spend Distribution</h3>
-      <div className="chart-canvas-container" style={{ height: '320px', minHeight: '320px', minWidth: 0 }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="chart-canvas-container" style={{ minWidth: 0 }}>
+        <ResponsiveContainer width="100%" height={320}>
           <PieChart>
             <Pie
               data={data}

@@ -83,6 +83,7 @@
 
 .budgetProgressFill--safe   { background: #38a169; }
 .budgetProgressFill--warning { background: #d69e2e; }
+.budgetProgressFill--exact  { background: #3182ce; }
 .budgetProgressFill--over   { background: #e53e3e; }
 
 .budgetBadge {
@@ -96,11 +97,13 @@
 
 .budgetBadge--safe    { background: #c6f6d5; color: #276749; }
 .budgetBadge--warning { background: #fefcbf; color: #744210; }
+.budgetBadge--exact   { background: #bee3f8; color: #2b6cb0; }
 .budgetBadge--over    { background: #fed7d7; color: #9b2335; }
 .budgetBadge--none    { background: #edf2f7; color: #718096; }
 
 .budgetRow--over td { background: #fff5f5; }
 .budgetRow--warning td { background: #fffff0; }
+.budgetRow--exact td { background: #ebf8ff; }
 
 .budgetOver  { color: #e53e3e; font-weight: 600; }
 .budgetUnder { color: #38a169; font-weight: 600; }

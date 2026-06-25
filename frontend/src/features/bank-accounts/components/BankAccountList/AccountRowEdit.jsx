@@ -12,6 +12,8 @@ export default function AccountRowEdit({ account, onAccountUpdated, onCancel }) 
   const [draftAmountColumn, setDraftAmountColumn] = useState(mappings.amount_column || '');
   const [draftAmountOutColumn, setDraftAmountOutColumn] = useState(mappings.amount_out_column || '');
   const [draftAmountInColumn, setDraftAmountInColumn] = useState(mappings.amount_in_column || '');
+  const [draftPdfRegex, setDraftPdfRegex] = useState(mappings.pdf_regex || '');
+  const [draftPdfHeaderBypass, setDraftPdfHeaderBypass] = useState(mappings.pdf_header_bypass || '');
   
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -29,6 +31,8 @@ export default function AccountRowEdit({ account, onAccountUpdated, onCancel }) 
     if (draftAmountColumn.trim()) updatedMappings.amount_column = draftAmountColumn.trim();
     if (draftAmountOutColumn.trim()) updatedMappings.amount_out_column = draftAmountOutColumn.trim();
     if (draftAmountInColumn.trim()) updatedMappings.amount_in_column = draftAmountInColumn.trim();
+    if (draftPdfRegex.trim()) updatedMappings.pdf_regex = draftPdfRegex.trim();
+    if (draftPdfHeaderBypass.trim()) updatedMappings.pdf_header_bypass = draftPdfHeaderBypass.trim();
 
     setSaving(true);
     setSaveError('');
@@ -45,7 +49,12 @@ export default function AccountRowEdit({ account, onAccountUpdated, onCancel }) 
       onCancel();
     } catch (err) {
       console.error('Failed updating bank account', err);
-      setSaveError(err.response?.data?.detail || 'Unable to save bank account.');
+      const detail = err.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        setSaveError(detail.map(e => `${e.loc?.slice(-1)[0]}: ${e.msg}`).join(' | '));
+      } else {
+        setSaveError(detail || err.message || 'Unable to save bank account.');
+      }
     } finally {
       setSaving(false);
     }
@@ -86,6 +95,25 @@ export default function AccountRowEdit({ account, onAccountUpdated, onCancel }) 
               <label>Debit Column: <input type="text" value={draftAmountOutColumn} onChange={(e) => setDraftAmountOutColumn(e.target.value)} /></label>
             </>
           )}
+          <label style={{ display: 'block' }}>
+            PDF Regex:
+            <textarea
+              value={draftPdfRegex}
+              onChange={(e) => setDraftPdfRegex(e.target.value)}
+              rows={3}
+              style={{ width: '100%', fontFamily: 'monospace', fontSize: '0.75rem', marginTop: '0.2rem', resize: 'vertical' }}
+              placeholder="^(?:\\d+\\s+)?..."
+            />
+          </label>
+          <label>
+            PDF Header Bypass:
+            <input
+              type="text"
+              value={draftPdfHeaderBypass}
+              onChange={(e) => setDraftPdfHeaderBypass(e.target.value)}
+              placeholder="date of transaction,page"
+            />
+          </label>
         </div>
       </td>
       <td>

@@ -34,6 +34,20 @@ export default function AccountRowRead({ account, onStartEdit }) {
             <div>Debit: {account.mappings?.amount_out_column}</div>
           </>
         )}
+        {account.mappings?.pdf_regex && (
+          <div style={{ marginTop: '0.35rem' }}>
+            <span style={{ color: '#718096' }}>PDF Regex:</span>
+            <code style={{ display: 'block', fontSize: '0.7rem', wordBreak: 'break-all', color: '#553c9a', marginTop: '0.1rem' }}>
+              {account.mappings.pdf_regex}
+            </code>
+          </div>
+        )}
+        {account.mappings?.pdf_header_bypass && (
+          <div style={{ marginTop: '0.25rem' }}>
+            <span style={{ color: '#718096' }}>Header Bypass:</span>{' '}
+            <code style={{ fontSize: '0.75rem', color: '#553c9a' }}>{account.mappings.pdf_header_bypass}</code>
+          </div>
+        )}
       </td>
       <td style={{ textAlign: 'center' }}>
         <button onClick={() => onStartEdit(account)}>Edit</button>

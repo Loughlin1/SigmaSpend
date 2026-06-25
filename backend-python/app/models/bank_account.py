@@ -20,3 +20,7 @@ class BankAccount(Base):
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True, index=True)
+
+    @property
+    def account_id(self):
+        return self.id

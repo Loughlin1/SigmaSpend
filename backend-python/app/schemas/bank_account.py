@@ -14,7 +14,6 @@ class BankAccountCreate(BankAccountBase):
     pass
 
 class BankAccountUpdate(BaseModel):
-    account_id: int
     account_name: Optional[str] = None
     bank_name: Optional[str] = None
     amount_style: Optional[str] = None
@@ -24,6 +23,7 @@ class BankAccountUpdate(BaseModel):
 
 class BankAccountResponse(BankAccountBase):
     id: int
+    account_id: int
     created_at: datetime
     is_active: bool
 

@@ -60,7 +60,7 @@ export default function StatementUpload({ accounts, onUploadSuccess, className =
         style={{ cursor: 'pointer' }}
       >
         <h2 style={{ margin: 0 }}>Import Bank Statement</h2>
-        <button className="collapse-button">{isCollapsed ? 'Show' : 'Hide'}</button>
+        <button className="collapse-button">{isCollapsed ? '▸' : '▾'}</button>
       </div>
 
       {!isCollapsed && (

@@ -4,6 +4,24 @@
 .page {
   padding: 1rem;
   width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Consistent section heading scale */
+.sectionCard h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.sectionCard h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
 }
 
 /* ⚡ Mobile-First Split Section Grid: Defaults stacked vertically */
@@ -105,7 +123,7 @@
 /* ⚡ RESPONSIVE SCALING BREAKPOINTS OVERRIDES (Tablet -> Desktop Monitors) */
 @media (min-width: 768px) {
   .page {
-    padding: 2rem;
+    padding: 2rem 3rem;
   }
   
   .splitSection {

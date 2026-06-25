@@ -31,6 +31,7 @@ export default function LedgerTable({
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [bulkDeletePending, setBulkDeletePending] = useState(false);
+  const [density, setDensity] = useState('compact'); // 'compact' | 'comfortable'
 
   // Success Modal States
   const [showBulkSuccess, setShowBulkSuccess] = useState(false);
@@ -158,9 +159,36 @@ export default function LedgerTable({
     setDeleteTargetId(null);
   };
 
+  const rowPadding = density === 'compact' ? '0.3rem 0.6rem' : '0.75rem 1rem';
+
   return (
     <div className="ledger-table-container" style={{ position: 'relative' }}>
-      
+
+      {/* Density toggle */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+        <div style={{ display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '1px solid #cbd5e0' }}>
+          {['compact', 'comfortable'].map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => setDensity(d)}
+              style={{
+                padding: '0.2rem 0.6rem',
+                fontSize: '0.75rem',
+                border: 'none',
+                borderLeft: d === 'comfortable' ? '1px solid #cbd5e0' : 'none',
+                cursor: 'pointer',
+                background: density === d ? '#3182ce' : '#fff',
+                color: density === d ? '#fff' : '#4a5568',
+                fontWeight: density === d ? 600 : 400,
+              }}
+            >
+              {d === 'compact' ? '≡ Compact' : '☰ Comfortable'}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <BulkActionsPanel
         selectedCount={selectedIds.length}
         bulkCategory={bulkCategory}
@@ -175,31 +203,40 @@ export default function LedgerTable({
         categories={categories}
       />
 
-      <table className="table ledger-table-view" style={{ width: '100%' }}>
+      <table className="table ledger-table-view" style={{ width: '100%', fontSize: density === 'compact' ? '0.82rem' : '0.875rem' }}>
         <thead>
           <tr>
-            <th style={{ width: '4%', textAlign: 'center' }}>
-              <input 
-                type="checkbox" 
+            <th style={{ width: '4%', textAlign: 'center', padding: rowPadding }}>
+              <input
+                type="checkbox"
                 onChange={handleSelectAll}
                 checked={expenses.length > 0 && selectedIds.length === expenses.length}
               />
             </th>
-            <th style={{ width: '10%' }}>Date</th>
-            <th style={{ width: '20%' }}>Description</th>
-            <th style={{ width: '9%' }}>Account</th>
-            <th style={{ width: '14%' }}>Category</th>
-            <th style={{ width: '16%' }}>Notes</th>
-            <th style={{ width: '8%' }}>Type</th>
-            <th style={{ width: '11%' }}>Amount</th>
-            <th style={{ width: '7%', textAlign: 'center' }}>Actions</th>
+            <th style={{ width: '10%', padding: rowPadding }}>Date</th>
+            <th style={{ width: '20%', padding: rowPadding }}>Description</th>
+            <th style={{ width: '9%', padding: rowPadding }}>Account</th>
+            <th style={{ width: '14%', padding: rowPadding }}>Category</th>
+            <th style={{ width: '16%', padding: rowPadding }}>Notes</th>
+            <th style={{ width: '8%', padding: rowPadding }}>Type</th>
+            <th style={{ width: '11%', padding: rowPadding }}>Amount</th>
+            <th style={{ width: '7%', textAlign: 'center', padding: rowPadding }}>Actions</th>
           </tr>
         </thead>
         <tbody>
+          {expenses.length === 0 && (
+            <tr>
+              <td colSpan={9} style={{ textAlign: 'center', padding: '3rem 1rem', color: '#718096' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔍</div>
+                <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>No transactions found</div>
+                <div style={{ fontSize: '0.85rem' }}>Try adjusting your filters, or upload a statement above to get started.</div>
+              </td>
+            </tr>
+          )}
           {expenses.map((exp) => {
             if (editingId === exp.id) {
               return (
-                <LedgerRowEdit 
+                <LedgerRowEdit
                   key={exp.id}
                   expense={exp}
                   accountNameMap={accountNameMap}
@@ -207,16 +244,18 @@ export default function LedgerTable({
                   onSave={handleRowSave}
                   onCancel={() => setEditingId(null)}
                   onCreateRuleFromTransaction={onCreateRuleFromTransaction}
+                  rowPadding={rowPadding}
                 />
               );
             }
 
             return (
-              <LedgerRowRead 
+              <LedgerRowRead
                 key={exp.id}
                 expense={exp}
                 isChecked={selectedIds.includes(exp.id)}
                 onSelectRow={() => handleSelectRow(exp.id)}
+                rowPadding={rowPadding}
                 displayAccountName={getAccountAbbreviation(accountNameMap[exp.account_id] || exp.account_id)}
                 displayCategory={getCategoryDisplay(exp.category_id, categories)}
                 onStartEdit={() => setEditingId(exp.id)}

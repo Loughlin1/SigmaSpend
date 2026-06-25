@@ -35,7 +35,7 @@ const AnalyticsSection = forwardRef(({ accounts, className = '' }, ref) => {
     <section className={`sectionCard ${className}`}>
       <div className="account-list__header" onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: 'pointer' }}>
         <h2 style={{ margin: 0 }}>Financial Summaries</h2>
-        <button className="collapse-button">{isCollapsed ? 'Show' : 'Hide'}</button>
+        <button className="collapse-button">{isCollapsed ? '▸' : '▾'}</button>
       </div>
 
       {!isCollapsed && (

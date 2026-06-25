@@ -40,7 +40,7 @@ export default function LogsSection({ className = '' }) {
       <div className="account-list__header" onClick={() => setIsCollapsed(prev => !prev)}>
         <h3>Application Logs</h3>
         <button className="collapse-button" type="button">
-          {isCollapsed ? 'Show' : 'Hide'}
+          {isCollapsed ? '▸' : '▾'}
         </button>
       </div>
 

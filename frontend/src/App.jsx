@@ -88,7 +88,7 @@ function App() {
           style={{ cursor: 'pointer' }}
         >
           <h2 style={{ margin: 0 }}>Configuration</h2>
-          <button className="collapse-button">{configCollapsed ? 'Show' : 'Hide'}</button>
+          <button className="collapse-button">{configCollapsed ? '▸' : '▾'}</button>
         </div>
 
         {!configCollapsed && (

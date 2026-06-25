@@ -63,7 +63,7 @@ export default function RuleManager({
         <div className="account-list__header" onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: 'pointer' }}>
           <h3>Processing Rules ({pagination.total})</h3>
           <button className="collapse-button" type="button">
-            {isCollapsed ? 'Show' : 'Hide'}
+            {isCollapsed ? '▸' : '▾'}
           </button>
         </div>
 

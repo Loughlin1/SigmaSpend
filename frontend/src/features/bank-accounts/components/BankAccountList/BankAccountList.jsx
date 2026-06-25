@@ -17,7 +17,7 @@ export default function BankAccountList({ accounts = [], loading, error, onAccou
         <div className="account-list__header" onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: 'pointer' }}>
           <h3>Bank Accounts ({accounts.length})</h3>
           <button className="collapse-button">
-            {isCollapsed ? 'Show' : 'Hide'}
+            {isCollapsed ? '▸' : '▾'}
           </button>
         </div>
         

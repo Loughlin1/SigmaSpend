@@ -35,7 +35,7 @@ export default function CategoryManager({ categories = [], onCreateCategory, loa
       <div className="account-list">
         <div className="account-list__header" onClick={() => setIsCollapsed(!isCollapsed)}>
           <h3>Categories & Subcategories</h3>
-          <button className="collapse-button" type="button">{isCollapsed ? 'Show' : 'Hide'}</button>
+          <button className="collapse-button" type="button">{isCollapsed ? '▸' : '▾'}</button>
         </div>
 
         {!isCollapsed && (

@@ -145,7 +145,7 @@ export default function ExpenseChart({ expenses = [], loading }) {
       {viewMode === 'combined' && (
         <div className="chart-canvas-container" style={{ height: `${dynamicHeight}px`, minHeight: '300px' }}>
           {chartData.length === 0 ? (
-            <div className="noDataMessage">No transaction records match your selected criteria.</div>
+            <div className="noDataMessage"><span style={{ fontSize: '2rem' }}>📊</span><span style={{ fontWeight: 500 }}>No data for this period</span><span style={{ fontSize: '0.85rem' }}>Try a different date range, account, or upload a statement.</span></div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} layout="vertical" margin={{ top: 10, right: 50, left: 20, bottom: 5 }}>
@@ -176,9 +176,9 @@ export default function ExpenseChart({ expenses = [], loading }) {
       {/* PER-CATEGORY VIEW */}
       {viewMode === 'per-category' && (
         perCategoryData.length === 0 ? (
-          <div className="noDataMessage">No transaction records match your selected criteria.</div>
+          <div className="noDataMessage"><span style={{ fontSize: '2rem' }}>📊</span><span style={{ fontWeight: 500 }}>No data for this period</span><span style={{ fontSize: '0.85rem' }}>Try a different date range, account, or upload a statement.</span></div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.25rem', padding: '0.5rem 0' }}>
+          <div className="per-category-grid">
             {perCategoryData.map((cat) => {
               const barColour = isNetView ? null : BAR_COLOUR[transactionType] || '#2b6cb0';
               const maxAbs = Math.max(...cat.periods.map(p => Math.abs(p.value)), 0.01);

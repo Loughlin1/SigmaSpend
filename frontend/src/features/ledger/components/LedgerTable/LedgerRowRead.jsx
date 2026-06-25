@@ -1,6 +1,6 @@
 // src/features/ledger/components/LedgerTable/LedgerRowRead.jsx
 
-import { formatTransactionDate, getGoogleCalendarDayUrl } from '../../../../utils/calendarUtils';
+import { formatTransactionDate, getGoogleCalendarDayUrl, getGmailReceiptSearchUrl } from '../../../../utils/calendarUtils';
 
 export default function LedgerRowRead({ 
   expense, 
@@ -19,15 +19,25 @@ export default function LedgerRowRead({
       {/* <td className="ledger-table-date" style={{ fontSize: '0.85rem' }}>{expense.date}</td> */}
       <td className="ledger-table-date"  style={{ fontSize: '0.85rem' }}>
         <span>{formatTransactionDate(expense.date)}</span>
-        <a 
+        <a
           href={getGoogleCalendarDayUrl(expense.date)}
-          target="_blank" 
+          target="_blank"
           rel="noopener noreferrer"
           className="calendar-icon-btn"
-          title="View day in Google Calendar"
+          title="View in Google Calendar"
           style={{ marginLeft: '6px', textDecoration: 'none' }}
         >
           📅
+        </a>
+        <a
+          href={getGmailReceiptSearchUrl(expense.date, expense.description)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="calendar-icon-btn"
+          title="Search Gmail for receipts"
+          style={{ marginLeft: '4px', textDecoration: 'none' }}
+        >
+          ✉️
         </a>
       </td>
       <td style={{ fontSize: '0.85rem' }}>{expense.description}</td>

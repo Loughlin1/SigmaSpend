@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   formatTransactionDate,
   getGoogleCalendarDayUrl,
+  getGmailReceiptSearchUrl,
   getCurrentMonthBounds,
 } from './calendarUtils';
 
@@ -91,6 +92,41 @@ describe('getGoogleCalendarDayUrl', () => {
 
   it('returns "#" for an unparseable string', () => {
     expect(getGoogleCalendarDayUrl('garbage')).toBe('#');
+  });
+});
+
+// ============================================================================
+// getGmailReceiptSearchUrl
+// ============================================================================
+
+describe('getGmailReceiptSearchUrl', () => {
+  it('returns a Gmail search URL containing the description and date window', () => {
+    const url = getGmailReceiptSearchUrl('2024-06-15', 'Starbucks Coffee');
+    expect(url).toContain('https://mail.google.com/mail/#search/');
+    expect(url).toContain('Starbucks');
+    // after: 3 days before = 2024/06/12, before: 4 days after = 2024/06/19
+    expect(url).toContain('after%3A2024%2F06%2F12');
+    expect(url).toContain('before%3A2024%2F06%2F19');
+  });
+
+  it('handles DD/MM/YYYY format', () => {
+    const url = getGmailReceiptSearchUrl('15/06/2024', 'Netflix');
+    expect(url).toContain('Netflix');
+    expect(url).toContain('after%3A2024%2F06%2F12');
+  });
+
+  it('uses only the first two words of a long description', () => {
+    const url = getGmailReceiptSearchUrl('2024-06-15', 'Amazon Marketplace GB London');
+    expect(url).toContain('Amazon%20Marketplace');
+    expect(url).not.toContain('GB');
+  });
+
+  it('returns "#" for null date', () => {
+    expect(getGmailReceiptSearchUrl(null, 'Tesco')).toBe('#');
+  });
+
+  it('returns "#" for unparseable date', () => {
+    expect(getGmailReceiptSearchUrl('garbage', 'Tesco')).toBe('#');
   });
 });
 

@@ -1,6 +1,62 @@
 // src/utils/calendarUtils.js
 
 /**
+ * Parses a date string in DD/MM/YYYY, YYYY/MM/DD, or YYYY-MM-DD format
+ * into a Date object. Returns null if unparseable.
+ * @param {string} dateStr
+ * @returns {Date|null}
+ */
+const parseDateStr = (dateStr) => {
+  if (!dateStr) return null;
+  const cleanStr = String(dateStr).trim();
+  if (/^\d{1,2}[-/]\d{1,2}[-/]\d{4}$/.test(cleanStr)) {
+    const parts = cleanStr.split(/[-/]/);
+    return new Date(`${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`);
+  }
+  if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(cleanStr)) {
+    return new Date(cleanStr.replace(/\//g, '-'));
+  }
+  const d = new Date(cleanStr);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+/**
+ * Formats a Date as YYYY/MM/DD for Gmail's after:/before: search operators.
+ * @param {Date} date
+ * @returns {string}
+ */
+const toGmailDateStr = (date) =>
+  `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+
+/**
+ * Generates a Gmail deep-link that searches for receipt/invoice emails
+ * within a ±3 day window around the transaction date, filtered by description.
+ * @param {string} dateStr
+ * @param {string} description - Transaction description / merchant name
+ * @returns {string} - Gmail search URL
+ */
+export const getGmailReceiptSearchUrl = (dateStr, description) => {
+  const parsed = parseDateStr(dateStr);
+  if (!parsed) return '#';
+
+  const before = new Date(parsed);
+  before.setDate(before.getDate() + 4); // exclusive upper bound
+
+  const after = new Date(parsed);
+  after.setDate(after.getDate() - 3);
+
+  // Take the first 1-2 meaningful words from the description as the search term
+  const searchTerm = (description || '')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .join(' ');
+
+  const query = `(receipt OR invoice OR "order confirmation") "${searchTerm}" after:${toGmailDateStr(after)} before:${toGmailDateStr(before)}`;
+  return `https://mail.google.com/mail/#search/${encodeURIComponent(query)}`;
+};
+
+/**
  * Formats a date string into a structured UK format including the weekday.
  * @param {string} dateStr - E.g., "2026/06/23" or "23/06/2026"
  * @returns {string} - E.g., "Tue, 23 Jun 2026"
@@ -58,26 +114,8 @@ export const formatTransactionDate = (dateStr) => {
  * @returns {string} - Deep link URL
  */
 export const getGoogleCalendarDayUrl = (dateStr) => {
-  if (!dateStr) return "#";
-
-  let parsedDate;
-  const cleanStr = String(dateStr).trim();
-
-  // 1. Handle DD/MM/YYYY or DD-MM-YYYY format (UK format)
-  if (/^\d{1,2}[-/]\d{1,2}[-/]\d{4}$/.test(cleanStr)) {
-    const parts = cleanStr.split(/[-/]/);
-    parsedDate = new Date(`${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`);
-  }
-  // 2. Handle YYYY/MM/DD or YYYY-MM-DD format (ISO / variant)
-  else if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(cleanStr)) {
-    parsedDate = new Date(cleanStr.replace(/\//g, '-'));
-  }
-  // 3. Fallback: native parse
-  else {
-    parsedDate = new Date(cleanStr);
-  }
-
-  if (!parsedDate || isNaN(parsedDate.getTime())) {
+  const parsedDate = parseDateStr(dateStr);
+  if (!parsedDate) {
     console.error(`[SigmaSpend] Unable to parse URL date: "${dateStr}"`);
     return "#";
   }

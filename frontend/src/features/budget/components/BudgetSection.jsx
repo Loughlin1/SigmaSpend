@@ -6,7 +6,7 @@ import BudgetPieChart from './BudgetPieChart';
 import RulesSummary from './RulesSummary';
 import { getCurrentMonthBounds } from '../../../utils/calendarUtils';
 
-const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUpdated }, ref) => {
+const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUpdated, className = '' }, ref) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const {
     budgets, updateBudget,
@@ -37,7 +37,7 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUp
   const parentCategories = categories.filter(c => !c.parent_id);
 
   return (
-    <section className="sectionCard">
+    <section className={`sectionCard ${className}`}>
       <div className="account-list__header" onClick={() => setIsCollapsed(prev => !prev)}>
         <h3>Budget Planner</h3>
         <button className="collapse-button" type="button">

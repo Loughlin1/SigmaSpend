@@ -13,7 +13,8 @@ export default function LedgerSection({
   accountNameMap,
   categories,
   triggerGlobalRefresh,
-  createRuleFromTransaction
+  createRuleFromTransaction,
+  className = '',
 }) {
   
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -61,7 +62,7 @@ export default function LedgerSection({
   };
 
   return (
-    <section className="sectionCard">
+    <section className={`sectionCard ${className}`}>
       <div className="account-list__header" onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: 'pointer' }}>
         <h3 style={{ margin: 0 }}>Transaction Ledger</h3>
         <button className="collapse-button">{isCollapsed ? 'Show' : 'Hide'}</button>

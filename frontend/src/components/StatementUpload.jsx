@@ -4,7 +4,7 @@ import { ingestionApi } from '../api/client';
 import MetricsModal from './ui/MetricsModal';
 import '../styles/forms.css';
 
-export default function StatementUpload({ accounts, onUploadSuccess }) {
+export default function StatementUpload({ accounts, onUploadSuccess, className = '' }) {
   const [files, setFiles] = useState([]);
   const [inputKey, setInputKey] = useState(0);
   const [selectedAccount, setSelectedAccount] = useState('');
@@ -53,7 +53,7 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
   };
 
   return (
-    <section className="sectionCard">
+    <section className={`sectionCard ${className}`}>
       <div
         className="account-list__header"
         onClick={() => setIsCollapsed(!isCollapsed)}

@@ -5,7 +5,7 @@ import LogTable from './LogTable';
 import LogDetailSidebar from './LogDetailSidebar';
 import '../../../styles/lists.css';
 
-export default function LogsSection() {
+export default function LogsSection({ className = '' }) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [selectedEntry, setSelectedEntry] = useState(null);
 
@@ -36,7 +36,7 @@ export default function LogsSection() {
   };
 
   return (
-    <section className="sectionCard">
+    <section className={`sectionCard ${className}`}>
       <div className="account-list__header" onClick={() => setIsCollapsed(prev => !prev)}>
         <h3>Application Logs</h3>
         <button className="collapse-button" type="button">

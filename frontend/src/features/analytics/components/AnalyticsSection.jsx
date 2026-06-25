@@ -5,7 +5,7 @@ import ExpenseChart from './ExpenseChart';
 import useExpenseAnalytics from '../hooks/useExpenseAnalytics';
 import { getCurrentMonthBounds } from '../../../utils/calendarUtils'
 
-const AnalyticsSection = forwardRef(({ accounts }, ref) => {
+const AnalyticsSection = forwardRef(({ accounts, className = '' }, ref) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { summaryData, loading: analyticsLoading, error: analyticsError, fetchSummary } = useExpenseAnalytics();
   
@@ -32,7 +32,7 @@ const AnalyticsSection = forwardRef(({ accounts }, ref) => {
   }));
 
   return (
-    <section className="sectionCard">
+    <section className={`sectionCard ${className}`}>
       <div className="account-list__header" onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: 'pointer' }}>
         <h2 style={{ margin: 0 }}>Financial Summaries</h2>
         <button className="collapse-button">{isCollapsed ? 'Show' : 'Hide'}</button>

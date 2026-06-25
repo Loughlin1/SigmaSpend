@@ -51,11 +51,13 @@ function App() {
       <StatementUpload
         accounts={accounts}
         onUploadSuccess={triggerGlobalRefresh}
+        className="sectionCard--primary"
       />
 
       <AnalyticsSection
         ref={analyticsRef}
         accounts={accounts}
+        className="sectionCard--primary"
       />
 
       <BudgetSection
@@ -63,6 +65,7 @@ function App() {
         categories={categories}
         accounts={accounts}
         onCategoryUpdated={fetchCategories}
+        className="sectionCard--primary"
       />
 
       <LedgerSection
@@ -74,10 +77,11 @@ function App() {
         createRuleFromTransaction={async (ruleData) => {
           if (automationRef.current) await automationRef.current.createRuleFromTransaction(ruleData);
         }}
+        className="sectionCard--primary"
       />
 
-      {/* Configuration — collapsed by default on load */}
-      <section className="sectionCard">
+      {/* Configuration — secondary, collapsed by default */}
+      <section className="sectionCard sectionCard--secondary">
         <div
           className="account-list__header"
           onClick={() => setConfigCollapsed(!configCollapsed)}
@@ -113,7 +117,7 @@ function App() {
         )}
       </section>
 
-      <LogsSection />
+      <LogsSection className="sectionCard--secondary" />
 
       <Footer />
     </div>

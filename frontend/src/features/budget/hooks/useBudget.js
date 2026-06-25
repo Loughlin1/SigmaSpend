@@ -84,10 +84,11 @@ export default function useBudget() {
       (data || []).forEach(row => {
         const type = String(row.type).toLowerCase();
         const name = row.category_name || 'Uncategorized';
+        const spent = -parseFloat(row.net || 0);
         if (type === 'category') {
-          map[name] = (map[name] || 0) + parseFloat(row.total_expenses || 0);
+          map[name] = (map[name] || 0) + spent;
         } else if (type === 'subcategory') {
-          subMap[name] = (subMap[name] || 0) + parseFloat(row.total_expenses || 0);
+          subMap[name] = (subMap[name] || 0) + spent;
         }
       });
       setActuals(map);

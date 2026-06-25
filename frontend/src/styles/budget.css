@@ -30,6 +30,10 @@
 }
 
 .budgetCategoryCell {
+  vertical-align: middle;
+}
+
+.budgetCategoryCell__inner {
   display: flex;
   align-items: center;
   gap: 0.5rem;

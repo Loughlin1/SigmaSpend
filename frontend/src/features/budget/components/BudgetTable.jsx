@@ -1,4 +1,5 @@
 // src/features/budget/components/BudgetTable.jsx
+import { useState } from 'react';
 import '../../../styles/budget.css';
 
 const BUCKETS = [
@@ -40,12 +41,15 @@ function ProgressBar({ actual, budget }) {
 }
 
 export default function BudgetTable({ categories, budgets, actuals, subActuals = {}, onBudgetChange, onBucketChange }) {
+  const allKeys = [...BUCKETS.map(b => b.key), 'untagged'];
+  const [collapsed, setCollapsed] = useState(Object.fromEntries(allKeys.map(k => [k, true])));
+  const toggleSection = (key) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
 
   // Build flat line items: subcategory if it (or siblings) have buckets, else parent
   const lineItems = [];
   for (const cat of categories) {
-    const hasBucketedSubs = cat.subcategories?.some(s => s.bucket);
-    if (hasBucketedSubs) {
+    const hasSubs = cat.subcategories?.length > 0;
+    if (hasSubs) {
       for (const sub of cat.subcategories) {
         lineItems.push({
           id: sub.id,
@@ -83,14 +87,15 @@ export default function BudgetTable({ categories, budgets, actuals, subActuals =
   });
 
   const renderSection = (bucketDef, items) => {
+    const sectionKey = bucketDef?.key || 'untagged';
+    const isCollapsed = collapsed[sectionKey];
     const totalActual = items.reduce((s, i) => s + i.actual, 0);
     const totalBudget = items.reduce((s, i) => s + (parseFloat(budgets[i.id]?.amount) || 0), 0);
     const remaining = totalBudget > 0 ? totalBudget - totalActual : null;
-    const sectionStatus = getStatus(totalActual, totalBudget);
 
     return (
       <div
-        key={bucketDef?.key || 'untagged'}
+        key={sectionKey}
         style={{
           marginBottom: '1.5rem',
           border: `1px solid ${bucketDef?.border || '#e2e8f0'}`,
@@ -99,16 +104,21 @@ export default function BudgetTable({ categories, budgets, actuals, subActuals =
         }}
       >
         {/* Section header */}
-        <div style={{
-          background: bucketDef?.bg || '#f7fafc',
-          borderBottom: `1px solid ${bucketDef?.border || '#e2e8f0'}`,
-          padding: '0.6rem 0.875rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '1rem',
-          flexWrap: 'wrap',
-        }}>
+        <div
+          onClick={() => toggleSection(sectionKey)}
+          style={{
+            background: bucketDef?.bg || '#f7fafc',
+            borderBottom: isCollapsed ? 'none' : `1px solid ${bucketDef?.border || '#e2e8f0'}`,
+            padding: '0.6rem 0.875rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '1rem',
+            flexWrap: 'wrap',
+            cursor: 'pointer',
+            userSelect: 'none',
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
             <span style={{ fontWeight: 700, fontSize: '0.95rem', color: bucketDef?.colour || '#4a5568' }}>
               {bucketDef?.label || '— Untagged'}
@@ -117,7 +127,7 @@ export default function BudgetTable({ categories, budgets, actuals, subActuals =
               <span style={{ fontSize: '0.78rem', color: '#718096' }}>target {bucketDef.pct} of income</span>
             )}
           </div>
-          <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.82rem', color: '#4a5568' }}>
+          <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.82rem', color: '#4a5568', alignItems: 'center' }}>
             <span>Spent: <strong>£{totalActual.toFixed(2)}</strong></span>
             {totalBudget > 0 && <span>Budget: <strong>£{totalBudget.toFixed(2)}</strong></span>}
             {remaining !== null && (
@@ -125,11 +135,14 @@ export default function BudgetTable({ categories, budgets, actuals, subActuals =
                 {remaining < 0 ? `-£${Math.abs(remaining).toFixed(2)} over` : `£${remaining.toFixed(2)} left`}
               </span>
             )}
+            <span style={{ fontSize: '1rem', color: '#718096', marginLeft: '0.25rem' }}>
+              {isCollapsed ? '▸' : '▾'}
+            </span>
           </div>
         </div>
 
         {/* Rows */}
-        <table className="budgetTable" style={{ margin: 0 }}>
+        {!isCollapsed && <table className="budgetTable" style={{ margin: 0 }}>
           <thead>
             <tr>
               <th>Category</th>
@@ -148,15 +161,17 @@ export default function BudgetTable({ categories, budgets, actuals, subActuals =
               return (
                 <tr key={item.id} className={status ? `budgetRow--${status}` : ''}>
                   <td className="budgetCategoryCell">
-                    <span className="budgetIcon">{item.icon}</span>
-                    <span>
-                      {item.isSub && (
-                        <span style={{ fontSize: '0.75rem', color: '#718096', marginRight: '0.25rem' }}>
-                          {item.parentName} ›
-                        </span>
-                      )}
-                      {item.displayName}
-                    </span>
+                    <div className="budgetCategoryCell__inner">
+                      <span className="budgetIcon">{item.icon}</span>
+                      <span>
+                        {item.isSub && (
+                          <span style={{ fontSize: '0.75rem', color: '#718096', marginRight: '0.25rem' }}>
+                            {item.parentName} ›
+                          </span>
+                        )}
+                        {item.displayName}
+                      </span>
+                    </div>
                   </td>
                   <td>
                     <select
@@ -199,7 +214,7 @@ export default function BudgetTable({ categories, budgets, actuals, subActuals =
               );
             })}
           </tbody>
-        </table>
+        </table>}
       </div>
     );
   };

@@ -7,7 +7,7 @@ const BUCKETS = [
   { key: '20_savings', label: 'Savings', target: 0.10, color: '#38a169' },
 ];
 
-export default function RulesSummary({ categories, actuals, monthlyIncome }) {
+export default function RulesSummary({ categories, actuals, subActuals = {}, monthlyIncome }) {
   const income = parseFloat(monthlyIncome) || 0;
   if (!income) return null;
 
@@ -15,7 +15,14 @@ export default function RulesSummary({ categories, actuals, monthlyIncome }) {
   BUCKETS.forEach(b => { bucketTotals[b.key] = 0; });
 
   categories.forEach(cat => {
-    if (cat.bucket && bucketTotals[cat.bucket] !== undefined) {
+    const hasSubs = cat.subcategories?.length > 0;
+    if (hasSubs) {
+      cat.subcategories.forEach(sub => {
+        if (sub.bucket && bucketTotals[sub.bucket] !== undefined) {
+          bucketTotals[sub.bucket] += subActuals[sub.name] || 0;
+        }
+      });
+    } else if (cat.bucket && bucketTotals[cat.bucket] !== undefined) {
       bucketTotals[cat.bucket] += actuals[cat.name] || 0;
     }
   });

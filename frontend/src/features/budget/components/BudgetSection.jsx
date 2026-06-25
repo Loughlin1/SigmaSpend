@@ -17,14 +17,23 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUp
   } = useBudget();
 
   const { start, end } = getCurrentMonthBounds();
-  const [filters, setFilters] = useState({ account_id: '', start_date: start, end_date: end });
+  const currentMonth = start.slice(0, 7); // "YYYY-MM"
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [filters, setFilters] = useState({ start_date: start, end_date: end });
 
   useImperativeHandle(ref, () => ({
     refreshBudget: () => fetchActuals(filters),
   }));
 
-  const handleAccountChange = (e) => {
-    const next = { ...filters, account_id: e.target.value };
+  const handleMonthChange = (e) => {
+    const ym = e.target.value; // "YYYY-MM"
+    const [year, month] = ym.split('-').map(Number);
+    const lastDay = new Date(year, month, 0).getDate();
+    const next = {
+      start_date: `${ym}-01`,
+      end_date: `${ym}-${String(lastDay).padStart(2, '0')}`,
+    };
+    setSelectedMonth(ym);
     setFilters(next);
     fetchActuals(next);
   };
@@ -35,6 +44,21 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUp
   };
 
   const parentCategories = categories.filter(c => !c.parent_id);
+
+  // Only include actuals for bucketed items — untagged categories are excluded from budget tracking
+  const bucketedActuals = {};
+  const bucketedSubActuals = {};
+  for (const cat of parentCategories) {
+    const hasSubs = cat.subcategories?.length > 0;
+    if (hasSubs) {
+      // Only include subcategories that have a bucket
+      for (const sub of cat.subcategories) {
+        if (sub.bucket) bucketedSubActuals[sub.name] = subActuals[sub.name] || 0;
+      }
+    } else if (cat.bucket) {
+      bucketedActuals[cat.name] = actuals[cat.name] || 0;
+    }
+  }
 
   return (
     <section className={`sectionCard ${className}`}>
@@ -65,26 +89,20 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUp
               />
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              {accounts.length > 0 && (
-                <select
-                  value={filters.account_id}
-                  onChange={handleAccountChange}
-                  className="chartSelect"
-                  aria-label="Filter by account"
-                >
-                  <option value="">All Accounts</option>
-                  {accounts.map(acc => (
-                    <option key={acc.id} value={acc.id}>{acc.name}</option>
-                  ))}
-                </select>
-              )}
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={handleMonthChange}
+                className="inlineButton"
+              />
               <button className="inlineButton" onClick={() => fetchActuals(filters)}>Refresh</button>
             </div>
           </div>
 
           <RulesSummary
             categories={parentCategories}
-            actuals={actuals}
+            actuals={bucketedActuals}
+            subActuals={bucketedSubActuals}
             monthlyIncome={monthlyIncome}
           />
 
@@ -99,8 +117,8 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUp
               <BudgetTable
                 categories={parentCategories}
                 budgets={budgets}
-                actuals={actuals}
-                subActuals={subActuals}
+                actuals={bucketedActuals}
+                subActuals={bucketedSubActuals}
                 onBudgetChange={updateBudget}
                 onBucketChange={handleBucketChange}
               />

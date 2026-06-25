@@ -52,27 +52,36 @@ describe('formatTransactionDate', () => {
 // ============================================================================
 
 describe('getGoogleCalendarDayUrl', () => {
-  it('builds the correct URL from an ISO YYYY-MM-DD date', () => {
+  it('opens 4-day view with transaction as 3rd day (ISO YYYY-MM-DD)', () => {
+    // 2024-06-15 minus 2 days = 2024-06-13 (start), transaction on day 3
     expect(getGoogleCalendarDayUrl('2024-06-15')).toBe(
-      'https://calendar.google.com/calendar/r/day/2024/06/15'
+      'https://calendar.google.com/calendar/r/customday/2024/06/13?dur=4'
     );
   });
 
   it('builds the correct URL from a YYYY/MM/DD date', () => {
     expect(getGoogleCalendarDayUrl('2024/06/15')).toBe(
-      'https://calendar.google.com/calendar/r/day/2024/06/15'
+      'https://calendar.google.com/calendar/r/customday/2024/06/13?dur=4'
     );
   });
 
   it('builds the correct URL from a DD/MM/YYYY date', () => {
     expect(getGoogleCalendarDayUrl('15/06/2024')).toBe(
-      'https://calendar.google.com/calendar/r/day/2024/06/15'
+      'https://calendar.google.com/calendar/r/customday/2024/06/13?dur=4'
     );
   });
 
   it('pads single-digit months and days', () => {
+    // 2024-01-03 minus 2 days = 2024-01-01
     expect(getGoogleCalendarDayUrl('2024-01-03')).toBe(
-      'https://calendar.google.com/calendar/r/day/2024/01/03'
+      'https://calendar.google.com/calendar/r/customday/2024/01/01?dur=4'
+    );
+  });
+
+  it('rolls back across a month boundary correctly', () => {
+    // 2024-06-01 minus 2 days = 2024-05-30
+    expect(getGoogleCalendarDayUrl('2024-06-01')).toBe(
+      'https://calendar.google.com/calendar/r/customday/2024/05/30?dur=4'
     );
   });
 

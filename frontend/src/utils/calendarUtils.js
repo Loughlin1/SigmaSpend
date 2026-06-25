@@ -50,45 +50,46 @@ export const formatTransactionDate = (dateStr) => {
 };
 
 /**
- * Generates a zero-auth deep link to open Google Calendar on a specific day.
+ * Generates a zero-auth deep link to open Google Calendar week view centred
+ * 2 days before the transaction date, so charges that cleared a day or two
+ * late are still visible in the same view.
  * Supports various formats: "23/06/2026", "2026/06/23", "2026-06-23", etc.
- * @param {string} dateStr 
+ * @param {string} dateStr
  * @returns {string} - Deep link URL
  */
 export const getGoogleCalendarDayUrl = (dateStr) => {
   if (!dateStr) return "#";
 
-  let year, month, day;
+  let parsedDate;
   const cleanStr = String(dateStr).trim();
 
-  // 1. Handle DD/MM/YYYY or DD-MM-YYYY format (Clean UK format)
+  // 1. Handle DD/MM/YYYY or DD-MM-YYYY format (UK format)
   if (/^\d{1,2}[-/]\d{1,2}[-/]\d{4}$/.test(cleanStr)) {
     const parts = cleanStr.split(/[-/]/);
-    day = parts[0].padStart(2, '0');
-    month = parts[1].padStart(2, '0');
-    year = parts[2];
-  } 
-  // 2. Handle YYYY/MM/DD or YYYY-MM-DD format (Standard ISO / Variant formats)
+    parsedDate = new Date(`${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`);
+  }
+  // 2. Handle YYYY/MM/DD or YYYY-MM-DD format (ISO / variant)
   else if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(cleanStr)) {
-    const parts = cleanStr.split(/[-/]/);
-    year = parts[0];
-    month = parts[1].padStart(2, '0');
-    day = parts[2].padStart(2, '0');
-  } 
-  // 3. Fallback: Parse natively if it's already an ISO timestamp
+    parsedDate = new Date(cleanStr.replace(/\//g, '-'));
+  }
+  // 3. Fallback: native parse
   else {
-    const fallbackDate = new Date(cleanStr);
-    if (isNaN(fallbackDate.getTime())) {
-      console.error(`[SigmaSpend] Unable to parse URL date: "${dateStr}"`);
-      return "#";
-    }
-    year = fallbackDate.getFullYear();
-    month = String(fallbackDate.getMonth() + 1).padStart(2, '0');
-    day = String(fallbackDate.getDate()).padStart(2, '0');
+    parsedDate = new Date(cleanStr);
   }
 
-  // Returns the clean, formatted Google Calendar Day View url safely
-  return `https://calendar.google.com/calendar/r/day/${year}/${month}/${day}`;
+  if (!parsedDate || isNaN(parsedDate.getTime())) {
+    console.error(`[SigmaSpend] Unable to parse URL date: "${dateStr}"`);
+    return "#";
+  }
+
+  // Step back 2 days so the transaction date is the 3rd day in a 4-day window
+  parsedDate.setDate(parsedDate.getDate() - 2);
+
+  const year = parsedDate.getFullYear();
+  const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+  const day = String(parsedDate.getDate()).padStart(2, '0');
+
+  return `https://calendar.google.com/calendar/r/customday/${year}/${month}/${day}?dur=4`;
 };
 
 

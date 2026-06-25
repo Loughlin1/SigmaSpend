@@ -45,7 +45,8 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
         added: metrics.added ?? 0,
         skipped: metrics.skipped ?? 0,
         categorized: metrics.categorized ?? 0,
-        uncategorized: metrics.uncategorized ?? 0
+        uncategorized: metrics.uncategorized ?? 0,
+        errors: metrics.errors ?? 0,
       });
       setUploadedFileCount(fileCountSent);
       setShowMetrics(true);

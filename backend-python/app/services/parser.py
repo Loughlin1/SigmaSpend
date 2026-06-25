@@ -137,7 +137,7 @@ class StatementParserService:
         all_rules = db.query(CategoryRule).all()
         flat_categories, category_map = cls._get_category_cache(db)
     
-        csv_file = StringIO(file_contents)
+        csv_file = StringIO(file_contents.lstrip('﻿'))
         reader = csv.DictReader(csv_file)
         headers = reader.fieldnames or []
         if mappings["date_column"] not in headers or mappings["description_column"] not in headers:

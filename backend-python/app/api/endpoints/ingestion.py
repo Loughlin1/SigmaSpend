@@ -69,6 +69,7 @@ async def upload_bank_statement(
         total_skipped = 0
         total_categorized = 0
         total_uncategorized = 0
+        total_errors = 0
 
         # 3. Dynamic layout file iteration
         for file in files:
@@ -114,13 +115,15 @@ async def upload_bank_statement(
             skipped = result.get("skipped", 0)
             categorized = result.get("categorized", 0)
             uncategorized = result.get("uncategorized", 0)
-            
-            logger.info(f"File '{file.filename}' ingestion metrics -> Added: {added}, Skipped (Duplicates): {skipped}")
-            
+            errors = result.get("errors", 0)
+
+            logger.info(f"File '{file.filename}' ingestion metrics -> Added: {added}, Skipped (Duplicates): {skipped}, Errors: {errors}")
+
             total_added += added
             total_skipped += skipped
             total_categorized += categorized
             total_uncategorized += uncategorized
+            total_errors += errors
 
         logger.info(
             f"Ingestion lifecycle finished for account '{account_id}'. "
@@ -134,7 +137,8 @@ async def upload_bank_statement(
                 "added": total_added,
                 "skipped": total_skipped,
                 "categorized": total_categorized,
-                "uncategorized": total_uncategorized
+                "uncategorized": total_uncategorized,
+                "errors": total_errors
             },
             "files_processed": len(files)
         }

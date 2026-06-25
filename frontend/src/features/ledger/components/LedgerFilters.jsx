@@ -1,5 +1,5 @@
 // src/components/LedgerFilters.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import '../../../styles/filters.css';
 
 const INITIAL_FILTERS_DEFAULTS = {
@@ -18,6 +18,115 @@ function countActiveFilters(filters) {
     const current = filters[key];
     return current !== undefined && String(current) !== String(defaultVal) && current !== '';
   }).length;
+}
+
+function CategoryCombobox({ value, onChange, categories }) {
+  const [inputVal, setInputVal] = useState(value || '');
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  // Flatten categories into a searchable list
+  const allOptions = [
+    { label: '❓ Uncategorized', value: 'Uncategorized' },
+    ...categories.flatMap(cat => {
+      const hasSubs = cat.subcategories?.length > 0;
+      const icon = cat.icon || '📁';
+      if (hasSubs) {
+        return [
+          { label: `${icon} ${cat.name} (All)`, value: cat.name, isParent: true },
+          { label: `${icon} ${cat.name} (Direct)`, value: `${cat.name}::direct`, isParent: true },
+          ...cat.subcategories.map(sub => ({
+            label: `  ${icon} ${sub.name}`,
+            value: sub.name,
+          })),
+        ];
+      }
+      return [{ label: `${icon} ${cat.name}`, value: cat.name, isParent: true }];
+    }),
+  ];
+
+  const filtered = inputVal
+    ? allOptions.filter(o => o.label.toLowerCase().includes(inputVal.toLowerCase()))
+    : allOptions;
+
+  // Sync external clear
+  useEffect(() => { setInputVal(value || ''); }, [value]);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const select = (opt) => {
+    setInputVal(opt.label.trim());
+    onChange(opt.value);
+    setOpen(false);
+  };
+
+  const handleInput = (e) => {
+    setInputVal(e.target.value);
+    onChange('');
+    setOpen(true);
+  };
+
+  const handleClear = () => {
+    setInputVal('');
+    onChange('');
+    setOpen(false);
+  };
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <input
+          type="text"
+          value={inputVal}
+          onChange={handleInput}
+          onFocus={() => setOpen(true)}
+          placeholder="All Categories"
+          className="ledger-filters__select"
+          style={{ flex: 1, cursor: 'text' }}
+        />
+        {inputVal && (
+          <button
+            type="button"
+            onClick={handleClear}
+            style={{ marginLeft: '0.25rem', background: 'none', border: 'none', cursor: 'pointer', color: '#718096', fontSize: '1rem', lineHeight: 1, padding: '0 0.25rem' }}
+            aria-label="Clear"
+          >×</button>
+        )}
+      </div>
+      {open && filtered.length > 0 && (
+        <ul style={{
+          position: 'absolute', zIndex: 100, top: '100%', left: 0, right: 0,
+          background: '#fff', border: '1px solid #cbd5e0', borderRadius: '6px',
+          margin: '2px 0 0', padding: 0, listStyle: 'none',
+          maxHeight: '220px', overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        }}>
+          {filtered.map(opt => (
+            <li
+              key={opt.value}
+              onMouseDown={() => select(opt)}
+              style={{
+                padding: '0.45rem 0.75rem',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontWeight: opt.isParent ? 600 : 400,
+                color: '#2d3748',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#ebf8ff'}
+              onMouseLeave={e => e.currentTarget.style.background = ''}
+            >
+              {opt.label}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 export default function LedgerFilters({ filters, onFilterChange, accountNameMap, categories = [] }) {
@@ -119,19 +228,12 @@ export default function LedgerFilters({ filters, onFilterChange, accountNameMap,
           </div>
 
           <div className="ledger-filters__field">
-            <label className="ledger-filters__label" htmlFor="filter_category">Category</label>
-            <select id="filter_category" name="category" value={filters.category} onChange={handleChange} className="ledger-filters__select">
-              <option value="">All Categories</option>
-              <option value="Uncategorized">❓ Uncategorized</option>
-              {categories.map((cat) => (
-                <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
-                  <option value={cat.name}>{cat.icon || '📁'} {cat.name} (All)</option>
-                  {cat.subcategories?.map((sub) => (
-                    <option key={sub.id} value={sub.name}>🔹 {sub.name}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+            <label className="ledger-filters__label">Category</label>
+            <CategoryCombobox
+              value={filters.category}
+              onChange={(val) => onFilterChange('category', val)}
+              categories={categories}
+            />
           </div>
 
           <div className="ledger-filters__field">

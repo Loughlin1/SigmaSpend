@@ -62,9 +62,11 @@ class ExpenseService:
                     (ExpenseModel.category_id == "")
                 )    
             else:
-                matched_cat = db.query(CategoryModel).filter(CategoryModel.name == category).first()
-                if matched_cat: 
-                    if matched_cat.subcategories:
+                direct_only = category.endswith('::direct')
+                cat_name = category[:-8] if direct_only else category
+                matched_cat = db.query(CategoryModel).filter(CategoryModel.name == cat_name).first()
+                if matched_cat:
+                    if not direct_only and matched_cat.subcategories:
                         allowed_ids = [matched_cat.id] + [sub.id for sub in matched_cat.subcategories]
                         query = query.filter(ExpenseModel.category_id.in_(allowed_ids))
                     else:

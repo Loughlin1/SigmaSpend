@@ -1,10 +1,11 @@
 // src/features/budget/hooks/useBudget.js
 import { useState, useCallback, useEffect } from 'react';
-import { expenseApi, budgetApi, incomeApi, categoryApi } from '../../../api/client';
+import { expenseApi, budgetApi, bucketBudgetApi, incomeApi, categoryApi } from '../../../api/client';
 import { getCurrentMonthBounds } from '../../../utils/calendarUtils';
 
 export default function useBudget() {
   const [budgets, setBudgets] = useState({});
+  const [bucketBudgets, setBucketBudgets] = useState({});
   const [actuals, setActuals] = useState({});
   const [subActuals, setSubActuals] = useState({});
   const [monthlyIncome, setMonthlyIncome] = useState('');
@@ -21,6 +22,33 @@ export default function useBudget() {
       console.error('Failed to load budgets', err);
     }
   }, []);
+
+  const fetchBucketBudgets = useCallback(async () => {
+    try {
+      const data = await bucketBudgetApi.getAll();
+      const map = {};
+      data.forEach(b => { map[b.bucket_key] = parseFloat(b.amount); });
+      setBucketBudgets(map);
+    } catch (err) {
+      console.error('Failed to load bucket budgets', err);
+    }
+  }, []);
+
+  const updateBucketBudget = useCallback(async (bucketKey, amount) => {
+    const parsed = parseFloat(amount);
+    if (isNaN(parsed) || amount === '') {
+      setBucketBudgets(prev => { const next = { ...prev }; delete next[bucketKey]; return next; });
+      try { await bucketBudgetApi.delete(bucketKey); } catch { /* already gone */ }
+      return;
+    }
+    setBucketBudgets(prev => ({ ...prev, [bucketKey]: parsed }));
+    try {
+      await bucketBudgetApi.upsert(bucketKey, parsed);
+    } catch (err) {
+      console.error('Failed to save bucket budget', err);
+      fetchBucketBudgets();
+    }
+  }, [fetchBucketBudgets]);
 
   const fetchIncome = useCallback(async () => {
     try {
@@ -103,10 +131,11 @@ export default function useBudget() {
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchBudgets();
+    fetchBucketBudgets();
     fetchIncome();
     fetchActuals();
-  }, [fetchBudgets, fetchIncome, fetchActuals]);
+  }, [fetchBudgets, fetchBucketBudgets, fetchIncome, fetchActuals]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  return { budgets, updateBudget, actuals, subActuals, monthlyIncome, updateIncome, updateBucket, loading, error, fetchActuals };
+  return { budgets, updateBudget, bucketBudgets, updateBucketBudget, actuals, subActuals, monthlyIncome, updateIncome, updateBucket, loading, error, fetchActuals };
 }

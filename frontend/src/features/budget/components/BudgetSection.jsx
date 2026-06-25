@@ -10,6 +10,7 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUp
   const [isCollapsed, setIsCollapsed] = useState(true);
   const {
     budgets, updateBudget,
+    bucketBudgets, updateBucketBudget,
     actuals, subActuals, fetchActuals,
     monthlyIncome, updateIncome,
     updateBucket,
@@ -104,6 +105,7 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUp
             actuals={bucketedActuals}
             subActuals={bucketedSubActuals}
             parentActuals={actuals}
+            bucketBudgets={bucketBudgets}
             monthlyIncome={monthlyIncome}
           />
 
@@ -118,16 +120,19 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUp
               <BudgetTable
                 categories={parentCategories}
                 budgets={budgets}
+                bucketBudgets={bucketBudgets}
                 actuals={actuals}
                 subActuals={subActuals}
                 parentActuals={actuals}
                 onBudgetChange={updateBudget}
+                onBucketBudgetChange={updateBucketBudget}
                 onBucketChange={handleBucketChange}
               />
               <BudgetPieChart
                 categories={parentCategories}
-                budgets={budgets}
                 actuals={actuals}
+                subActuals={subActuals}
+                bucketBudgets={bucketBudgets}
               />
             </div>
           )}

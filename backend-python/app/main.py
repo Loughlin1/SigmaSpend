@@ -16,13 +16,14 @@ logger = logging.getLogger("sigmaspend")
 from app.core.config import settings
 from app.database.session import SessionLocal, engine, Base
 from app.database.seeder import seed_database_if_empty
-from app.api.endpoints import ingestion, expenses, categories, rules, accounts, banks, logs, budgets, income
+from app.api.endpoints import ingestion, expenses, categories, rules, accounts, banks, logs, budgets, income, bucket_budgets
 # Import models to ensure they're registered with Base.metadata
 from app.models.bank_account import BankAccount
 from app.models.expense import Expense
 from app.models.category import Category
 from app.models.category_rules import CategoryRule
 from app.models.budget import Budget
+from app.models.bucket_budget import BucketBudget
 from app.models.income_settings import IncomeSettings
 
 
@@ -192,4 +193,5 @@ app.include_router(rules.router, prefix=f"{settings.API_V1_STR}/rules", tags=["R
 app.include_router(banks.router, prefix=f"{settings.API_V1_STR}/banks", tags=["Banks"])
 app.include_router(logs.router, prefix=settings.API_V1_STR, tags=["Logs"])
 app.include_router(budgets.router, prefix=f"{settings.API_V1_STR}/budgets", tags=["Budgets"])
+app.include_router(bucket_budgets.router, prefix=f"{settings.API_V1_STR}/bucket-budgets", tags=["Bucket Budgets"])
 app.include_router(income.router, prefix=f"{settings.API_V1_STR}/income", tags=["Income"])

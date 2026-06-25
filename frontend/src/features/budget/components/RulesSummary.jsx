@@ -7,7 +7,7 @@ const BUCKETS = [
   { key: '20_savings', label: 'Savings', target: 0.10, color: '#38a169' },
 ];
 
-export default function RulesSummary({ categories, actuals, subActuals = {}, parentActuals = {}, monthlyIncome }) {
+export default function RulesSummary({ categories, actuals, subActuals = {}, parentActuals = {}, bucketBudgets = {}, monthlyIncome }) {
   const income = parseFloat(monthlyIncome) || 0;
   if (!income) return null;
 
@@ -33,14 +33,40 @@ export default function RulesSummary({ categories, actuals, subActuals = {}, par
     }
   });
 
+  const totalSpent = Object.values(bucketTotals).reduce((s, v) => s + v, 0);
+  const spentOver = totalSpent > income;
+  const remaining = income - totalSpent;
+
   return (
     <div className="rulesSummary">
       <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', color: '#2d3748' }}>
         60/30/10 Rule — Monthly Income: £{income.toFixed(2)}
       </h3>
+      {totalSpent > 0 && (
+        <div style={{
+          marginBottom: '1rem',
+          padding: '0.6rem 0.875rem',
+          borderRadius: '6px',
+          fontSize: '0.85rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          background: spentOver ? '#fff5f5' : '#f0fff4',
+          border: `1px solid ${spentOver ? '#feb2b2' : '#c6f6d5'}`,
+          color: spentOver ? '#c53030' : '#276749',
+        }}>
+          <span>{spentOver ? '⚠️' : '✓'}</span>
+          <span>
+            Total spent: <strong>£{totalSpent.toFixed(2)}</strong>
+            {spentOver
+              ? ` — exceeds income by £${Math.abs(remaining).toFixed(2)}`
+              : ` — £${remaining.toFixed(2)} remaining`}
+          </span>
+        </div>
+      )}
       <div className="rulesBuckets">
         {BUCKETS.map(({ key, label, target, color }) => {
-          const targetAmt = income * target;
+          const targetAmt = bucketBudgets[key] || (income * target);
           const actual = bucketTotals[key];
           const pct = targetAmt > 0 ? Math.min((actual / targetAmt) * 100, 100) : 0;
           const over = actual > targetAmt;

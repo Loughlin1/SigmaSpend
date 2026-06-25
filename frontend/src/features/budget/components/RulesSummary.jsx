@@ -2,9 +2,9 @@
 import '../../../styles/budget.css';
 
 const BUCKETS = [
-  { key: '50_needs',   label: 'Needs',   target: 0.50, color: '#2b6cb0' },
+  { key: '50_needs',   label: 'Needs',   target: 0.60, color: '#2b6cb0' },
   { key: '30_wants',   label: 'Wants',   target: 0.30, color: '#6b46c1' },
-  { key: '20_savings', label: 'Savings', target: 0.20, color: '#38a169' },
+  { key: '20_savings', label: 'Savings', target: 0.10, color: '#38a169' },
 ];
 
 export default function RulesSummary({ categories, actuals, monthlyIncome }) {
@@ -23,7 +23,7 @@ export default function RulesSummary({ categories, actuals, monthlyIncome }) {
   return (
     <div className="rulesSummary">
       <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', color: '#2d3748' }}>
-        50/30/20 Rule — Monthly Income: £{income.toFixed(2)}
+        60/30/10 Rule — Monthly Income: £{income.toFixed(2)}
       </h3>
       <div className="rulesBuckets">
         {BUCKETS.map(({ key, label, target, color }) => {

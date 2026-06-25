@@ -9,7 +9,7 @@ export default function useExpenses() {
   
   // Pagination States
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(50);
+  const [limit, setLimit] = useState(25);
   const [totalCount, setTotalCount] = useState(0); 
 
   const fetchExpenses = useCallback(async (filters = {}, currentPage = page, currentLimit = limit) => {

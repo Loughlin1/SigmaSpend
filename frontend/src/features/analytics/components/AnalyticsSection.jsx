@@ -6,6 +6,7 @@ import useExpenseAnalytics from '../hooks/useExpenseAnalytics';
 import { getCurrentMonthBounds } from '../../../utils/calendarUtils'
 
 const AnalyticsSection = forwardRef(({ accounts }, ref) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const { summaryData, loading: analyticsLoading, error: analyticsError, fetchSummary } = useExpenseAnalytics();
   
   const { start: defaultStart, end: defaultEnd } = getCurrentMonthBounds();
@@ -32,22 +33,30 @@ const AnalyticsSection = forwardRef(({ accounts }, ref) => {
 
   return (
     <section className="sectionCard">
-      <div className="headingRow" style={{ marginBottom: '1rem' }}>
+      <div className="account-list__header" onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: 'pointer' }}>
         <h2 style={{ margin: 0 }}>Financial Summaries</h2>
-        <AnalyticsFilters 
-          chartFilters={chartFilters}
-          onFilterChange={setChartFilters}
-          accounts={accounts}
-        />
+        <button className="collapse-button">{isCollapsed ? 'Show' : 'Hide'}</button>
       </div>
 
-      {analyticsError && <p className="errorText">Error loading aggregations: {analyticsError.message}</p>}
-      
-      <ExpenseChart
-        expenses={summaryData} 
-        accounts={accounts}
-        loading={analyticsLoading}
-      />
+      {!isCollapsed && (
+        <>
+          <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+            <AnalyticsFilters
+              chartFilters={chartFilters}
+              onFilterChange={setChartFilters}
+              accounts={accounts}
+            />
+          </div>
+
+          {analyticsError && <p className="errorText">Error loading aggregations: {analyticsError.message}</p>}
+
+          <ExpenseChart
+            expenses={summaryData}
+            accounts={accounts}
+            loading={analyticsLoading}
+          />
+        </>
+      )}
     </section>
   );
 });

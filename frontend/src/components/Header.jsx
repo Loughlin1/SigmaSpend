@@ -1,5 +1,5 @@
 // src/components/Header.jsx
-import logo from '../assets/logo.png'; // Adjust this path based on where your logo file sits
+import logo from '../assets/logo.png';
 
 export default function Header() {
   return (
@@ -7,12 +7,12 @@ export default function Header() {
       <div className="headingRow logo-container">
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <img src={logo} alt="SigmaSpend Logo" width="64" className="logo" />
-          <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#2d3748' }}>
-            SigmaSpend Dashboard
-          </h1>
-        </div>
-        <div style={{ color: '#718096', fontSize: '0.9rem', fontWeight: '500' }}>
-          Local Expense Tracking
+          <div>
+            <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#2d3748' }}>SigmaSpend</h1>
+            <p style={{ margin: '0.3rem 0 0 0', fontSize: '0.85rem', color: '#718096', lineHeight: 1.4 }}>
+              Upload bank statements, organise transactions, and track spending — privately, locally.
+            </p>
+          </div>
         </div>
       </div>
     </header>

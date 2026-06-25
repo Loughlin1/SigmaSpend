@@ -10,15 +10,16 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
   const [selectedAccount, setSelectedAccount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const [showMetrics, setShowMetrics] = useState(false);
   const [uploadedFileCount, setUploadedFileCount] = useState(0);
   const [uploadMetrics, setUploadMetrics] = useState(null);
 
   const handleUpload = async (e) => {
-    e.preventDefault(); // Preventing submission bubbling transitions
+    e.preventDefault();
     if (files.length === 0 || !selectedAccount) {
-      setError('Please select a bank account and attach at least one CSV file.');
+      setError('Please select a bank account and attach at least one file.');
       return;
     }
 
@@ -30,17 +31,6 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
       const response = await ingestionApi.uploadStatement(files, selectedAccount);
       const metrics = response.summary || response.data || response;
 
-      const added = metrics.added ?? 0;
-      const skipped = metrics.skipped ?? 0;
-      const categorized = metrics.categorized ?? 0;
-      const uncategorized = metrics.uncategorized ?? 0;
-      console.log("[SigmaSpend UI] Statement Ingestion Success Metrics:", {
-        total_files: files.length,
-        added,
-        skipped,
-        categorized,
-        uncategorized
-      });
       setUploadMetrics({
         added: metrics.added ?? 0,
         skipped: metrics.skipped ?? 0,
@@ -63,65 +53,58 @@ export default function StatementUpload({ accounts, onUploadSuccess }) {
   };
 
   return (
-    <section className="form">
-      <h3>Import Bank Statement</h3>
-      {error && <div className="form__error">{error}</div>}
-      
-      <form onSubmit={handleUpload} className="form__grid form__grid--wide">
-        <label className="form-field-wrapper">
-          Select Bank Account
-          <select
-            value={selectedAccount}
-            onChange={(e) => setSelectedAccount(e.target.value)}
-            className="form-inline-input"
-            required
-          >
-            <option value="">Choose an account</option>
-            {accounts.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.account_name} ({account.bank_name})
-              </option>
-            ))}
-          </select>
-        </label>
+    <section className="sectionCard">
+      <div
+        className="account-list__header"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        style={{ cursor: 'pointer' }}
+      >
+        <h2 style={{ margin: 0 }}>Import Bank Statement</h2>
+        <button className="collapse-button">{isCollapsed ? 'Show' : 'Hide'}</button>
+      </div>
 
-        <label className="form-field-wrapper">
-          Attach Statement Files (.csv)
-          <input
-            key={inputKey}
-            type="file"
-            accept=".csv, .pdf"
-            multiple
-            onChange={(e) => setFiles(Array.from(e.target.files))}
-            className="form-inline-input"
-            style={{ padding: '0.35rem' }} // Slight vertical normalization for file selector boxes
-          />
-        </label>
+      {!isCollapsed && (
+        <div style={{ marginTop: '1rem' }}>
+          {error && <div className="form__error" style={{ marginBottom: '0.75rem' }}>{error}</div>}
 
-        {files.length > 0 && (
-          <div style={{ gridColumn: '1 / -1', width: '100%', fontSize: '0.9rem', color: '#555', background: '#f7f7f7', padding: '0.5rem 0.75rem', borderRadius: '4px', border: '1px solid #eee' }}>
-            <strong>Selected files ({files.length}):</strong>
-            <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px' }}>
-              {files.map((fileItem, index) => (
-                <li key={`${fileItem.name}-${index}`} style={{ fontFamily: 'monospace' }}>
-                  {fileItem.name}
-                </li>
+          <form onSubmit={handleUpload} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <select
+              value={selectedAccount}
+              onChange={(e) => setSelectedAccount(e.target.value)}
+              className="inlineButton"
+              required
+              style={{ minWidth: '200px' }}
+            >
+              <option value="">Select account...</option>
+              {accounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.account_name} ({account.bank_name})
+                </option>
               ))}
-            </ul>
-          </div>
-        )}
+            </select>
 
-        <button
-          type="submit"
-          disabled={files.length === 0 || !selectedAccount || loading}
-          className="inlineButton form__submit"
-          style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }} // Centers button across the grid layout width
-        >
-          {loading ? 'Processing...' : `Upload File${files.length === 1 ? '' : 's'}`}
-        </button>
-      </form>
+            <input
+              key={inputKey}
+              type="file"
+              accept=".csv,.pdf"
+              multiple
+              onChange={(e) => setFiles(Array.from(e.target.files))}
+              className="inlineButton"
+              style={{ padding: '0.3rem', flex: 1, minWidth: '180px' }}
+            />
 
-      <MetricsModal 
+            <button
+              type="submit"
+              disabled={files.length === 0 || !selectedAccount || loading}
+              className="inlineButton form__submit"
+            >
+              {loading ? 'Processing...' : `Upload${files.length > 1 ? ` (${files.length})` : ''}`}
+            </button>
+          </form>
+        </div>
+      )}
+
+      <MetricsModal
         isOpen={showMetrics}
         onClose={() => setShowMetrics(false)}
         fileCount={uploadedFileCount}

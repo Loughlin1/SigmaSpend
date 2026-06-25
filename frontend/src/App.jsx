@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
-import DescriptionSection from './components/Description';
 import StatementUpload from './components/StatementUpload';
 
 // Features
@@ -49,15 +48,10 @@ function App() {
     <div className="page">
       <Header />
 
-      <section className="sectionCard">
-        <div className="splitSection">
-          <DescriptionSection />
-          <StatementUpload
-            accounts={accounts}
-            onUploadSuccess={triggerGlobalRefresh}
-          />
-        </div>
-      </section>
+      <StatementUpload
+        accounts={accounts}
+        onUploadSuccess={triggerGlobalRefresh}
+      />
 
       <AnalyticsSection
         ref={analyticsRef}

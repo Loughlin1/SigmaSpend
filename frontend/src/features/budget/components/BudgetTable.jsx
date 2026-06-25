@@ -40,7 +40,7 @@ function ProgressBar({ actual, budget }) {
   );
 }
 
-export default function BudgetTable({ categories, budgets, actuals, subActuals = {}, onBudgetChange, onBucketChange }) {
+export default function BudgetTable({ categories, budgets, actuals, subActuals = {}, parentActuals = {}, onBudgetChange, onBucketChange }) {
   const allKeys = [...BUCKETS.map(b => b.key), 'untagged'];
   const [collapsed, setCollapsed] = useState(Object.fromEntries(allKeys.map(k => [k, true])));
   const toggleSection = (key) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
@@ -59,6 +59,21 @@ export default function BudgetTable({ categories, budgets, actuals, subActuals =
           icon: cat.icon || '📁',
           bucket: sub.bucket || '',
           actual: subActuals[sub.name] || 0,
+          isSub: true,
+        });
+      }
+      // parentActuals includes rolled-up subcategory totals, so subtract them to get direct-only
+      const subTotal = cat.subcategories.reduce((s, sub) => s + (subActuals[sub.name] || 0), 0);
+      const parentDirect = Math.round(((parentActuals[cat.name] || 0) - subTotal) * 100) / 100;
+      if (parentDirect !== 0) {
+        lineItems.push({
+          id: cat.id,
+          name: cat.name,
+          displayName: `${cat.name} (direct)`,
+          parentName: cat.name,
+          icon: cat.icon || '📁',
+          bucket: cat.bucket || '',
+          actual: parentDirect,
           isSub: true,
         });
       }

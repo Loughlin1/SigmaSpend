@@ -38,14 +38,14 @@ class ExpenseAnalyticsService:
 
         if start_date:
             try:
-                start_dt = datetime.strptime(start_date.strip(), "%Y-%m-%d")
+                start_dt = datetime.strptime(start_date.strip(), "%Y-%m-%d").date()
                 base_filters.append(ExpenseModel.date >= start_dt)
             except ValueError:
                 logger.error(f"Analytics unexpected start_date format received: {start_date}")
 
         if end_date:
             try:
-                end_dt = datetime.strptime(end_date.strip(), "%Y-%m-%d")
+                end_dt = datetime.strptime(end_date.strip(), "%Y-%m-%d").date()
                 base_filters.append(ExpenseModel.date <= end_dt)
             except ValueError:
                 logger.error(f"Analytics unexpected end_date format received: {end_date}")

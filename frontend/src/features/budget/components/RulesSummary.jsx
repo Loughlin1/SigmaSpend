@@ -7,7 +7,7 @@ const BUCKETS = [
   { key: '20_savings', label: 'Savings', target: 0.10, color: '#38a169' },
 ];
 
-export default function RulesSummary({ categories, actuals, subActuals = {}, monthlyIncome }) {
+export default function RulesSummary({ categories, actuals, subActuals = {}, parentActuals = {}, monthlyIncome }) {
   const income = parseFloat(monthlyIncome) || 0;
   if (!income) return null;
 
@@ -22,6 +22,12 @@ export default function RulesSummary({ categories, actuals, subActuals = {}, mon
           bucketTotals[sub.bucket] += subActuals[sub.name] || 0;
         }
       });
+      // parentActuals rolls up subcategory totals — subtract them to get direct-only transactions
+      const subTotal = cat.subcategories.reduce((s, sub) => s + (subActuals[sub.name] || 0), 0);
+      const parentDirect = Math.round(((parentActuals[cat.name] || 0) - subTotal) * 100) / 100;
+      if (parentDirect !== 0 && cat.bucket && bucketTotals[cat.bucket] !== undefined) {
+        bucketTotals[cat.bucket] += parentDirect;
+      }
     } else if (cat.bucket && bucketTotals[cat.bucket] !== undefined) {
       bucketTotals[cat.bucket] += actuals[cat.name] || 0;
     }

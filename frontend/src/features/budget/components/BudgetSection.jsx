@@ -103,6 +103,7 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUp
             categories={parentCategories}
             actuals={bucketedActuals}
             subActuals={bucketedSubActuals}
+            parentActuals={actuals}
             monthlyIncome={monthlyIncome}
           />
 
@@ -117,8 +118,9 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUp
               <BudgetTable
                 categories={parentCategories}
                 budgets={budgets}
-                actuals={bucketedActuals}
-                subActuals={bucketedSubActuals}
+                actuals={actuals}
+                subActuals={subActuals}
+                parentActuals={actuals}
                 onBudgetChange={updateBudget}
                 onBucketChange={handleBucketChange}
               />

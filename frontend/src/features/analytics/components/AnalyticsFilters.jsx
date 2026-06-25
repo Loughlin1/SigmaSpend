@@ -1,15 +1,14 @@
 // src/components/AnalyticsFilters.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { expenseApi } from '../../../api/client';
 
 const CURRENT_YEAR = new Date().getFullYear();
-const YEARS = Array.from({ length: CURRENT_YEAR - 2019 }, (_, i) => CURRENT_YEAR - i);
 
 function lastDayOfMonth(year, month) {
   return new Date(year, month, 0).getDate();
 }
 
 function boundsFromMonth(ym) {
-  // ym = "YYYY-MM"
   const [year, month] = ym.split('-').map(Number);
   const last = lastDayOfMonth(year, month);
   return {
@@ -19,16 +18,31 @@ function boundsFromMonth(ym) {
 }
 
 function boundsFromYear(year) {
-  return {
-    start_date: `${year}-01-01`,
-    end_date:   `${year}-12-31`,
-  };
+  return { start_date: `${year}-01-01`, end_date: `${year}-12-31` };
 }
 
-export default function AnalyticsFilters({ chartFilters, onFilterChange, accounts = [] }) {
-  const [mode, setMode] = useState('month'); // 'month' | 'year' | 'custom'
+function boundsFromYears(selected) {
+  if (selected.length === 0) return {};
+  const min = Math.min(...selected);
+  const max = Math.max(...selected);
+  return { start_date: `${min}-01-01`, end_date: `${max}-12-31` };
+}
 
-  // Derive current month string from existing filter for the month input
+const MODES = ['month', 'year', 'years', 'custom'];
+
+export default function AnalyticsFilters({ chartFilters, onFilterChange, accounts = [] }) {
+  const [mode, setMode] = useState('month');
+  const [availableYears, setAvailableYears] = useState([CURRENT_YEAR]);
+  const [selectedYears, setSelectedYears] = useState([CURRENT_YEAR]);
+
+  useEffect(() => {
+    expenseApi.getYears()
+      .then(years => {
+        if (years.length > 0) setAvailableYears(years);
+      })
+      .catch(() => {}); // non-fatal — fallback stays as current year
+  }, []);
+
   const currentMonthValue = chartFilters.start_date
     ? chartFilters.start_date.slice(0, 7)
     : new Date().toISOString().slice(0, 7);
@@ -43,8 +57,19 @@ export default function AnalyticsFilters({ chartFilters, onFilterChange, account
       onFilterChange({ ...chartFilters, ...boundsFromMonth(currentMonthValue) });
     } else if (newMode === 'year') {
       onFilterChange({ ...chartFilters, ...boundsFromYear(currentYearValue) });
+    } else if (newMode === 'years') {
+      onFilterChange({ ...chartFilters, ...boundsFromYears(selectedYears) });
     }
-    // custom: leave existing dates as-is
+    // custom: leave dates as-is
+  };
+
+  const toggleYear = (year) => {
+    const next = selectedYears.includes(year)
+      ? selectedYears.filter(y => y !== year)
+      : [...selectedYears, year];
+    if (next.length === 0) return; // always keep at least one
+    setSelectedYears(next);
+    onFilterChange({ ...chartFilters, ...boundsFromYears(next) });
   };
 
   const handleUpdate = (field, value) => {
@@ -78,7 +103,7 @@ export default function AnalyticsFilters({ chartFilters, onFilterChange, account
 
       {/* Date mode toggle */}
       <div style={{ display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '1px solid #cbd5e0' }}>
-        {['month', 'year', 'custom'].map((m) => (
+        {MODES.map((m) => (
           <button
             key={m}
             type="button"
@@ -87,13 +112,14 @@ export default function AnalyticsFilters({ chartFilters, onFilterChange, account
               padding: '0.3rem 0.65rem',
               fontSize: '0.8rem',
               border: 'none',
+              borderLeft: m !== MODES[0] ? '1px solid #cbd5e0' : 'none',
               cursor: 'pointer',
               background: mode === m ? '#3182ce' : '#fff',
               color: mode === m ? '#fff' : '#4a5568',
               fontWeight: mode === m ? 600 : 400,
             }}
           >
-            {m.charAt(0).toUpperCase() + m.slice(1)}
+            {m === 'years' ? 'Multi-Year' : m.charAt(0).toUpperCase() + m.slice(1)}
           </button>
         ))}
       </div>
@@ -113,8 +139,36 @@ export default function AnalyticsFilters({ chartFilters, onFilterChange, account
           onChange={(e) => onFilterChange({ ...chartFilters, ...boundsFromYear(Number(e.target.value)) })}
           className="inlineButton"
         >
-          {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+          {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
+      )}
+
+      {mode === 'years' && (
+        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+          {availableYears.map(y => {
+            const active = selectedYears.includes(y);
+            return (
+              <button
+                key={y}
+                type="button"
+                onClick={() => toggleYear(y)}
+                style={{
+                  padding: '0.25rem 0.6rem',
+                  fontSize: '0.8rem',
+                  borderRadius: '4px',
+                  border: '1px solid',
+                  cursor: 'pointer',
+                  borderColor: active ? '#3182ce' : '#cbd5e0',
+                  background: active ? '#ebf8ff' : '#fff',
+                  color: active ? '#2b6cb0' : '#718096',
+                  fontWeight: active ? 600 : 400,
+                }}
+              >
+                {y}
+              </button>
+            );
+          })}
+        </div>
       )}
 
       {mode === 'custom' && (

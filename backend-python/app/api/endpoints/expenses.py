@@ -4,6 +4,7 @@ from dateutil import parser
 from dateutil.parser import ParserError
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import text
 from sqlalchemy.orm import Session, joinedload
 
 from app.api import deps
@@ -97,6 +98,21 @@ def read_expenses_summary(
         db, logger, account_id, start_date, end_date, group_by
     )
     return results
+
+@router.get("/analytics/years", response_model=List[int])
+def read_expense_years(
+    db: Session = Depends(deps.get_db),
+    account_id: Optional[int] = Query(None, description="Filter by specific bank account"),
+):
+    """Return the distinct years that have expense data, sorted descending."""
+    from sqlalchemy import func
+    year_col = func.strftime("%Y", ExpenseModel.date)
+    query = db.query(year_col.label("year"))
+    if account_id:
+        query = query.filter(ExpenseModel.account_id == account_id)
+    rows = query.group_by(year_col).order_by(year_col.desc()).all()
+    return [int(r.year) for r in rows if r.year]
+
 
 @router.get("/{expense_id}", response_model=ExpenseResponse)
 def read_expense(

@@ -6,6 +6,7 @@ import { getCurrentMonthBounds } from '../../../utils/calendarUtils';
 export default function useBudget() {
   const [budgets, setBudgets] = useState({});
   const [actuals, setActuals] = useState({});
+  const [subActuals, setSubActuals] = useState({});
   const [monthlyIncome, setMonthlyIncome] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -79,13 +80,18 @@ export default function useBudget() {
       };
       const data = await expenseApi.getSummary(params);
       const map = {};
-      (data || [])
-        .filter(row => String(row.type).toLowerCase() === 'category')
-        .forEach(row => {
-          const name = row.category_name || 'Uncategorized';
+      const subMap = {};
+      (data || []).forEach(row => {
+        const type = String(row.type).toLowerCase();
+        const name = row.category_name || 'Uncategorized';
+        if (type === 'category') {
           map[name] = (map[name] || 0) + parseFloat(row.total_expenses || 0);
-        });
+        } else if (type === 'subcategory') {
+          subMap[name] = (subMap[name] || 0) + parseFloat(row.total_expenses || 0);
+        }
+      });
       setActuals(map);
+      setSubActuals(subMap);
     } catch (err) {
       setError(err);
     } finally {
@@ -101,5 +107,5 @@ export default function useBudget() {
   }, [fetchBudgets, fetchIncome, fetchActuals]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  return { budgets, updateBudget, actuals, monthlyIncome, updateIncome, updateBucket, loading, error, fetchActuals };
+  return { budgets, updateBudget, actuals, subActuals, monthlyIncome, updateIncome, updateBucket, loading, error, fetchActuals };
 }

@@ -10,7 +10,7 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUp
   const [isCollapsed, setIsCollapsed] = useState(true);
   const {
     budgets, updateBudget,
-    actuals, fetchActuals,
+    actuals, subActuals, fetchActuals,
     monthlyIncome, updateIncome,
     updateBucket,
     loading, error,
@@ -100,6 +100,7 @@ const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUp
                 categories={parentCategories}
                 budgets={budgets}
                 actuals={actuals}
+                subActuals={subActuals}
                 onBudgetChange={updateBudget}
                 onBucketChange={handleBucketChange}
               />

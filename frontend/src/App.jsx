@@ -1,6 +1,6 @@
 // src/App.jsx
 import './App.css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -25,23 +25,25 @@ function App() {
   // Global Shared Ecosystem Hooks
   const { accounts, loading: accountsLoading, error: accountsError, fetchAccounts, accountNameMap } = useAccounts();
   const { categories, loading: categoriesLoading, error: categoriesError, fetchCategories, createCategory } = useCategories();
-  
+
   // Feature component communication boundaries
   const automationRef = useRef(null);
   const analyticsRef = useRef(null);
   const budgetRef = useRef(null);
 
+  const [configCollapsed, setConfigCollapsed] = useState(false);
+
   // App Mount Prefetch
- useEffect(() => {
+  useEffect(() => {
     fetchAccounts();
     fetchCategories();
   }, [fetchAccounts, fetchCategories]);
 
   const triggerGlobalRefresh = async () => {
-      if (analyticsRef.current) {
-        analyticsRef.current.refreshAnalytics();
-      }
-    };
+    if (analyticsRef.current) {
+      analyticsRef.current.refreshAnalytics();
+    }
+  };
 
   return (
     <div className="page">
@@ -50,33 +52,12 @@ function App() {
       <section className="sectionCard">
         <div className="splitSection">
           <DescriptionSection />
-          <StatementUpload 
-            accounts={accounts} 
-            onUploadSuccess={triggerGlobalRefresh} 
+          <StatementUpload
+            accounts={accounts}
+            onUploadSuccess={triggerGlobalRefresh}
           />
         </div>
       </section>
-
-      <BankAccountList
-        accounts={accounts}
-        loading={accountsLoading}
-        error={accountsError}
-        onAccountUpdated={fetchAccounts}
-        onAccountCreated={fetchAccounts}
-      />
-
-      <CategoryManager
-        categories={categories}
-        onCreateCategory={createCategory}
-        loading={categoriesLoading}
-        error={categoriesError}
-      />
-
-      <AutomationSection
-        ref={automationRef}
-        categories={categories}
-        triggerGlobalRefresh={triggerGlobalRefresh}
-      />
 
       <AnalyticsSection
         ref={analyticsRef}
@@ -100,6 +81,44 @@ function App() {
           if (automationRef.current) await automationRef.current.createRuleFromTransaction(ruleData);
         }}
       />
+
+      {/* Configuration — collapsed by default on load */}
+      <section className="sectionCard">
+        <div
+          className="account-list__header"
+          onClick={() => setConfigCollapsed(!configCollapsed)}
+          style={{ cursor: 'pointer' }}
+        >
+          <h2 style={{ margin: 0 }}>Configuration</h2>
+          <button className="collapse-button">{configCollapsed ? 'Show' : 'Hide'}</button>
+        </div>
+
+        {!configCollapsed && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1.25rem' }}>
+            <BankAccountList
+              accounts={accounts}
+              loading={accountsLoading}
+              error={accountsError}
+              onAccountUpdated={fetchAccounts}
+              onAccountCreated={fetchAccounts}
+            />
+
+            <CategoryManager
+              categories={categories}
+              onCreateCategory={createCategory}
+              loading={categoriesLoading}
+              error={categoriesError}
+            />
+
+            <AutomationSection
+              ref={automationRef}
+              categories={categories}
+              triggerGlobalRefresh={triggerGlobalRefresh}
+            />
+          </div>
+        )}
+      </section>
+
       <LogsSection />
 
       <Footer />

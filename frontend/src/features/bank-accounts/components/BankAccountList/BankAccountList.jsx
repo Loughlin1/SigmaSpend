@@ -42,22 +42,23 @@ export default function BankAccountList({ accounts = [], loading, error, onAccou
                     </tr>
                   </thead>
                   <tbody>
-                    {accounts.map((account) => (
-                      editingAccountId === account.account_id ? (
+                    {accounts.map((account) => {
+                      const accountId = account.account_id ?? account.id;
+                      return editingAccountId === accountId ? (
                         <AccountRowEdit
-                          key={account.account_id}
-                          account={account}
+                          key={accountId}
+                          account={{ ...account, account_id: accountId }}
                           onAccountUpdated={onAccountUpdated}
                           onCancel={() => setEditingAccountId(null)}
                         />
                       ) : (
                         <AccountRowRead
-                          key={account.account_id}
-                          account={account}
+                          key={accountId}
+                          account={{ ...account, account_id: accountId }}
                           onStartEdit={(acc) => setEditingAccountId(acc.account_id)}
                         />
-                      )
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -118,11 +118,13 @@ def test_parse_and_ingest_successful_flow():
 
     # Construct Mocked Word Layout Tokens sharing an identical row-top baseline
     words_data = [
-        {"text": "12", "top": 10.2, "x0": 10},
-        {"text": "FEBRUARY", "top": 10.2, "x0": 25},
+        {"text": "12",        "top": 10.2, "x0": 10},
+        {"text": "FEBRUARY",  "top": 10.2, "x0": 25},
+        {"text": "",          "top": 10.2, "x0": 60},   # spacer: date→description column gap
         {"text": "STARBUCKS", "top": 10.2, "x0": 80},
-        {"text": "COFFEE", "top": 10.2, "x0": 150},
-        {"text": "4.50", "top": 10.2, "x0": 240},
+        {"text": "COFFEE",    "top": 10.2, "x0": 150},
+        {"text": "",          "top": 10.2, "x0": 200},  # spacer: description→amount column gap
+        {"text": "4.50",      "top": 10.2, "x0": 240},
     ]
     
     mock_page = MagicMock()
@@ -140,7 +142,8 @@ def test_parse_and_ingest_successful_flow():
         # Setup Account Mapping Profile Configuration
         mock_parser_service.get_account_bank_config.return_value = {
             "mappings": {
-                "pdf_regex": r"^(\d{2}\s+[A-Z]+)\s+(.+?)\s+(-?[\d,]+\.\d{2}(?:CR)?)$",
+                # "pdf_regex": r"^(\d{2}\s+[A-Z]+)\s+(.+?)\s+(-?[\d,]+\.\d{2}(?:CR)?)$",
+                "pdf_regex": r"^(\d{2}\s+[A-Z]{3,10})(?:\s+\d{2}\s+[A-Z]{3,10})?\s{2,}(.+?)\s{2,}(-?£?[0-9,]+\.\d{2}\s*(?:CR|DR)?)$",
                 "pdf_header_bypass": "date of transaction,page"
             }
         }

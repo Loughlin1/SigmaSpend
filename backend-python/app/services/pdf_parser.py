@@ -79,7 +79,18 @@ class PDFStatementParser:
 
                 for top_coord in sorted_tops:
                     line_words = sorted(lines_dict[top_coord], key=lambda x: x["x0"])
-                    reconstructed_line = " ".join([w["text"] for w in line_words]).strip()
+
+                    # Preserve column gaps as double spaces so \s{2,} in the regex
+                    # can distinguish column boundaries from intra-word spaces.
+                    if line_words:
+                        parts = [line_words[0]["text"]]
+                        for prev, curr in zip(line_words, line_words[1:]):
+                            gap = curr["x0"] - prev.get("x1", prev["x0"])
+                            parts.append("  " if gap > 20 else " ")
+                            parts.append(curr["text"])
+                        reconstructed_line = "".join(parts).strip()
+                    else:
+                        reconstructed_line = ""
 
                     if any(kw in reconstructed_line.lower() for kw in bypass_keywords):
                         continue

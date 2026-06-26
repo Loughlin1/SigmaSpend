@@ -15,6 +15,7 @@ import CategoryManager from './features/categories/components/CategoryManager';
 import LogsSection from './features/logs-viewer/components/LogsSection';
 import BudgetSection from './features/budget/components/BudgetSection';
 import HolidayList from './features/holidays/components/HolidayList';
+import HolidayAnalyticsSection from './features/holidays/components/HolidayAnalyticsSection';
 
 // Master Shared Hooks
 import useAccounts from './features/bank-accounts/hooks/useAccounts';
@@ -60,6 +61,8 @@ function App() {
         accounts={accounts}
         className="sectionCard--primary"
       />
+
+      <HolidayAnalyticsSection />
 
       <BudgetSection
         ref={budgetRef}

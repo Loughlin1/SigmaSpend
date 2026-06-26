@@ -89,6 +89,8 @@ export const holidaysApi = {
   create: (data) => apiClient.post('/holidays/', data).then(res => res.data),
   update: (id, data) => apiClient.put(`/holidays/${id}`, data).then(res => res.data),
   delete: (id) => apiClient.delete(`/holidays/${id}`).then(res => res.data),
+  getSummary: (holidayId) =>
+    apiClient.get('/expenses/analytics/summary', { params: { holiday_id: holidayId, group_by: 'day' } }).then(res => res.data),
 };
 
 export const logsApi = {

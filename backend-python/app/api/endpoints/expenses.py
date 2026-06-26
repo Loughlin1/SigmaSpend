@@ -90,14 +90,15 @@ def read_expenses_summary(
     account_id: Optional[int] = Query(None, description="Filter by specific bank account"),
     start_date: Optional[str] = Query(None, description="Filter from date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="Filter up to date (YYYY-MM-DD)"),
-    group_by: str = Query("month", regex="^(month|year|day)$", description="Timeline granularity")
+    group_by: str = Query("month", regex="^(month|year|day)$", description="Timeline granularity"),
+    holiday_id: Optional[int] = Query(None, description="Filter by holiday/trip ID"),
 ):
     """
-    Retrieve an aggregated financial summary breakdown of global grand totals, 
+    Retrieve an aggregated financial summary breakdown of global grand totals,
     parent categories, and subcategories for the selected timeline.
     """
     results = ExpenseAnalyticsService.get_multi_tier_summary(
-        db, logger, account_id, start_date, end_date, group_by
+        db, logger, account_id, start_date, end_date, group_by, holiday_id
     )
     return results
 

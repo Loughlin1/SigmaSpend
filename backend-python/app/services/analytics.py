@@ -17,7 +17,8 @@ class ExpenseAnalyticsService:
         account_id: Optional[int] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        group_by: str = "month"
+        group_by: str = "month",
+        holiday_id: Optional[int] = None,
     ) -> List[dict]:
         
         # 1. Timeline resolution
@@ -35,6 +36,8 @@ class ExpenseAnalyticsService:
         base_filters = []
         if account_id:
             base_filters.append(ExpenseModel.account_id == account_id)
+        if holiday_id is not None:
+            base_filters.append(ExpenseModel.holiday_id == holiday_id)
 
         if start_date:
             try:

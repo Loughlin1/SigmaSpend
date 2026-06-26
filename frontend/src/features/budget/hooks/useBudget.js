@@ -95,11 +95,8 @@ export default function useBudget() {
     }
   }, []);
 
-  const fetchYearActuals = useCallback(async (year) => {
-    const start = `${year}-01-01`;
-    const end = `${year}-12-31`;
-    const data = await expenseApi.getSummary({ group_by: 'month', start_date: start, end_date: end });
-    // Returns { categoryName: { "YYYY-MM": spend } } for category rows, same for subcategory
+  const fetchRangeActuals = useCallback(async (startDate, endDate) => {
+    const data = await expenseApi.getSummary({ group_by: 'month', start_date: startDate, end_date: endDate });
     const catMap = {};
     const subMap = {};
     (data || []).forEach(row => {
@@ -117,6 +114,10 @@ export default function useBudget() {
     });
     return { catMap, subMap };
   }, []);
+
+  const fetchYearActuals = useCallback(async (year) =>
+    fetchRangeActuals(`${year}-01-01`, `${year}-12-31`),
+  [fetchRangeActuals]);
 
   const fetchActuals = useCallback(async (filters = {}) => {
     setLoading(true);
@@ -160,5 +161,5 @@ export default function useBudget() {
   }, [fetchBudgets, fetchBucketBudgets, fetchIncome, fetchActuals]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  return { budgets, updateBudget, bucketBudgets, updateBucketBudget, actuals, subActuals, monthlyIncome, updateIncome, updateBucket, loading, error, fetchActuals, fetchYearActuals };
+  return { budgets, updateBudget, bucketBudgets, updateBucketBudget, actuals, subActuals, monthlyIncome, updateIncome, updateBucket, loading, error, fetchActuals, fetchYearActuals, fetchRangeActuals };
 }

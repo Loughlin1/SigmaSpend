@@ -3,6 +3,7 @@ import { forwardRef, useImperativeHandle, useState } from 'react';
 import useBudget from '../hooks/useBudget';
 import BudgetTable from './BudgetTable';
 import BudgetYearTable from './BudgetYearTable';
+import BudgetMonthsTable from './BudgetMonthsTable';
 import BudgetPieChart from './BudgetPieChart';
 import RulesSummary from './RulesSummary';
 import { getCurrentMonthBounds } from '../../../utils/calendarUtils';
@@ -17,6 +18,7 @@ const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, classNam
     updateBucket,
     loading, error,
     fetchYearActuals,
+    fetchRangeActuals,
   } = useBudget();
 
   const { start, end } = getCurrentMonthBounds();
@@ -24,8 +26,10 @@ const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, classNam
   const currentYear = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [filters, setFilters] = useState({ start_date: start, end_date: end });
-  const [yearView, setYearView] = useState(false);
+  const [viewMode, setViewMode] = useState('month'); // 'month' | 'year' | 'months'
   const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [rangeStart, setRangeStart] = useState(`${currentYear - 1}-${String(new Date().getMonth() + 1).padStart(2, '0')}`);
+  const [rangeEnd, setRangeEnd] = useState(currentMonth);
 
   useImperativeHandle(ref, () => ({
     refreshBudget: () => fetchActuals(filters),
@@ -95,19 +99,18 @@ const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, classNam
               />
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                className="inlineButton"
-                style={{ fontWeight: yearView ? 400 : 700 }}
-                onClick={() => setYearView(false)}
-              >Month</button>
-              <button
-                type="button"
-                className="inlineButton"
-                style={{ fontWeight: yearView ? 700 : 400 }}
-                onClick={() => setYearView(true)}
-              >Year</button>
-              {yearView ? (
+              {['month', 'year', 'months'].map(mode => (
+                <button
+                  key={mode}
+                  type="button"
+                  className="inlineButton"
+                  style={{ fontWeight: viewMode === mode ? 700 : 400 }}
+                  onClick={() => setViewMode(mode)}
+                >
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
+              {viewMode === 'year' && (
                 <input
                   type="number"
                   min="2020"
@@ -117,7 +120,8 @@ const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, classNam
                   className="budgetInput"
                   style={{ width: '80px' }}
                 />
-              ) : (
+              )}
+              {viewMode === 'month' && (
                 <>
                   <input
                     type="month"
@@ -126,6 +130,23 @@ const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, classNam
                     className="inlineButton"
                   />
                   <button className="inlineButton" onClick={() => fetchActuals(filters)}>Refresh</button>
+                </>
+              )}
+              {viewMode === 'months' && (
+                <>
+                  <input
+                    type="month"
+                    value={rangeStart}
+                    onChange={e => setRangeStart(e.target.value)}
+                    className="inlineButton"
+                  />
+                  <span style={{ fontSize: '0.82rem', color: '#718096' }}>to</span>
+                  <input
+                    type="month"
+                    value={rangeEnd}
+                    onChange={e => setRangeEnd(e.target.value)}
+                    className="inlineButton"
+                  />
                 </>
               )}
             </div>
@@ -144,13 +165,22 @@ const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, classNam
 
           {parentCategories.length === 0 ? (
             <p style={{ color: '#4a5568' }}>No categories found. Add categories first.</p>
-          ) : yearView ? (
+          ) : viewMode === 'year' ? (
             <BudgetYearTable
               categories={parentCategories}
               budgets={budgets}
               bucketBudgets={bucketBudgets}
               year={selectedYear}
               fetchYearActuals={fetchYearActuals}
+            />
+          ) : viewMode === 'months' ? (
+            <BudgetMonthsTable
+              categories={parentCategories}
+              budgets={budgets}
+              bucketBudgets={bucketBudgets}
+              startMonth={rangeStart}
+              endMonth={rangeEnd}
+              fetchRangeActuals={fetchRangeActuals}
             />
           ) : loading ? (
             <p style={{ color: '#4a5568' }}>Loading actuals…</p>

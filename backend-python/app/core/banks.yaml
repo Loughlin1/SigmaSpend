@@ -196,3 +196,170 @@ banks:
 
   - name: "Zopa"
     country: GB
+
+  # UK Building Societies
+  - name: "Bath Building Society"
+    country: GB
+
+  - name: "Beverley Building Society"
+    country: GB
+
+  - name: "Buckinghamshire Building Society"
+    country: GB
+
+  - name: "Cambridge Building Society"
+    country: GB
+
+  - name: "Chelsea Building Society"
+    country: GB
+
+  - name: "Chorley Building Society"
+    country: GB
+
+  - name: "Coventry Building Society"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Description"
+      amount_in_column: "Credit"
+      amount_out_column: "Debit"
+
+  - name: "Cumberland Building Society"
+    country: GB
+
+  - name: "Darlington Building Society"
+    country: GB
+
+  - name: "Dudley Building Society"
+    country: GB
+
+  - name: "Earl Shilton Building Society"
+    country: GB
+
+  - name: "Furness Building Society"
+    country: GB
+
+  - name: "Glasgow Credit Union"
+    country: GB
+
+  - name: "Hanley Economic Building Society"
+    country: GB
+
+  - name: "Harpenden Building Society"
+    country: GB
+
+  - name: "Hinckley & Rugby Building Society"
+    country: GB
+
+  - name: "Holmesdale Building Society"
+    country: GB
+
+  - name: "Ipswich Building Society"
+    country: GB
+
+  - name: "Leeds Building Society"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Description"
+      amount_in_column: "Credit"
+      amount_out_column: "Debit"
+
+  - name: "Leek Building Society"
+    country: GB
+
+  - name: "Loughborough Building Society"
+    country: GB
+
+  - name: "Mansfield Building Society"
+    country: GB
+
+  - name: "Market Harborough Building Society"
+    country: GB
+
+  - name: "Marsden Building Society"
+    country: GB
+
+  - name: "Melton Building Society"
+    country: GB
+
+  - name: "Monmouthshire Building Society"
+    country: GB
+
+  - name: "National Counties Building Society"
+    country: GB
+
+  - name: "Newbury Building Society"
+    country: GB
+
+  - name: "Newcastle Building Society"
+    country: GB
+
+  - name: "Norwich & Peterborough Building Society"
+    country: GB
+
+  - name: "Nottingham Building Society"
+    country: GB
+
+  - name: "Penrith Building Society"
+    country: GB
+
+  - name: "Principality Building Society"
+    country: GB
+
+  - name: "Progressive Building Society"
+    country: GB
+
+  - name: "Saffron Building Society"
+    country: GB
+
+  - name: "Scottish Building Society"
+    country: GB
+
+  - name: "Skipton Building Society"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Description"
+      amount_in_column: "Credit"
+      amount_out_column: "Debit"
+
+  - name: "Stafford Railway Building Society"
+    country: GB
+
+  - name: "Staffordshire Building Society"
+    country: GB
+
+  - name: "Stroud & Swindon Building Society"
+    country: GB
+
+  - name: "Swansea Building Society"
+    country: GB
+
+  - name: "Teachers Building Society"
+    country: GB
+
+  - name: "Tipton & Coseley Building Society"
+    country: GB
+
+  - name: "Vernon Building Society"
+    country: GB
+
+  - name: "West Bromwich Building Society"
+    country: GB
+
+  - name: "Yorkshire Building Society"
+    country: GB
+    default_amount_style: split_columns
+    default_invert_amounts: false
+    default_mappings:
+      date_column: "Date"
+      description_column: "Description"
+      amount_in_column: "Credit"
+      amount_out_column: "Debit"

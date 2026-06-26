@@ -7,7 +7,6 @@ import '../../../styles/forms.css'
 export default function BankAccountForm({ onAccountCreated }) {
   const { banks, loading: banksLoading } = useBanks();
 
-  const [accountId, setAccountId] = useState('');
   const [accountName, setAccountName] = useState('');
   const [bankName, setBankName] = useState('');
   const [amountStyle, setAmountStyle] = useState('single_column');
@@ -58,8 +57,8 @@ export default function BankAccountForm({ onAccountCreated }) {
     setError('');
     setSuccessMessage('');
 
-    if (!accountId.trim() || !accountName.trim() || !bankName.trim()) {
-      setError('Account ID, name, and bank name are required.');
+    if (!accountName.trim() || !bankName.trim()) {
+      setError('Account name and bank name are required.');
       return;
     }
 
@@ -82,7 +81,6 @@ export default function BankAccountForm({ onAccountCreated }) {
     setLoading(true);
     try {
       await accountsApi.createAccount({
-        account_id: accountId.trim(),
         account_name: accountName.trim(),
         bank_name: bankName.trim(),
         amount_style: amountStyle,
@@ -90,7 +88,6 @@ export default function BankAccountForm({ onAccountCreated }) {
         mappings,
       });
       setSuccessMessage('Bank account added successfully.');
-      setAccountId('');
       setAccountName('');
       setBankName('');
       setAmountStyle('single_column');
@@ -115,16 +112,6 @@ export default function BankAccountForm({ onAccountCreated }) {
       {error && <div className="form__error">{error}</div>}
       {successMessage && <div className="form__success">{successMessage}</div>}
       <form onSubmit={handleSubmit} className="form__grid">
-        <label className="form-field-wrapper">
-          Account ID
-          <input
-            type="text"
-            value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
-            placeholder="e.g. checking_001"
-            className="form-inline-input"
-          />
-        </label>
         <label className="form-field-wrapper">
           Account Name
           <input

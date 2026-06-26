@@ -1,17 +1,17 @@
 # app/services/pdf_parser.py
 import io
 import re
-import json
 from collections import defaultdict
-from sqlalchemy.orm import Session, object_mapper
 from datetime import datetime, date
-from typing import List
-from fastapi import HTTPException, status
+from typing import List, Optional, Tuple
 
+from fastapi import HTTPException, status
 import pdfplumber
+from sqlalchemy.orm import Session
+
 from app.models.expense import Expense
 from app.models.category_rules import CategoryRule
-from app.services.parser import StatementParserService  
+from app.services.parser import StatementParserService
 
 import logging
 logger = logging.getLogger("sigmaspend")
@@ -19,236 +19,335 @@ logger = logging.getLogger("sigmaspend")
 
 class PDFStatementParser:
     """
-    Dynamic spatial coordinate layout engine utilizing strict, required Regex mapping 
-    definitions sourced straight from the targeted bank account configuration profile.
-    Dynamically extracts the statement calendar year from page headers.
+    Spatial PDF parser. Reconstructs table rows from word bounding boxes,
+    using configurable column-gap detection to split columns with double spaces.
+
+    Regex format: 3 groups (date)(description)(amount) where amount has a CR/DR suffix.
     """
 
-    # Matches standard 4-digit years bound by word spaces (e.g., 2024, 2025, 2026)
     YEAR_HEADER_PATTERN = re.compile(r"\b(20[2-9]\d)\b")
 
+    # ------------------------------------------------------------------ #
+    #  Public entry point                                                  #
+    # ------------------------------------------------------------------ #
+
     @classmethod
-    def parse_and_ingest(cls, file_stream: io.BytesIO, db: Session, account_id: int, logger: logging.Logger) -> dict:
+    def parse_and_ingest(
+        cls, file_stream: io.BytesIO, db: Session, account_id: int, logger: logging.Logger
+    ) -> dict:
         if account_id is None:
-            logger.warning("[PDF Spatial Parser] Aborting processing: No account_id provided.")
+            logger.warning("[PDF] Aborting: no account_id provided.")
             return {}
 
-        bank_config = StatementParserService.get_account_bank_config(db, account_id)
-        mappings = bank_config.get("mappings", {})
-        custom_regex_str = mappings.get("pdf_regex")
-        
-        if not custom_regex_str:
-            logger.error(f"[PDF Spatial Parser] Ingestion rejected: Bank Account '{account_id}' has no custom 'pdf_regex'.")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="PDF parsing rules are missing for this account. Please update configurations."
-            )
+        config = cls._load_config(db, account_id)
+        logger.info(
+            f"[PDF] Config loaded: col_gap_mode={config['col_gap_mode']}, "
+            f"col_gap_px={config['col_gap_px']}"
+        )
 
-        row_pattern = re.compile(custom_regex_str, re.IGNORECASE)
-        bypass_keywords = [kw.strip().lower() for kw in mappings.get("pdf_header_bypass", "date of transaction,page").split(",")]
-
-        # 1. Dynamically scan the document text to find the statement year
         statement_years = cls._extract_statement_years(file_stream, logger)
-        logger.info(f"[PDF Spatial Parser] Target processing calendar year resolved to: {statement_years}")
+        logger.info(f"[PDF] Statement years: {statement_years}")
 
         all_rules = db.query(CategoryRule).all()
-        flat_categories, category_map = StatementParserService._get_category_cache(db)
+        _, category_map = StatementParserService._get_category_cache(db)
 
-        file_combinations = defaultdict(int)
-        added_count = 0
-        skipped_count = 0
-        error_count = 0
-        categorized_count = 0
-        uncategorized_count = 0
+        file_combinations: defaultdict = defaultdict(int)
+        counters = dict(added=0, skipped=0, error=0, categorized=0, uncategorized=0)
+        pending = None
 
-        # Reset stream position after text pre-scanning
         file_stream.seek(0)
 
         with pdfplumber.open(file_stream) as pdf:
             for page_idx, page in enumerate(pdf.pages, start=1):
-                words = page.extract_words(horizontal_ltr=True, y_tolerance=3)
+                words = page.extract_words(horizontal_ltr=True, y_tolerance=3, x_tolerance=1)
                 if not words:
                     continue
 
-                lines_dict = defaultdict(list)
-                for w in words:
-                    top_key = round(w["top"], 1)
-                    lines_dict[top_key].append(w)
+                for line_words in cls._group_lines(words):
+                    reconstructed, gap_log = cls._reconstruct_line(
+                        line_words, config["col_gap_mode"], config["col_gap_px"]
+                    )
 
-                sorted_tops = sorted(lines_dict.keys())
-
-                for top_coord in sorted_tops:
-                    line_words = sorted(lines_dict[top_coord], key=lambda x: x["x0"])
-
-                    # Preserve column gaps as double spaces so \s{2,} in the regex
-                    # can distinguish column boundaries from intra-word spaces.
-                    if line_words:
-                        parts = [line_words[0]["text"]]
-                        for prev, curr in zip(line_words, line_words[1:]):
-                            gap = curr["x0"] - prev.get("x1", prev["x0"])
-                            parts.append("  " if gap > 20 else " ")
-                            parts.append(curr["text"])
-                        reconstructed_line = "".join(parts).strip()
-                    else:
-                        reconstructed_line = ""
-
-                    if any(kw in reconstructed_line.lower() for kw in bypass_keywords):
+                    if not reconstructed:
                         continue
 
-                    logger.info(f"[PDF DEBUG] Attempting match with regex: {row_pattern.pattern}")
-                    logger.info(f"[PDF DEBUG] Testing reconstructed target line: '{reconstructed_line}'")
+                    if gap_log:
+                        logger.info(f"[PDF GAPS] {reconstructed!r}")
+                        logger.info(f"[PDF GAPS] {' | '.join(gap_log)}")
 
-                    match = row_pattern.match(reconstructed_line)
+                    if any(kw in reconstructed.lower() for kw in config["bypass_keywords"]):
+                        continue
+
+                    logger.info(f"[PDF LINE] {reconstructed!r}")
+
+                    match = config["row_pattern"].match(reconstructed)
                     if match:
-                        raw_date_cell, raw_desc_cell, raw_amount_cell = match.groups()
-                        
-                        try:
-                            description = raw_desc_cell.strip()
-                            raw_amount_str = raw_amount_cell.upper().replace("£", "").replace(",", "").strip()
-                            notes = ""
-                            
-                            is_credit = "CR" in raw_amount_str
-                            clean_amount = raw_amount_str.replace("CR", "").replace("DR", "").strip()
-                            raw_float = float(clean_amount)
-                            amount = abs(raw_float)
-                            is_income = is_credit
-                            
-                            # Pass the dynamically discovered year instead of datetime.now().year
-                            parsed_date = cls._normalize_date(raw_date_cell.strip(), statement_years)
-                            date_string = parsed_date.strftime("%d/%m/%Y")
+                        pending = cls._flush_and_parse(
+                            pending, match, statement_years,
+                            account_id, db, all_rules, category_map,
+                            file_combinations, counters, logger,
+                        )
+                    elif pending is not None:
+                        continuation = reconstructed.strip()
+                        if continuation:
+                            pending["description"] += " " + continuation
+                            logger.info(f"[PDF CONT] appended: {continuation!r}")
 
-                            base_sig = f"{account_id}_{date_string}_{amount}_{is_income}_{description.lower()}"
-                            file_combinations[base_sig] += 1
-                            occurrence = file_combinations[base_sig]
+                cls._flush_pending(
+                    pending, account_id, db, all_rules, category_map,
+                    file_combinations, counters, logger,
+                )
+                pending = None
 
-                            tx_hash = StatementParserService.generate_transaction_hash(
-                                account_id=account_id, date=date_string, amount=amount,
-                                is_income=is_income, description=description, occurrence=occurrence
-                            )
-                            
-                            if db.query(Expense).filter(Expense.transaction_hash == tx_hash).first():
-                                skipped_count += 1
-                                continue
-
-                            new_expense = Expense(
-                                account_id=account_id,
-                                date=parsed_date,
-                                amount=amount,
-                                is_income=is_income,
-                                description=description,
-                                notes=notes,
-                                transaction_hash=tx_hash,
-                                category_id=None
-                            )
-
-                            cat_id = StatementParserService._assign_category(new_expense, all_rules, category_map)
-                            new_expense.category_id = cat_id  # type: ignore
-                            
-                            if cat_id:
-                                categorized_count += 1
-                            else:
-                                uncategorized_count += 1
-
-                            expense_dict = {
-                                column.key: getattr(new_expense, column.key)
-                                for column in object_mapper(new_expense).columns
-                            }
-
-                            if expense_dict.get("date"):
-                                expense_dict["date"] = expense_dict["date"].isoformat()
-
-                            json_string = json.dumps(expense_dict)
-                            logger.info(f"✅ [PDF Spatial Parser] Parsed Extracted Row: {json_string}")
-                            
-                            db.add(new_expense)
-                            added_count += 1
-
-                        except Exception as row_error:
-                            error_count += 1
-                            logger.warning(f"[PDF Spatial Parser] Format translation skipped line. Error: {str(row_error)}")
-                            continue
-        
-        db.commit()
+        # db.commit()
 
         return {
-            "added": added_count,
-            "skipped": skipped_count,
-            "categorized": categorized_count,
-            "uncategorized": uncategorized_count
+            "added":         counters["added"],
+            "skipped":       counters["skipped"],
+            "categorized":   counters["categorized"],
+            "uncategorized": counters["uncategorized"],
         }
+
+    # ------------------------------------------------------------------ #
+    #  Config loading                                                      #
+    # ------------------------------------------------------------------ #
+
+    @classmethod
+    def _load_config(cls, db: Session, account_id: int) -> dict:
+        bank_config = StatementParserService.get_account_bank_config(db, account_id)
+        mappings = bank_config.get("mappings", {})
+
+        custom_regex_str = mappings.get("pdf_regex")
+        if not custom_regex_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="PDF parsing rules are missing for this account. Please update configurations.",
+            )
+
+        bypass_keywords = [
+            kw.strip().lower()
+            for kw in mappings.get("pdf_header_bypass", "date of transaction,page").split(",")
+        ]
+
+        # "fixed" (default): use pdf_col_gap_px as an absolute pixel threshold.
+        # "relative": compute 2.5× median inter-word gap per line (adapts to PDF typography).
+        col_gap_mode = mappings.get("pdf_col_gap_mode", "fixed")
+        col_gap_px   = float(mappings.get("pdf_col_gap_px", 15))
+
+        return {
+            "row_pattern":     re.compile(custom_regex_str, re.IGNORECASE),
+            "bypass_keywords": bypass_keywords,
+            "col_gap_mode":    col_gap_mode,
+            "col_gap_px":      col_gap_px,
+        }
+
+    # ------------------------------------------------------------------ #
+    #  Line grouping                                                       #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _group_lines(words: list) -> list:
+        """Group pdfplumber word dicts by their vertical position."""
+        lines_dict: defaultdict = defaultdict(list)
+        for w in words:
+            lines_dict[round(w["top"], 1)].append(w)
+        return [
+            sorted(lines_dict[top], key=lambda x: x["x0"])
+            for top in sorted(lines_dict)
+        ]
+
+    # ------------------------------------------------------------------ #
+    #  Line reconstruction                                                 #
+    # ------------------------------------------------------------------ #
+
+    @classmethod
+    def _reconstruct_line(
+        cls, line_words: list, col_gap_mode: str, col_gap_px: float
+    ) -> Tuple[str, list]:
+        """
+        Reconstruct a single line from word bounding boxes.
+        Inserts double space at column boundaries, single space within columns.
+        Returns (reconstructed_string, gap_log_entries).
+        """
+        if not line_words:
+            return "", []
+
+        gaps = [
+            curr["x0"] - prev.get("x1", prev["x0"])
+            for prev, curr in zip(line_words, line_words[1:])
+        ]
+
+        threshold = cls._compute_threshold(gaps, col_gap_mode, col_gap_px)
+
+        parts = [line_words[0]["text"]]
+        gap_log = []
+        for i, (prev, curr) in enumerate(zip(line_words, line_words[1:])):
+            gap = gaps[i]
+            is_col = gap > threshold
+            parts.append("  " if is_col else " ")
+            parts.append(curr["text"])
+            tag = f"[COL thr={threshold:.1f}]" if is_col else ""
+            gap_log.append(f"'{prev['text']}'→'{curr['text']}' gap={gap:.1f}px {tag}")
+
+        return "".join(parts).strip(), gap_log
+
+    @staticmethod
+    def _compute_threshold(gaps: list, mode: str, fixed_px: float) -> float:
+        """
+        "fixed": return fixed_px unchanged.
+        "relative": 2.5× the median inter-word gap on this line, floored at 4px.
+        """
+        if mode == "fixed" or not gaps:
+            return fixed_px
+
+        sorted_gaps = sorted(gaps)
+        mid = len(sorted_gaps) // 2
+        median = (
+            sorted_gaps[mid] if len(sorted_gaps) % 2
+            else (sorted_gaps[mid - 1] + sorted_gaps[mid]) / 2
+        )
+        return max(median * 2.5, 4.0)
+
+    # ------------------------------------------------------------------ #
+    #  Row parsing                                                         #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _parse_groups(groups: tuple) -> Tuple[str, str, float, bool]:
+        """Extract (raw_date, description, amount, is_income) from 3 regex groups (date, description, amount with CR/DR suffix)."""
+        raw_date, raw_desc, raw_amount = groups
+        raw_upper = raw_amount.upper().replace("£", "").replace(",", "").strip()
+        is_credit = "CR" in raw_upper
+        clean = raw_upper.replace("CR", "").replace("DR", "").strip()
+        return raw_date, raw_desc, abs(float(clean)), is_credit
+
+    # ------------------------------------------------------------------ #
+    #  Transaction flushing                                                #
+    # ------------------------------------------------------------------ #
+
+    @classmethod
+    def _flush_and_parse(
+        cls, pending, match, statement_years,
+        account_id, db, all_rules, category_map,
+        file_combinations, counters, logger,
+    ) -> Optional[dict]:
+        """Flush the previous pending transaction, then build the next one from match."""
+        cls._flush_pending(
+            pending, account_id, db, all_rules, category_map,
+            file_combinations, counters, logger,
+        )
+        try:
+            raw_date, raw_desc, amount, is_income = cls._parse_groups(match.groups())
+            parsed_date = cls._normalize_date(raw_date.strip(), statement_years)
+            return {
+                "description": raw_desc.strip(),
+                "parsed_date": parsed_date,
+                "amount":      amount,
+                "is_income":   is_income,
+            }
+        except Exception as e:
+            counters["error"] += 1
+            logger.warning(f"[PDF] Could not parse matched line: {e}")
+            return None
+
+    @staticmethod
+    def _flush_pending(
+        pending, account_id, db, all_rules, category_map,
+        file_combinations, counters, logger,
+    ):
+        if pending is None:
+            return
+        try:
+            description = pending["description"]
+            parsed_date = pending["parsed_date"]
+            amount      = pending["amount"]
+            is_income   = pending["is_income"]
+
+            date_string = parsed_date.strftime("%d/%m/%Y")
+            base_sig = f"{account_id}_{date_string}_{amount}_{is_income}_{description.lower()}"
+            file_combinations[base_sig] += 1
+
+            tx_hash = StatementParserService.generate_transaction_hash(
+                account_id=account_id, date=date_string, amount=amount,
+                is_income=is_income, description=description,
+                occurrence=file_combinations[base_sig],
+            )
+
+            if db.query(Expense).filter(Expense.transaction_hash == tx_hash).first():
+                counters["skipped"] += 1
+                return
+
+            new_expense = Expense(
+                account_id=account_id,
+                date=parsed_date,
+                amount=amount,
+                is_income=is_income,
+                description=description,
+                notes="",
+                transaction_hash=tx_hash,
+                category_id=None,
+            )
+
+            cat_id = StatementParserService._assign_category(new_expense, all_rules, category_map)
+            new_expense.category_id = cat_id
+            if cat_id:
+                counters["categorized"] += 1
+            else:
+                counters["uncategorized"] += 1
+
+            # db.add(new_expense)
+            counters["added"] += 1
+            logger.info(f"✅ [PDF] {date_string} | {description} | £{amount} | income={is_income}")
+
+        except Exception as e:
+            counters["error"] += 1
+            logger.warning(f"[PDF] Failed to flush row: {e}")
+
+    # ------------------------------------------------------------------ #
+    #  Year detection                                                      #
+    # ------------------------------------------------------------------ #
 
     @staticmethod
     def _extract_statement_years(file_stream: io.BytesIO, logger: logging.Logger) -> List[int]:
-        """
-        Scans the first page text to find all valid, modern 4-digit calendar years.
-        Filters out anomalies and returns a deduplicated, sorted list of integers.
-        """
-        # Establish a reasonable chronological boundary
-        current_year = datetime.now().year  # Resolves to 2026
-        minimum_valid_year = 2020
-        maximum_valid_year = current_year + 1  # Allows parsing forward boundary cross-overs
-
+        current_year = datetime.now().year
         try:
             with pdfplumber.open(file_stream) as pdf:
                 if pdf.pages:
-                    first_page_text = pdf.pages[0].extract_text() or ""
-                    
-                    # Find all 4-digit numeric chunks bound by word spaces
-                    raw_matches = PDFStatementParser.YEAR_HEADER_PATTERN.findall(first_page_text)
-                    
-                    # Convert to integers, filter out noise, and deduplicate using a set
-                    valid_years = {
-                        int(yr) for yr in raw_matches 
-                        if minimum_valid_year <= int(yr) <= maximum_valid_year
-                    }
-                    
-                    if valid_years:
-                        sorted_years = sorted(list(valid_years))
-                        logger.info(f"🎯 [PDF Year Scanner] Resolved clean boundary years: {sorted_years}")
-                        return sorted_years
-                        
+                    text = pdf.pages[0].extract_text() or ""
+                    raw = PDFStatementParser.YEAR_HEADER_PATTERN.findall(text)
+                    valid = {int(y) for y in raw if 2020 <= int(y) <= current_year + 1}
+                    if valid:
+                        years = sorted(valid)
+                        logger.info(f"[PDF Year] Found: {years}")
+                        return years
         except Exception as e:
-            logger.warning(f"[PDF Year Scanner] Error while pre-scanning for year metadata: {e}")
-            
-        # Fallback if no valid years are discovered in the text layout
-        logger.warning(f"[PDF Year Scanner] No valid layout year found. Falling back to current year: {current_year}")
+            logger.warning(f"[PDF Year] Error scanning: {e}")
+
+        logger.warning(f"[PDF Year] Falling back to current year: {current_year}")
         return [current_year]
+
+    # ------------------------------------------------------------------ #
+    #  Date normalisation                                                  #
+    # ------------------------------------------------------------------ #
 
     @staticmethod
     def _normalize_date(date_str: str, detected_years: List[int]) -> date:
-        """
-        Translates '01 FEBRUARY' into a datetime.date object, intelligently selecting
-        the correct year from the statement context to handle New Year cross-over anomalies.
-        """
-        # If the document contains multiple boundary years (e.g., [2025, 2026]), 
-        # test them sequentially against standard text parsing rules.
         for target_year in detected_years:
             try:
-                date_with_year = f"{date_str} {target_year}"
-                parsed_dt = datetime.strptime(date_with_year, "%d %B %Y").date()
-                
-                # --- NEW YEAR CROSS-OVER PROTECTION GUARD ---
-                # If the statement text spans across December/January, make sure an individual row
-                # doesn't generate a date that swings outside the logic boundaries.
-                # Example: If a transaction is labeled 'JANUARY' but we test it against '2025'
-                # when the file context explicitly ranges into 2026, we check months to confirm accuracy.
+                parsed = datetime.strptime(f"{date_str} {target_year}", "%d %B %Y").date()
                 if len(detected_years) > 1:
-                    # If this is a December row but we are trying to force it into the larger year, skip it
-                    if parsed_dt.month == 12 and target_year == max(detected_years):
+                    if parsed.month == 12 and target_year == max(detected_years):
                         continue
-                    # If this is a January row but we are trying to force it into the smaller year, skip it
-                    if parsed_dt.month == 1 and target_year == min(detected_years):
+                    if parsed.month == 1 and target_year == min(detected_years):
                         continue
-                        
-                return parsed_dt
+                return parsed
             except ValueError:
                 pass
 
-        # Native layout fallback configurations (e.g., formats that already include the year)
         for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%d %b %Y"):
             try:
                 return datetime.strptime(date_str, fmt).date()
             except ValueError:
                 continue
-                
-        raise ValueError(f"Unsupported string spatial date layout format: '{date_str}'")
+
+        raise ValueError(f"Unsupported date format: '{date_str}'")

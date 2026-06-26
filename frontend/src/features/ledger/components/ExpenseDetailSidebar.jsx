@@ -125,7 +125,7 @@ export default function ExpenseDetailSidebar({ expense, accountNameMap, onClose,
               <option value="">— None —</option>
               {holidays.map(h => (
                 <option key={h.id} value={h.id}>
-                  {h.name}{h.destination ? ` · ${h.destination}` : ''}
+                  {h.flag || '✈️'} {h.name}{h.destination ? ` · ${h.destination}` : ''}
                 </option>
               ))}
             </select>

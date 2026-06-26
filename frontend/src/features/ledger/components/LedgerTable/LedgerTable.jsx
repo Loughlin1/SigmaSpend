@@ -1,6 +1,6 @@
 // src/features/ledger/components/LedgerTable/LedgerTable.jsx
-import { useState } from 'react';
-import { expenseApi } from '../../../../api/client';
+import { useState, useEffect } from 'react';
+import { expenseApi, holidaysApi } from '../../../../api/client';
 import BulkActionsPanel from './BulkActionsPanel';
 import LedgerRowEdit from './LedgerRowEdit';
 import LedgerRowRead from './LedgerRowRead';
@@ -33,6 +33,11 @@ export default function LedgerTable({
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [bulkDeletePending, setBulkDeletePending] = useState(false);
   const [density, setDensity] = useState('compact'); // 'compact' | 'comfortable'
+  const [holidays, setHolidays] = useState([]);
+
+  useEffect(() => {
+    holidaysApi.getAll().then(setHolidays).catch(() => {});
+  }, []);
 
   // Success Modal States
   const [showBulkSuccess, setShowBulkSuccess] = useState(false);
@@ -111,6 +116,23 @@ export default function LedgerTable({
     } catch (err) {
       console.error("[SigmaSpend UI] Bulk reclassify failed:", err);
       triggerErrorModal("Re-classification Failed", "Could not re-run automation rules.");
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  const handleBulkAssignHoliday = async (holidayId) => {
+    if (!selectedIds.length) return;
+    setBulkUpdating(true);
+    try {
+      await expenseApi.bulkAssignHoliday(selectedIds, holidayId);
+      const label = holidayId
+        ? holidays.find(h => h.id === holidayId)?.name || 'holiday'
+        : 'no holiday';
+      finishBulkSuccess(`Assigned ${selectedIds.length} transaction${selectedIds.length !== 1 ? 's' : ''} to ${label}.`);
+    } catch (err) {
+      console.error("[SigmaSpend UI] Bulk holiday assign failed:", err);
+      triggerErrorModal("Holiday Assignment Failed", "Could not assign the selected transactions to this holiday.");
     } finally {
       setBulkUpdating(false);
     }
@@ -200,8 +222,10 @@ export default function LedgerTable({
         onBulkUpdateType={handleBulkUpdateType}
         onBulkReclassify={handleBulkReclassify}
         onBulkExport={handleBulkExport}
+        onBulkAssignHoliday={handleBulkAssignHoliday}
         onClearSelection={() => setSelectedIds([])}
         categories={categories}
+        holidays={holidays}
       />
 
       <table className="table ledger-table-view" style={{ width: '100%', fontSize: density === 'compact' ? '0.82rem' : '0.875rem' }}>

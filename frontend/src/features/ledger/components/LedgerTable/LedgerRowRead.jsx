@@ -16,14 +16,7 @@ export default function LedgerRowRead({
   const tdStyle = { fontSize: '0.85rem', padding: rowPadding, cursor: 'pointer' };
 
   return (
-    <tr
-      style={{ background: isChecked ? '#f7fafc' : 'transparent' }}
-      onClick={(e) => {
-        // Don't open sidebar if clicking checkbox or action buttons
-        if (e.target.closest('button') || e.target.type === 'checkbox') return;
-        if (onRowClick) onRowClick(expense);
-      }}
-    >
+    <tr style={{ background: isChecked ? '#f7fafc' : 'transparent' }}>
       <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: rowPadding }}>
         <input type="checkbox" checked={isChecked} onChange={onSelectRow} />
       </td>
@@ -50,7 +43,11 @@ export default function LedgerRowRead({
           ✉️
         </a>
       </td>
-      <td style={tdStyle}>
+      <td
+        style={{ ...tdStyle, textDecoration: 'underline dotted', textDecorationColor: '#cbd5e0' }}
+        onClick={() => onRowClick && onRowClick(expense)}
+        title="Click to view details"
+      >
         {expense.description}
         {expense.holiday_name && (
           <span title={expense.holiday_name} style={{ marginLeft: '0.4rem', fontSize: '0.72rem', background: '#ebf8ff', color: '#2b6cb0', borderRadius: '4px', padding: '0.1rem 0.35rem', fontWeight: 500, whiteSpace: 'nowrap' }}>

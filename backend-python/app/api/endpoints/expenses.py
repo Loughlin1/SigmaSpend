@@ -14,7 +14,7 @@ from app.schemas.expense import (
     ExpenseCreate, ExpenseUpdate, ExpenseResponse,
     AnalyticalBreakdownResponse, BulkCategoryUpdate,
     BulkDeleteRequest, BulkTypeUpdate, BulkReclassifyRequest,
-    PaginatedExpenseResponse
+    BulkHolidayAssign, PaginatedExpenseResponse
 )
 from app.services.expense import ExpenseService
 from app.services.analytics import ExpenseAnalyticsService
@@ -256,5 +256,19 @@ def bulk_reclassify_expenses(
         expense.category_id = cat_id
         updated += 1
 
+    db.commit()
+    return {"updated": updated}
+
+
+@router.post("/bulk-assign-holiday", status_code=status.HTTP_200_OK)
+def bulk_assign_holiday(
+    payload: BulkHolidayAssign,
+    db: Session = Depends(deps.get_db)
+):
+    logger.info(f"Bulk assigning holiday_id={payload.holiday_id} to {len(payload.expense_ids)} transactions")
+    updated = db.query(ExpenseModel).filter(ExpenseModel.id.in_(payload.expense_ids)).update(
+        {ExpenseModel.holiday_id: payload.holiday_id},
+        synchronize_session=False
+    )
     db.commit()
     return {"updated": updated}

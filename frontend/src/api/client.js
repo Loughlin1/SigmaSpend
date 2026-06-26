@@ -26,6 +26,8 @@ export const expenseApi = {
     apiClient.post('/expenses/bulk-update-type', { expense_ids: expenseIds, is_income: isIncome }).then(res => res.data),
   bulkReclassify: (expenseIds) =>
     apiClient.post('/expenses/bulk-reclassify', { expense_ids: expenseIds }).then(res => res.data),
+  bulkAssignHoliday: (expenseIds, holidayId) =>
+    apiClient.post('/expenses/bulk-assign-holiday', { expense_ids: expenseIds, holiday_id: holidayId }).then(res => res.data),
 };
 
 export const ingestionApi = {

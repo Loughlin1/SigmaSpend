@@ -6,6 +6,7 @@ const ACTION_DELETE     = 'delete';
 const ACTION_TYPE       = 'type';
 const ACTION_RECLASSIFY = 'reclassify';
 const ACTION_EXPORT     = 'export';
+const ACTION_HOLIDAY    = 'holiday';
 
 export default function BulkActionsPanel({
   selectedCount,
@@ -17,10 +18,13 @@ export default function BulkActionsPanel({
   onBulkUpdateType,
   onBulkReclassify,
   onBulkExport,
+  onBulkAssignHoliday,
   onClearSelection,
-  categories
+  categories,
+  holidays = [],
 }) {
   const [activeAction, setActiveAction] = useState('');
+  const [bulkHolidayId, setBulkHolidayId] = useState('');
 
   if (selectedCount === 0) return null;
 
@@ -107,6 +111,34 @@ export default function BulkActionsPanel({
           </button>
         );
 
+      case ACTION_HOLIDAY:
+        return (
+          <>
+            <select
+              value={bulkHolidayId}
+              onChange={e => setBulkHolidayId(e.target.value)}
+              className="form-inline-input"
+              style={{ margin: 0, padding: '0.35rem', width: '200px', fontSize: '0.85rem' }}
+              disabled={bulkUpdating}
+            >
+              <option value="">— None (unlink) —</option>
+              {holidays.map(h => (
+                <option key={h.id} value={h.id}>
+                  ✈️ {h.name}{h.destination ? ` · ${h.destination}` : ''}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => onBulkAssignHoliday(bulkHolidayId === '' ? null : parseInt(bulkHolidayId, 10))}
+              className="inlineButton"
+              style={{ background: '#2b6cb0', color: 'white', padding: '0.35rem 1rem' }}
+              disabled={bulkUpdating}
+            >
+              {bulkUpdating ? 'Updating...' : 'Assign Holiday'}
+            </button>
+          </>
+        );
+
       case ACTION_DELETE:
         return (
           <button
@@ -144,6 +176,7 @@ export default function BulkActionsPanel({
         >
           <option value="">Actions ▾</option>
           <option value={ACTION_CATEGORIZE}>🏷️ Categorize</option>
+          <option value={ACTION_HOLIDAY}>✈️ Assign Holiday</option>
           <option value={ACTION_TYPE}>🔄 Toggle Type</option>
           <option value={ACTION_RECLASSIFY}>⚡ Re-run Rules</option>
           <option value={ACTION_EXPORT}>📥 Export CSV</option>

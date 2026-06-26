@@ -41,9 +41,12 @@ export default function ExpenseDetailSidebar({ expense, accountNameMap, onClose,
     setSaving(true);
     try {
       const holidayId = selectedHolidayId === '' ? null : parseInt(selectedHolidayId, 10);
+      // expense.date arrives as "DD/MM/YYYY" from the API serializer; backend expects "YYYY-MM-DD"
+      const [d, m, y] = expense.date.split('/');
+      const isoDate = `${y}-${m}-${d}`;
       await expenseApi.update(expense.id, {
         account_id: expense.account_id,
-        date: expense.date,
+        date: isoDate,
         amount: expense.amount,
         is_income: expense.is_income,
         description: expense.description,

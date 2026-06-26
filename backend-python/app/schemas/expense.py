@@ -122,3 +122,8 @@ class BulkTypeUpdate(BaseModel):
 
 class BulkReclassifyRequest(BaseModel):
     expense_ids: List[int]
+
+
+class BulkHolidayAssign(BaseModel):
+    expense_ids: List[int]
+    holiday_id: Optional[int] = None  # None = unlink

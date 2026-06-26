@@ -6,6 +6,7 @@ const INITIAL_FILTERS_DEFAULTS = {
   is_income: '',
   account_id: '',
   category: '',
+  holiday_id: '',
   start_date: '',
   end_date: '',
   min_amount: '',
@@ -117,7 +118,7 @@ function CategoryCombobox({ value, onChange, categories }) {
   );
 }
 
-export default function LedgerFilters({ filters, onFilterChange, accountNameMap, categories = [] }) {
+export default function LedgerFilters({ filters, onFilterChange, accountNameMap, categories = [], holidays = [] }) {
   const [localSearch, setLocalSearch] = useState(filters.q || '');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -224,6 +225,21 @@ export default function LedgerFilters({ filters, onFilterChange, accountNameMap,
               categories={categories}
             />
           </div>
+
+          {holidays.length > 0 && (
+            <div className="ledger-filters__field">
+              <label className="ledger-filters__label" htmlFor="filter_holiday_id">Holiday / Trip</label>
+              <select id="filter_holiday_id" name="holiday_id" value={filters.holiday_id || ''} onChange={handleChange} className="ledger-filters__select">
+                <option value="">All</option>
+                <option value="none">— Unassigned</option>
+                {holidays.map(h => (
+                  <option key={h.id} value={h.id}>
+                    {h.flag || '✈️'} {h.name}{h.destination ? ` · ${h.destination}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="ledger-filters__field">
             <label className="ledger-filters__label" htmlFor="filter_start_date">Start Date</label>

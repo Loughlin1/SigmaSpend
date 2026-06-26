@@ -44,6 +44,7 @@ class ExpenseService:
         min_amount: Optional[float] = None,
         max_amount: Optional[float] = None,
         sort_date: Optional[str] = "desc",
+        holiday_id: Optional[int] = None,
     ) -> Tuple[List[ExpenseModel], int]:  # ◄ Returns (Items, TotalCount)
         """
         Applies filters dynamically and returns a tuple containing the 
@@ -105,6 +106,11 @@ class ExpenseService:
             query = query.filter(ExpenseModel.amount >= min_amount)
         if max_amount is not None:
             query = query.filter(ExpenseModel.amount <= max_amount)
+        if holiday_id is not None:
+            if holiday_id == -1:
+                query = query.filter(ExpenseModel.holiday_id.is_(None))
+            else:
+                query = query.filter(ExpenseModel.holiday_id == holiday_id)
 
         # Execute count operation BEFORE slicing with offset/limit
         total_count = query.count()

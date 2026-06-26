@@ -42,6 +42,7 @@ def read_expenses(
     min_amount: Optional[float] = Query(None, description="Filter expenses with amount >= this value"),
     max_amount: Optional[float] = Query(None, description="Filter expenses with amount <= this value"),
     sort_date: Optional[str] = Query("desc", description="Sort by date: 'asc' or 'desc'"),
+    holiday_id: Optional[str] = Query(None, description="Filter by holiday/trip ID, or 'none' for unassigned"),
 ):
     """
     Retrieve a paginated and filtered list of expenses.
@@ -51,10 +52,11 @@ def read_expenses(
         f"Fetching expenses (skip={skip}, limit={limit}) with filters: "
         f"category={category}, account_id={account_id}, is_income={is_income}, "
         f"start_date={start_date}, end_date={end_date}, q={q}, "
-        f"min_amount={min_amount}, max_amount={max_amount}"
+        f"min_amount={min_amount}, max_amount={max_amount}, holiday_id={holiday_id}"
     )
+    parsed_holiday_id = None if holiday_id is None else (-1 if holiday_id == 'none' else int(holiday_id))
     items, total_count = ExpenseService.get_filtered_expenses_with_count(
-        db, skip, limit, category, account_id, is_income, start_date, end_date, q, min_amount, max_amount, sort_date
+        db, skip, limit, category, account_id, is_income, start_date, end_date, q, min_amount, max_amount, sort_date, parsed_holiday_id
     )
     current_page = (skip // limit) + 1
     return {

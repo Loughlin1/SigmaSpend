@@ -20,5 +20,8 @@ class Expense(Base):
     account_id = Column(Integer, ForeignKey("bank_accounts.id"), nullable=False, index=True)
     account_rel = relationship("BankAccount", back_populates="expenses")
 
+    holiday_id = Column(Integer, ForeignKey("holidays.id", ondelete="SET NULL"), nullable=True, index=True)
+    holiday_rel = relationship("Holiday", back_populates="expenses")
+
     # Enforces database-level structural constraint to guarantee no duplicates
     transaction_hash = Column(String, unique=True, index=True, nullable=False)

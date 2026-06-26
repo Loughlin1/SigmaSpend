@@ -30,6 +30,7 @@ from app.models.category import Category
 from app.models.category_rules import CategoryRule
 from app.models.budget import Budget
 from app.models.income_settings import IncomeSettings
+from app.models.holiday import Holiday
 
 target_metadata = Base.metadata
 

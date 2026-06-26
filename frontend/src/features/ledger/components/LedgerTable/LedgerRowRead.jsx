@@ -10,12 +10,20 @@ export default function LedgerRowRead({
   displayCategory,
   onStartEdit,
   onDelete,
+  onRowClick,
   rowPadding = '0.75rem 1rem',
 }) {
-  const tdStyle = { fontSize: '0.85rem', padding: rowPadding };
+  const tdStyle = { fontSize: '0.85rem', padding: rowPadding, cursor: 'pointer' };
 
   return (
-    <tr style={{ background: isChecked ? '#f7fafc' : 'transparent' }}>
+    <tr
+      style={{ background: isChecked ? '#f7fafc' : 'transparent' }}
+      onClick={(e) => {
+        // Don't open sidebar if clicking checkbox or action buttons
+        if (e.target.closest('button') || e.target.type === 'checkbox') return;
+        if (onRowClick) onRowClick(expense);
+      }}
+    >
       <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: rowPadding }}>
         <input type="checkbox" checked={isChecked} onChange={onSelectRow} />
       </td>
@@ -42,7 +50,14 @@ export default function LedgerRowRead({
           ✉️
         </a>
       </td>
-      <td style={tdStyle}>{expense.description}</td>
+      <td style={tdStyle}>
+        {expense.description}
+        {expense.holiday_name && (
+          <span title={expense.holiday_name} style={{ marginLeft: '0.4rem', fontSize: '0.72rem', background: '#ebf8ff', color: '#2b6cb0', borderRadius: '4px', padding: '0.1rem 0.35rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
+            ✈️ {expense.holiday_name}
+          </span>
+        )}
+      </td>
       <td style={tdStyle}>{displayAccountName}</td>
       <td style={tdStyle}>{displayCategory.icon} {displayCategory.name}</td>
       <td style={tdStyle}>{expense.notes || <span style={{ color: '#ccc' }}>—</span>}</td>

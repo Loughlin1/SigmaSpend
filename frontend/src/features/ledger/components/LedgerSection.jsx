@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import LedgerFilters from './LedgerFilters';
 import ExpenseForm from './ExpenseForm';
 import LedgerTable from './LedgerTable/LedgerTable';
+import ExpenseDetailSidebar from './ExpenseDetailSidebar';
 
 // Custom Hooks
 import useExpenses from '../hooks/useExpenses';
@@ -36,6 +37,7 @@ export default function LedgerSection({
   } = useExpenses();
 
   const { filters, handleFilterChange } = useExpenseFilters();
+  const [sidebarExpense, setSidebarExpense] = useState(null);
   
   // 2. Consume form lifecycle here instead of pulling from App.jsx
   const {
@@ -138,11 +140,24 @@ export default function LedgerSection({
               }}
               onCreateRuleFromTransaction={createRuleFromTransaction}
               onBulkUpdateSuccess={handleLocalRefresh}
+              onRowClick={(expense) => setSidebarExpense(expense)}
               page={page}
               limit={limit}
               totalCount={totalCount}
               onPageChange={(newPage) => changePage(newPage, filters)}
               onLimitChange={(newLimit) => changeLimit(newLimit, filters)}
+            />
+          )}
+
+          {sidebarExpense && (
+            <ExpenseDetailSidebar
+              expense={sidebarExpense}
+              accountNameMap={accountNameMap}
+              onClose={() => setSidebarExpense(null)}
+              onUpdated={() => {
+                handleLocalRefresh();
+                setSidebarExpense(null);
+              }}
             />
           )}
         </>

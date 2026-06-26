@@ -82,6 +82,13 @@ export const bucketBudgetApi = {
   delete: (bucketKey) => apiClient.delete(`/bucket-budgets/${bucketKey}`).then(res => res.data),
 };
 
+export const holidaysApi = {
+  getAll: () => apiClient.get('/holidays/').then(res => res.data),
+  create: (data) => apiClient.post('/holidays/', data).then(res => res.data),
+  update: (id, data) => apiClient.put(`/holidays/${id}`, data).then(res => res.data),
+  delete: (id) => apiClient.delete(`/holidays/${id}`).then(res => res.data),
+};
+
 export const logsApi = {
   getLogs: (params) => apiClient.get('/logs', { params }).then(res => res.data),
   getModules: () => apiClient.get('/logs/modules').then(res => res.data),

@@ -14,6 +14,7 @@ import AnalyticsSection from './features/analytics/components/AnalyticsSection';
 import CategoryManager from './features/categories/components/CategoryManager';
 import LogsSection from './features/logs-viewer/components/LogsSection';
 import BudgetSection from './features/budget/components/BudgetSection';
+import HolidayList from './features/holidays/components/HolidayList';
 
 // Master Shared Hooks
 import useAccounts from './features/bank-accounts/hooks/useAccounts';
@@ -113,6 +114,8 @@ function App() {
               categories={categories}
               triggerGlobalRefresh={triggerGlobalRefresh}
             />
+
+            <HolidayList />
           </div>
         )}
       </section>

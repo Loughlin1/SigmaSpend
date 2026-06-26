@@ -11,6 +11,7 @@ class ExpenseBase(BaseModel):
     description: str
     notes: Optional[str] = None
     category_id: Optional[int] = None
+    holiday_id: Optional[int] = None
 
     # Converts Python date objects directly to UK format strings for JSON payloads
     @field_serializer('date')
@@ -29,6 +30,7 @@ class ExpenseUpdate(ExpenseBase):
 class ExpenseResponse(ExpenseBase):
     id: int
     transaction_hash: str
+    holiday_name: Optional[str] = None
     category_metadata: Dict[str, Any] = Field(
         default={
             "name": "Uncategorized",
@@ -77,6 +79,8 @@ class ExpenseResponse(ExpenseBase):
         # 4. Bind metadata safely onto the object structure
         if hasattr(data, "__dict__"):
             data.__dict__["category_metadata"] = metadata
+            holiday_rel = getattr(data, "holiday_rel", None)
+            data.__dict__["holiday_name"] = holiday_rel.name if holiday_rel else None
         elif isinstance(data, dict):
             data["category_metadata"] = metadata
 

@@ -11,14 +11,15 @@ import { getAccountAbbreviation, getCategoryDisplay } from '../../../../utils/fo
 import '../../../../styles/lists.css';
 import '../../../../styles/forms.css';
 
-export default function LedgerTable({ 
-  expenses = [], 
-  accountNameMap = {}, 
-  categories = [], 
-  onExpenseSaved, 
+export default function LedgerTable({
+  expenses = [],
+  accountNameMap = {},
+  categories = [],
+  onExpenseSaved,
   onDelete,
   onCreateRuleFromTransaction,
   onBulkUpdateSuccess,
+  onRowClick,
   page = 1,
   limit = 50,
   totalCount = 0,
@@ -260,6 +261,7 @@ export default function LedgerTable({
                 displayCategory={getCategoryDisplay(exp.category_id, categories)}
                 onStartEdit={() => setEditingId(exp.id)}
                 onDelete={setDeleteTargetId}
+                onRowClick={onRowClick}
               />
             );
           })}

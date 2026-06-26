@@ -8,6 +8,7 @@ class HolidayBase(BaseModel):
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     notes: Optional[str] = None
+    flag: Optional[str] = None
 
 class HolidayCreate(HolidayBase):
     pass

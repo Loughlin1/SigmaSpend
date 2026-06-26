@@ -93,7 +93,7 @@ function App() {
         </div>
 
         {!configCollapsed && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1.25rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.75rem' }}>
             <BankAccountList
               accounts={accounts}
               loading={accountsLoading}

@@ -11,5 +11,6 @@ class Holiday(Base):
     start_date = Column(Date, nullable=True)
     end_date = Column(Date, nullable=True)
     notes = Column(String, nullable=True)
+    flag = Column(String, nullable=True)
 
     expenses = relationship("Expense", back_populates="holiday_rel")

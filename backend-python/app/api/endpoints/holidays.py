@@ -30,7 +30,7 @@ def read_holidays(db: Session = Depends(deps.get_db)):
         result.append(HolidayResponse(
             id=h.id, name=h.name, destination=h.destination,
             start_date=h.start_date, end_date=h.end_date, notes=h.notes,
-            expense_count=expense_count, total_spend=round(total_spend, 2),
+            flag=h.flag, expense_count=expense_count, total_spend=round(total_spend, 2),
         ))
     return result
 
@@ -44,7 +44,7 @@ def create_holiday(holiday_in: HolidayCreate, db: Session = Depends(deps.get_db)
     logger.info(f"Created holiday '{db_obj.name}' (id={db_obj.id})")
     return HolidayResponse(id=db_obj.id, name=db_obj.name, destination=db_obj.destination,
                            start_date=db_obj.start_date, end_date=db_obj.end_date,
-                           notes=db_obj.notes, expense_count=0, total_spend=0.0)
+                           notes=db_obj.notes, flag=db_obj.flag, expense_count=0, total_spend=0.0)
 
 
 @router.put("/{holiday_id}", response_model=HolidayResponse)
@@ -63,7 +63,7 @@ def update_holiday(holiday_id: int, holiday_in: HolidayUpdate, db: Session = Dep
         ExpenseModel.holiday_id == h.id, ExpenseModel.is_income == False).scalar() or 0.0
     return HolidayResponse(id=h.id, name=h.name, destination=h.destination,
                            start_date=h.start_date, end_date=h.end_date, notes=h.notes,
-                           expense_count=expense_count, total_spend=round(total_spend, 2))
+                           flag=h.flag, expense_count=expense_count, total_spend=round(total_spend, 2))
 
 
 @router.delete("/{holiday_id}", status_code=status.HTTP_204_NO_CONTENT)

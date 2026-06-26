@@ -1,7 +1,88 @@
 import { useState } from 'react';
 import useHolidays from '../hooks/useHolidays';
 
-const EMPTY_FORM = { name: '', destination: '', start_date: '', end_date: '', notes: '' };
+const FLAGS = [
+  '🇬🇧','🇺🇸','🇫🇷','🇪🇸','🇮🇹','🇩🇪','🇵🇹','🇬🇷','🇳🇱','🇧🇪',
+  '🇨🇭','🇦🇹','🇸🇪','🇳🇴','🇩🇰','🇫🇮','🇵🇱','🇨🇿','🇭🇷','🇸🇮',
+  '🇷🇴','🇧🇬','🇭🇺','🇸🇰','🇲🇹','🇨🇾','🇮🇪','🇮🇸','🇹🇷','🇲🇦',
+  '🇹🇳','🇪🇬','🇿🇦','🇰🇪','🇹🇭','🇯🇵','🇰🇷','🇨🇳','🇮🇳','🇦🇪',
+  '🇮🇱','🇯🇴','🇲🇽','🇧🇷','🇦🇷','🇨🇴','🇵🇪','🇨🇺','🇨🇦','🇦🇺',
+  '🇳🇿','🇫🇯','🇲🇻','🇧🇦','🇲🇪','🇷🇸','🇦🇱','🇲🇰','🇺🇦','🇱🇻',
+  '🇦🇩','🇦🇲','🇦🇿','🇧🇾','🇪🇪','🇬🇪','🇬🇮','🇬🇬','🇮🇲','🇯🇪',
+  '🇱🇮','🇱🇹','🇱🇺','🇲🇩','🇲🇨','🇷🇺','🇸🇲','🇻🇦','🇦🇬','🇦🇮',
+  '🇦🇼','🇧🇸','🇧🇧','🇧🇿','🇧🇲','🇧🇴','🇧🇶','🇻🇬','🇰🇾','🇨🇱',
+  '🇨🇷','🇨🇼','🇩🇲','🇩🇴','🇪🇨','🇸🇻','🇫🇰','🇬🇫','🇬🇱','🇬🇩',
+  '🇬🇵','🇬🇹','🇬🇾','🇭🇹','🇭🇳','🇯🇲','🇲🇶','🇲🇸','🇳🇮','🇵🇦',
+  '🇵🇾','🇵🇷','🇧🇱','🇰🇳','🇱🇨','🇲🇫','🇵🇲','🇻🇨','🇸🇽','🇸🇷',
+  '🇹🇹','🇹🇨','🇺🇾','🇻🇮','🇻🇪','🇦🇫','🇧🇩','🇧🇭','🇧🇹','🇧🇳',
+  '🇰🇭','🇭🇰','🇮🇩','🇮🇷','🇮🇶','🇰🇿','🇰🇬','🇱🇦','🇱🇧','🇲🇴',
+  '🇲🇾','🇲🇳','🇲🇲','🇳🇵','🇴🇲','🇵🇰','🇵🇸','🇵🇭','🇶🇦','🇸🇦',
+  '🇸🇬','🇱🇰','🇸🇾','🇹🇼','🇹🇯','🇹🇱','🇹🇲','🇺🇿','🇻🇳','🇾🇪',
+  '🇩🇿','🇦🇴','🇧🇮','🇧🇯','🇧🇼','🇧🇫','🇨🇲','🇨🇻','🇨🇫','🇹🇩',
+  '🇰🇲','🇨🇬','🇨🇩','🇨🇮','🇩🇯','🇬🇶','🇪🇷','🇸🇿','🇪🇹','🇬🇦',
+  '🇬🇲','🇬🇭','🇬🇳','🇬🇼','🇱🇸','🇱🇷','🇱🇾','🇲🇬','🇲🇼','🇲🇱',
+  '🇲🇷','🇲🇺','🇾🇹','🇲🇿','🇳🇦','🇳🇪','🇳🇬','🇷🇪','🇷🇼','🇸🇭',
+  '🇸🇹','🇸🇳','🇸🇨','🇸🇱','🇸🇴','🇸🇸','🇸🇩','🇹🇿','🇹🇬','🇺🇬',
+  '🇪🇭','🇿🇲','🇿🇼','🇦🇸','🇨🇰','🇬🇺','🇰🇮','🇲🇭','🇫🇲','🇳🇷',
+  '🇳🇨','🇳🇺','🇲🇵','🇵🇼','🇵🇬','🇵🇳','🇼🇸','🇸🇧','🇹🇰','🇹🇴',
+  '🇹🇻','🇻🇺','🇼🇫','🇦🇶','🇧🇻','🇨🇨','🇨🇽','🇭🇲','🇮🇴','🇳🇫',
+  '🇬🇸','🇹🇫','🏴󠁧󠁢󠁥󠁮󠁧󠁿','🏴󠁧󠁢󠁳󠁣󠁴󠁿','🏴󠁧󠁢󠁷󠁬󠁳󠁿'
+];
+
+const EMPTY_FORM = { name: '', destination: '', start_date: '', end_date: '', notes: '', flag: '' };
+
+function FlagPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(p => !p)}
+        style={{
+          fontSize: '1.4rem', lineHeight: 1, padding: '0.2rem 0.4rem',
+          border: '1px solid #cbd5e0', borderRadius: '6px', cursor: 'pointer',
+          background: '#fff', minWidth: '2.4rem',
+        }}
+        title="Pick a flag"
+      >
+        {value || '🏳️'}
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', top: '110%', left: 0, zIndex: 50,
+          background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: '0.5rem',
+          width: '320px',
+        }}>
+          <button
+            type="button"
+            onClick={() => { onChange(''); setOpen(false); }}
+            style={{ display: 'block', width: '100%', fontSize: '0.75rem', padding: '0.25rem', marginBottom: '0.4rem', border: '1px solid #e2e8f0', borderRadius: '4px', cursor: 'pointer', background: '#f7fafc', color: '#718096' }}
+          >
+            Clear
+          </button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '2px' }}>
+            {FLAGS.map(f => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => { onChange(f); setOpen(false); }}
+                style={{
+                  fontSize: '1.2rem', lineHeight: 1, padding: '0.15rem',
+                  border: f === value ? '2px solid #3182ce' : '1px solid transparent',
+                  borderRadius: '4px', cursor: 'pointer',
+                  background: f === value ? '#ebf8ff' : 'transparent',
+                }}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function HolidayForm({ initial = EMPTY_FORM, onSave, onCancel }) {
   const [form, setForm] = useState(initial);
@@ -15,11 +96,16 @@ function HolidayForm({ initial = EMPTY_FORM, onSave, onCancel }) {
       start_date: form.start_date || null,
       end_date: form.end_date || null,
       notes: form.notes.trim() || null,
+      flag: form.flag || null,
     });
   };
 
   return (
     <form onSubmit={handleSubmit} className="form" style={{ marginTop: '0.75rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+        <FlagPicker value={form.flag} onChange={val => set('flag', val)} />
+        <span style={{ fontSize: '0.78rem', color: '#718096' }}>Pick a flag</span>
+      </div>
       <div className="form__grid">
         <input
           className="form-inline-input"
@@ -72,11 +158,13 @@ function HolidayRow({ holiday, onEdit, onDelete }) {
     ? Math.round((new Date(holiday.end_date) - new Date(holiday.start_date)) / 86400000)
     : null;
 
+  const icon = holiday.flag || '✈️';
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.5rem', alignItems: 'start', padding: '0.75rem 0', borderBottom: '1px solid #e2e8f0' }}>
       <div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>✈️ {holiday.name}</span>
+          <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>{icon} {holiday.name}</span>
           {holiday.destination && (
             <span style={{ fontSize: '0.82rem', color: '#718096' }}>📍 {holiday.destination}</span>
           )}
@@ -152,6 +240,7 @@ export default function HolidayList() {
                     start_date: h.start_date || '',
                     end_date: h.end_date || '',
                     notes: h.notes || '',
+                    flag: h.flag || '',
                   }}
                   onSave={handleUpdate}
                   onCancel={() => setEditingHoliday(null)}

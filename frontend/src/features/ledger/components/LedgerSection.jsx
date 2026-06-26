@@ -38,11 +38,10 @@ export default function LedgerSection({
   const { filters, handleFilterChange } = useExpenseFilters();
   
   // 2. Consume form lifecycle here instead of pulling from App.jsx
-  const { 
-    showExpenseForm, 
-    actionSelect, 
-    closeExpenseForm, 
-    handleActionChange 
+  const {
+    showExpenseForm,
+    closeExpenseForm,
+    handleActionChange,
   } = useExpenseForm();
 
   // 3. React automatically to filter and pagination page bounds changes

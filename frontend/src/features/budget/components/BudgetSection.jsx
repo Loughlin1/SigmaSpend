@@ -6,7 +6,7 @@ import BudgetPieChart from './BudgetPieChart';
 import RulesSummary from './RulesSummary';
 import { getCurrentMonthBounds } from '../../../utils/calendarUtils';
 
-const BudgetSection = forwardRef(({ categories = [], accounts = [], onCategoryUpdated, className = '' }, ref) => {
+const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, className = '' }, ref) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const {
     budgets, updateBudget,

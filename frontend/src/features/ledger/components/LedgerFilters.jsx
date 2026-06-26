@@ -122,6 +122,7 @@ export default function LedgerFilters({ filters, onFilterChange, accountNameMap,
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalSearch(filters.q || '');
   }, [filters.q]);
 

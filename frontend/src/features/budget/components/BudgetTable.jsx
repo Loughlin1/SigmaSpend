@@ -92,12 +92,6 @@ function getStatus(actual, budget) {
   return 'safe';
 }
 
-function StatusBadge({ status }) {
-  if (!status) return <span className="budgetBadge budgetBadge--none">No limit</span>;
-  const labels = { safe: 'On track', warning: 'Approaching', exact: 'On budget', over: 'Over budget' };
-  return <span className={`budgetBadge budgetBadge--${status}`}>{labels[status]}</span>;
-}
-
 function ProgressBar({ actual, budget }) {
   if (!budget) return null;
   const pct = Math.min((actual / budget) * 100, 100);
@@ -109,7 +103,7 @@ function ProgressBar({ actual, budget }) {
   );
 }
 
-export default function BudgetTable({ categories, budgets, bucketBudgets = {}, actuals, subActuals = {}, parentActuals = {}, onBudgetChange, onBucketBudgetChange, onBucketChange }) {
+export default function BudgetTable({ categories, bucketBudgets = {}, actuals, subActuals = {}, parentActuals = {}, onBucketBudgetChange, onBucketChange }) {
   const allKeys = [...BUCKETS.map(b => b.key), 'untagged'];
   const [collapsed, setCollapsed] = useState(Object.fromEntries(allKeys.map(k => [k, true])));
   const toggleSection = (key) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
@@ -176,7 +170,6 @@ export default function BudgetTable({ categories, budgets, bucketBudgets = {}, a
     const totalActual = items.reduce((s, i) => s + i.actual, 0);
     const bucketBudget = bucketDef ? (bucketBudgets[bucketDef.key] || 0) : 0;
     const remaining = bucketBudget > 0 ? bucketBudget - totalActual : null;
-    const status = getStatus(totalActual, bucketBudget);
 
     return (
       <div

@@ -21,11 +21,12 @@ function countActiveFilters(filters) {
 }
 
 function CategoryCombobox({ value, onChange, categories }) {
-  const [inputVal, setInputVal] = useState(value || '');
+  // value is a comma-separated string of selected category values
+  const selected = value ? value.split(',').filter(Boolean) : [];
+  const [inputVal, setInputVal] = useState('');
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
-  // Flatten categories into a searchable list
   const allOptions = [
     { label: '❓ Uncategorized', value: 'Uncategorized' },
     ...categories.flatMap(cat => {
@@ -35,69 +36,63 @@ function CategoryCombobox({ value, onChange, categories }) {
         return [
           { label: `${icon} ${cat.name} (All)`, value: cat.name, isParent: true },
           { label: `${icon} ${cat.name} (Direct)`, value: `${cat.name}::direct`, isParent: true },
-          ...cat.subcategories.map(sub => ({
-            label: `  ${icon} ${sub.name}`,
-            value: sub.name,
-          })),
+          ...cat.subcategories.map(sub => ({ label: `  ${icon} ${sub.name}`, value: sub.name })),
         ];
       }
       return [{ label: `${icon} ${cat.name}`, value: cat.name, isParent: true }];
     }),
   ];
 
-  const filtered = inputVal
+  const filtered = (inputVal
     ? allOptions.filter(o => o.label.toLowerCase().includes(inputVal.toLowerCase()))
-    : allOptions;
+    : allOptions
+  ).filter(o => !selected.includes(o.value));
 
-  // Sync external clear
-  useEffect(() => { setInputVal(value || ''); }, [value]);
-
-  // Close on outside click
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const select = (opt) => {
-    setInputVal(opt.label.trim());
-    onChange(opt.value);
-    setOpen(false);
-  };
-
-  const handleInput = (e) => {
-    setInputVal(e.target.value);
-    onChange('');
-    setOpen(true);
-  };
-
-  const handleClear = () => {
+  const toggle = (optValue) => {
+    const next = selected.includes(optValue)
+      ? selected.filter(v => v !== optValue)
+      : [...selected, optValue];
+    onChange(next.join(','));
     setInputVal('');
-    onChange('');
-    setOpen(false);
   };
+
+  const remove = (optValue) => {
+    onChange(selected.filter(v => v !== optValue).join(','));
+  };
+
+  const labelFor = (val) => allOptions.find(o => o.value === val)?.label.trim() || val;
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      {/* Chips + input */}
+      <div
+        className="ledger-filters__select"
+        onClick={() => setOpen(true)}
+        style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', cursor: 'text', minHeight: '2rem', height: 'auto', padding: '0.25rem 0.5rem' }}
+      >
+        {selected.map(val => (
+          <span key={val} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', background: '#ebf8ff', border: '1px solid #bee3f8', borderRadius: '4px', padding: '0.1rem 0.4rem', fontSize: '0.78rem', color: '#2b6cb0', whiteSpace: 'nowrap' }}>
+            {labelFor(val)}
+            <button type="button" onMouseDown={e => { e.stopPropagation(); remove(val); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2b6cb0', padding: 0, lineHeight: 1, fontSize: '0.85rem' }}>×</button>
+          </span>
+        ))}
         <input
           type="text"
           value={inputVal}
-          onChange={handleInput}
+          onChange={e => { setInputVal(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
-          placeholder="All Categories"
-          className="ledger-filters__select"
-          style={{ flex: 1, cursor: 'text' }}
+          placeholder={selected.length === 0 ? 'All Categories' : ''}
+          style={{ border: 'none', outline: 'none', flex: 1, minWidth: '80px', fontSize: '0.85rem', background: 'transparent', padding: 0 }}
         />
-        {inputVal && (
-          <button
-            type="button"
-            onClick={handleClear}
-            style={{ marginLeft: '0.25rem', background: 'none', border: 'none', cursor: 'pointer', color: '#718096', fontSize: '1rem', lineHeight: 1, padding: '0 0.25rem' }}
-            aria-label="Clear"
-          >×</button>
-        )}
       </div>
+
+      {/* Dropdown */}
       {open && filtered.length > 0 && (
         <ul style={{
           position: 'absolute', zIndex: 100, top: '100%', left: 0, right: 0,
@@ -108,15 +103,8 @@ function CategoryCombobox({ value, onChange, categories }) {
           {filtered.map(opt => (
             <li
               key={opt.value}
-              onMouseDown={() => select(opt)}
-              style={{
-                padding: '0.45rem 0.75rem',
-                cursor: 'pointer',
-                fontSize: '0.85rem',
-                fontWeight: opt.isParent ? 600 : 400,
-                color: '#2d3748',
-                whiteSpace: 'nowrap',
-              }}
+              onMouseDown={e => { e.preventDefault(); toggle(opt.value); }}
+              style={{ padding: '0.45rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: opt.isParent ? 600 : 400, color: '#2d3748', whiteSpace: 'nowrap' }}
               onMouseEnter={e => e.currentTarget.style.background = '#ebf8ff'}
               onMouseLeave={e => e.currentTarget.style.background = ''}
             >

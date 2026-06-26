@@ -55,24 +55,36 @@ class ExpenseService:
 
         # Apply all dynamic filter conditions sequentially
         if category:
-            cat_clean = category.strip().lower()
-            if cat_clean == "uncategorized":
-                query = query.filter(
-                    (ExpenseModel.category_id.is_(None)) | 
-                    (ExpenseModel.category_id == "")
-                )    
-            else:
-                direct_only = category.endswith('::direct')
-                cat_name = category[:-8] if direct_only else category
+            # Support comma-separated list of category values for multiselect
+            cat_values = [c.strip() for c in category.split(',') if c.strip()]
+            allowed_ids = set()
+            include_uncategorized = False
+
+            for cat_value in cat_values:
+                if cat_value.lower() == "uncategorized":
+                    include_uncategorized = True
+                    continue
+                direct_only = cat_value.endswith('::direct')
+                cat_name = cat_value[:-8] if direct_only else cat_value
                 matched_cat = db.query(CategoryModel).filter(CategoryModel.name == cat_name).first()
                 if matched_cat:
                     if not direct_only and matched_cat.subcategories:
-                        allowed_ids = [matched_cat.id] + [sub.id for sub in matched_cat.subcategories]
-                        query = query.filter(ExpenseModel.category_id.in_(allowed_ids))
+                        allowed_ids.add(matched_cat.id)
+                        allowed_ids.update(sub.id for sub in matched_cat.subcategories)
                     else:
-                        query = query.filter(ExpenseModel.category_id == matched_cat.id)
-                else:
-                    query = query.filter(ExpenseModel.category_id == -1)
+                        allowed_ids.add(matched_cat.id)
+
+            if include_uncategorized and allowed_ids:
+                query = query.filter(
+                    (ExpenseModel.category_id.is_(None)) |
+                    (ExpenseModel.category_id.in_(allowed_ids))
+                )
+            elif include_uncategorized:
+                query = query.filter(ExpenseModel.category_id.is_(None))
+            elif allowed_ids:
+                query = query.filter(ExpenseModel.category_id.in_(allowed_ids))
+            else:
+                query = query.filter(ExpenseModel.category_id == -1)
 
         if account_id:
             query = query.filter(ExpenseModel.account_id == account_id)

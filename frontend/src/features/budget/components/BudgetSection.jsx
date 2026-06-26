@@ -2,6 +2,7 @@
 import { forwardRef, useImperativeHandle, useState } from 'react';
 import useBudget from '../hooks/useBudget';
 import BudgetTable from './BudgetTable';
+import BudgetYearTable from './BudgetYearTable';
 import BudgetPieChart from './BudgetPieChart';
 import RulesSummary from './RulesSummary';
 import { getCurrentMonthBounds } from '../../../utils/calendarUtils';
@@ -15,12 +16,16 @@ const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, classNam
     monthlyIncome, updateIncome,
     updateBucket,
     loading, error,
+    fetchYearActuals,
   } = useBudget();
 
   const { start, end } = getCurrentMonthBounds();
   const currentMonth = start.slice(0, 7); // "YYYY-MM"
+  const currentYear = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [filters, setFilters] = useState({ start_date: start, end_date: end });
+  const [yearView, setYearView] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
 
   useImperativeHandle(ref, () => ({
     refreshBudget: () => fetchActuals(filters),
@@ -90,13 +95,39 @@ const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, classNam
               />
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <input
-                type="month"
-                value={selectedMonth}
-                onChange={handleMonthChange}
+              <button
+                type="button"
                 className="inlineButton"
-              />
-              <button className="inlineButton" onClick={() => fetchActuals(filters)}>Refresh</button>
+                style={{ fontWeight: yearView ? 400 : 700 }}
+                onClick={() => setYearView(false)}
+              >Month</button>
+              <button
+                type="button"
+                className="inlineButton"
+                style={{ fontWeight: yearView ? 700 : 400 }}
+                onClick={() => setYearView(true)}
+              >Year</button>
+              {yearView ? (
+                <input
+                  type="number"
+                  min="2020"
+                  max={currentYear + 1}
+                  value={selectedYear}
+                  onChange={e => setSelectedYear(Number(e.target.value))}
+                  className="budgetInput"
+                  style={{ width: '80px' }}
+                />
+              ) : (
+                <>
+                  <input
+                    type="month"
+                    value={selectedMonth}
+                    onChange={handleMonthChange}
+                    className="inlineButton"
+                  />
+                  <button className="inlineButton" onClick={() => fetchActuals(filters)}>Refresh</button>
+                </>
+              )}
             </div>
           </div>
 
@@ -111,10 +142,18 @@ const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, classNam
 
           {error && <p className="errorText">Error loading actuals: {error.message}</p>}
 
-          {loading ? (
-            <p style={{ color: '#4a5568' }}>Loading actuals…</p>
-          ) : parentCategories.length === 0 ? (
+          {parentCategories.length === 0 ? (
             <p style={{ color: '#4a5568' }}>No categories found. Add categories first.</p>
+          ) : yearView ? (
+            <BudgetYearTable
+              categories={parentCategories}
+              budgets={budgets}
+              bucketBudgets={bucketBudgets}
+              year={selectedYear}
+              fetchYearActuals={fetchYearActuals}
+            />
+          ) : loading ? (
+            <p style={{ color: '#4a5568' }}>Loading actuals…</p>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem', marginTop: '1rem' }}>
               <BudgetTable

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import '../../../styles/budget.css';
+import { BUCKETS, BUCKET_OPTIONS } from '../budgetConstants';
 
 // One colour per parent category — subcategories sharing a parent get the same colour
 const PARENT_PALETTE = ['#3182ce','#dd6b20','#805ad5','#0987a0','#b7791f','#6b46c1','#2c7a7b','#c05621','#553c9a','#2b6cb0'];
@@ -70,18 +71,6 @@ function BucketPieChart({ items }) {
   );
 }
 
-const BUCKETS = [
-  { key: '50_needs',   label: '🏠 Needs',   pct: '60%', colour: '#3182ce', bg: '#ebf8ff', border: '#bee3f8' },
-  { key: '30_wants',   label: '🎉 Wants',   pct: '30%', colour: '#d69e2e', bg: '#fffff0', border: '#faf089' },
-  { key: '20_savings', label: '💰 Savings', pct: '10%', colour: '#38a169', bg: '#f0fff4', border: '#c6f6d5' },
-];
-
-const BUCKET_OPTIONS = [
-  { value: '',          label: '— untagged —' },
-  { value: '50_needs',  label: '🏠 Needs (60%)' },
-  { value: '30_wants',  label: '🎉 Wants (30%)' },
-  { value: '20_savings',label: '💰 Savings (10%)' },
-];
 
 function getStatus(actual, budget) {
   if (!budget) return null;
@@ -103,7 +92,7 @@ function ProgressBar({ actual, budget }) {
   );
 }
 
-export default function BudgetTable({ categories, bucketBudgets = {}, actuals, subActuals = {}, parentActuals = {}, onBucketBudgetChange, onBucketChange }) {
+export default function BudgetTable({ categories, budgets = {}, bucketBudgets = {}, actuals, subActuals = {}, parentActuals = {}, onBudgetChange, onBucketBudgetChange, onBucketChange }) {
   const allKeys = [...BUCKETS.map(b => b.key), 'untagged'];
   const [collapsed, setCollapsed] = useState(Object.fromEntries(allKeys.map(k => [k, true])));
   const toggleSection = (key) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
@@ -170,6 +159,7 @@ export default function BudgetTable({ categories, bucketBudgets = {}, actuals, s
     const totalActual = items.reduce((s, i) => s + i.actual, 0);
     const bucketBudget = bucketDef ? (bucketBudgets[bucketDef.key] || 0) : 0;
     const remaining = bucketBudget > 0 ? bucketBudget - totalActual : null;
+    const totalAllocated = items.reduce((s, i) => s + (budgets[i.id]?.amount || 0), 0);
 
     return (
       <div
@@ -212,8 +202,8 @@ export default function BudgetTable({ categories, bucketBudgets = {}, actuals, s
           {/* Right: budget input + spend summary */}
           <div style={{ display: 'flex', gap: '1rem', fontSize: '0.82rem', color: '#4a5568', alignItems: 'center', flexWrap: 'wrap' }}>
             {bucketDef && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.82rem' }}>
-                <span style={{ color: '#718096' }}>Budget £</span>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem' }}>
+                <span style={{ color: '#718096' }}>Monthly budget £</span>
                 <input
                   type="number"
                   min="0"
@@ -226,6 +216,9 @@ export default function BudgetTable({ categories, bucketBudgets = {}, actuals, s
                   style={{ width: '90px' }}
                 />
               </label>
+            )}
+            {totalAllocated > 0 && (
+              <span>Allocated: <strong>£{totalAllocated.toFixed(2)}</strong></span>
             )}
             <span>Spent: <strong>£{totalActual.toFixed(2)}</strong></span>
             {remaining !== null && (
@@ -247,6 +240,7 @@ export default function BudgetTable({ categories, bucketBudgets = {}, actuals, s
             <tr>
               <th>Category</th>
               <th>Bucket</th>
+              <th>Allocated Budget</th>
               <th>Actual Spend</th>
               <th>% of Budget</th>
             </tr>
@@ -280,6 +274,18 @@ export default function BudgetTable({ categories, bucketBudgets = {}, actuals, s
                         <option key={o.value} value={o.value}>{o.label}</option>
                       ))}
                     </select>
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="—"
+                      value={budgets[item.id]?.amount ?? ''}
+                      onChange={e => onBudgetChange(item.id, e.target.value)}
+                      className="budgetInput"
+                      style={{ width: '90px' }}
+                    />
                   </td>
                   <td className="budgetActualCell">£{item.actual.toFixed(2)}</td>
                   <td style={{ fontSize: '0.82rem', fontWeight: sharePct !== null ? 600 : 400,

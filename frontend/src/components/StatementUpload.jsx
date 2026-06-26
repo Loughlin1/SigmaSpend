@@ -10,6 +10,7 @@ export default function StatementUpload({ accounts, onUploadSuccess, className =
   const [selectedAccount, setSelectedAccount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [touched, setTouched] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const [showMetrics, setShowMetrics] = useState(false);
@@ -18,17 +19,18 @@ export default function StatementUpload({ accounts, onUploadSuccess, className =
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (files.length === 0 || !selectedAccount) {
-      setError('Please select a bank account and attach at least one file.');
-      return;
-    }
+    setTouched(true);
+    if (files.length === 0 || !selectedAccount) return;
 
     setError('');
     setLoading(true);
+    setTouched(false);
     const fileCountSent = files.length;
 
+    console.log('[Upload] Starting upload, account:', selectedAccount, 'files:', files.map(f => f.name));
     try {
       const response = await ingestionApi.uploadStatement(files, selectedAccount);
+      console.log('[Upload] Response:', response);
       const metrics = response.summary || response.data || response;
 
       setUploadMetrics({
@@ -45,8 +47,12 @@ export default function StatementUpload({ accounts, onUploadSuccess, className =
       setFiles([]);
       setInputKey((prev) => prev + 1);
     } catch (err) {
-      console.error('Upload failed', err);
-      setError(err.response?.data?.detail || 'Failed to upload statement.');
+      console.error('[Upload] Failed:', err);
+      const detail = err.response?.data?.detail
+        || err.response?.data?.message
+        || err.message
+        || 'Failed to upload statement.';
+      setError(typeof detail === 'string' ? detail : JSON.stringify(detail));
     } finally {
       setLoading(false);
     }
@@ -65,42 +71,50 @@ export default function StatementUpload({ accounts, onUploadSuccess, className =
 
       {!isCollapsed && (
         <div style={{ marginTop: '1rem' }}>
-          {error && <div className="form__error" style={{ marginBottom: '0.75rem' }}>{error}</div>}
+          <form onSubmit={handleUpload} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <select
+                value={selectedAccount}
+                onChange={(e) => { setSelectedAccount(e.target.value); setTouched(false); }}
+                className="inlineButton"
+                style={{ minWidth: '200px', borderColor: touched && !selectedAccount ? '#e53e3e' : '' }}
+              >
+                <option value="">Select account...</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.account_name} ({account.bank_name})
+                  </option>
+                ))}
+              </select>
+              {touched && !selectedAccount && (
+                <span style={{ fontSize: '0.75rem', color: '#e53e3e' }}>Please select an account</span>
+              )}
+            </div>
 
-          <form onSubmit={handleUpload} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <select
-              value={selectedAccount}
-              onChange={(e) => setSelectedAccount(e.target.value)}
-              className="inlineButton"
-              required
-              style={{ minWidth: '200px' }}
-            >
-              <option value="">Select account...</option>
-              {accounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.account_name} ({account.bank_name})
-                </option>
-              ))}
-            </select>
-
-            <input
-              key={inputKey}
-              type="file"
-              accept=".csv,.pdf"
-              multiple
-              onChange={(e) => setFiles(Array.from(e.target.files))}
-              className="inlineButton"
-              style={{ padding: '0.3rem', flex: 1, minWidth: '180px' }}
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: '180px' }}>
+              <input
+                key={inputKey}
+                type="file"
+                accept=".csv,.pdf"
+                multiple
+                onChange={(e) => { setFiles(Array.from(e.target.files)); setTouched(false); }}
+                className="inlineButton"
+                style={{ padding: '0.3rem', borderColor: touched && files.length === 0 ? '#e53e3e' : '' }}
+              />
+              {touched && files.length === 0 && (
+                <span style={{ fontSize: '0.75rem', color: '#e53e3e' }}>Please select at least one file</span>
+              )}
+            </div>
 
             <button
               type="submit"
-              disabled={files.length === 0 || !selectedAccount || loading}
+              disabled={loading}
               className="inlineButton form__submit"
             >
               {loading ? 'Processing...' : `Upload${files.length > 1 ? ` (${files.length})` : ''}`}
             </button>
           </form>
+          {error && <div className="form__error" style={{ marginTop: '0.75rem' }}>{error}</div>}
         </div>
       )}
 

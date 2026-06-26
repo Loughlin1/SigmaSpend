@@ -14,8 +14,9 @@ export default function ExpenseForm({
     is_income: false,
     category: 'Uncategorized',
     description: '',
+    notes: '',
     date: new Date().toISOString().split('T')[0],
-    account_id: '' 
+    account_id: ''
   });
 
   useEffect(() => {
@@ -26,6 +27,7 @@ export default function ExpenseForm({
         is_income: !!initialData.is_income,
         category: initialData.category || 'Uncategorized',
         description: initialData.description || '',
+        notes: initialData.notes || '',
         date: initialData.date || new Date().toISOString().split('T')[0],
         account_id: initialData.account_id || ''
       });
@@ -58,7 +60,15 @@ export default function ExpenseForm({
           value={formData.description}
           onChange={e => setFormData({ ...formData, description: e.target.value })}
           required
-          className='form-inline-input'    
+          className='form-inline-input'
+        />
+
+        <input
+          type="text"
+          placeholder="Notes (optional)"
+          value={formData.notes}
+          onChange={e => setFormData({ ...formData, notes: e.target.value })}
+          className='form-inline-input'
         />
 
         <select 

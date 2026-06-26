@@ -81,13 +81,15 @@ export default function LedgerSection({
               >
                 {expensesLoading ? '...' : '↻ Refresh'}
               </button>
-              <select value={actionSelect} onChange={(e) => handleActionChange(e.target.value)} className="inlineButton">
-                <option value="none">Actions</option>
-                <option value="add_manual">Add Manual Transaction</option>
-              </select>
-              {showExpenseForm && (
-                <button type="button" onClick={closeExpenseForm} className="inlineButton">Close</button>
-              )}
+              <button
+                type="button"
+                onClick={() => showExpenseForm ? closeExpenseForm() : handleActionChange('add_manual')}
+                className="inlineButton"
+                title={showExpenseForm ? 'Close form' : 'Add manual transaction'}
+                style={{ fontSize: '1.1rem', lineHeight: 1, padding: '0.3rem 0.65rem' }}
+              >
+                {showExpenseForm ? '✕' : '+'}
+              </button>
             </div>
 
             <LedgerFilters
@@ -105,7 +107,11 @@ export default function LedgerSection({
                 accountNameMap={accountNameMap}
                 initialData={null}
                 onExpenseAdded={async (data) => {
-                  await createExpense(data);
+                  const allCats = categories.flatMap(c => [c, ...(c.subcategories || [])]);
+                  const matched = allCats.find(c => c.name === data.category);
+                  const payload = { ...data, category_id: matched?.id ?? null };
+                  delete payload.category;
+                  await createExpense(payload);
                   await handleLocalRefresh();
                   closeExpenseForm();
                 }}

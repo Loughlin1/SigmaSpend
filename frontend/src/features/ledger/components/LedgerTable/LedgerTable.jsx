@@ -183,6 +183,45 @@ export default function LedgerTable({
   };
 
   const rowPadding = density === 'compact' ? '0.3rem 0.6rem' : '0.75rem 1rem';
+  const totalPages = Math.ceil(totalCount / limit) || 1;
+
+  const paginationStrip = (top = false) => (
+    <div className="ledger-pagination-strip" style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      padding: '0.75rem 1rem', background: '#f7fafc',
+      borderTop: top ? 'none' : '1px solid #e2e8f0',
+      borderBottom: top ? '1px solid #e2e8f0' : 'none',
+      borderRadius: top ? '6px 6px 0 0' : '0 0 6px 6px',
+      flexWrap: 'wrap', gap: '1rem', marginTop: top ? 0 : '1rem',
+    }}>
+      <div style={{ fontSize: '0.85rem', color: '#4a5568' }}>
+        Showing <strong>{expenses.length}</strong> of <strong>{totalCount || expenses.length}</strong> records
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' }}>
+          <span style={{ color: '#4a5568' }}>Per Page:</span>
+          <select
+            value={limit}
+            onChange={e => onLimitChange && onLimitChange(Number(e.target.value))}
+            style={{ padding: '0.25rem', borderRadius: '4px', border: '1px solid #cbd5e0' }}
+          >
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
+        <div style={{ display: 'flex', gap: '0.25rem' }}>
+          <button onClick={() => page > 1 && onPageChange(1)} disabled={page === 1} className="inlineButton" style={{ padding: '0.25rem 0.5rem', opacity: page === 1 ? 0.5 : 1 }}>«</button>
+          <button onClick={() => page > 1 && onPageChange(page - 1)} disabled={page === 1} className="inlineButton" style={{ padding: '0.25rem 0.5rem', opacity: page === 1 ? 0.5 : 1 }}>‹</button>
+          <span style={{ padding: '0.25rem 0.75rem', fontSize: '0.85rem', color: '#2d3748', alignSelf: 'center' }}>
+            Page <strong>{page}</strong> of {totalPages}
+          </span>
+          <button onClick={() => page < totalPages && onPageChange(page + 1)} disabled={page >= totalPages} className="inlineButton" style={{ padding: '0.25rem 0.5rem', opacity: page >= totalPages ? 0.5 : 1 }}>›</button>
+          <button onClick={() => page < totalPages && onPageChange(totalPages)} disabled={page >= totalPages} className="inlineButton" style={{ padding: '0.25rem 0.5rem', opacity: page >= totalPages ? 0.5 : 1 }}>»</button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="ledger-table-container" style={{ position: 'relative' }}>
@@ -211,6 +250,8 @@ export default function LedgerTable({
           ))}
         </div>
       </div>
+
+      {paginationStrip(true)}
 
       <BulkActionsPanel
         selectedCount={selectedIds.length}
@@ -292,41 +333,7 @@ export default function LedgerTable({
         </tbody>
       </table>
 
-      {/* Pagination Controls Strip */}
-      <div className="ledger-pagination-strip" style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '0.75rem 1rem', background: '#f7fafc', borderTop: '1px solid #e2e8f0',
-        borderRadius: '0 0 6px 6px', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem'
-      }}>
-        <div style={{ fontSize: '0.85rem', color: '#4a5568' }}>
-          Showing <strong>{expenses.length}</strong> entries of <strong>{totalCount || expenses.length}</strong> total records
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' }}>
-            <span style={{ color: '#4a5568' }}>Per Page:</span>
-            <select 
-              value={limit} 
-              onChange={e => onLimitChange && onLimitChange(Number(e.target.value))}
-              style={{ padding: '0.25rem', borderRadius: '4px', border: '1px solid #cbd5e0' }}
-            >
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.25rem' }}>
-            <button onClick={() => page > 1 && onPageChange(1)} disabled={page === 1} className="inlineButton" style={{ padding: '0.25rem 0.5rem', opacity: page === 1 ? 0.5 : 1 }}>«</button>
-            <button onClick={() => page > 1 && onPageChange(page - 1)} disabled={page === 1} className="inlineButton" style={{ padding: '0.25rem 0.5rem', opacity: page === 1 ? 0.5 : 1 }}>‹</button>
-            <span style={{ padding: '0.25rem 0.75rem', fontSize: '0.85rem', color: '#2d3748', alignSelf: 'center' }}>
-              Page <strong>{page}</strong> of {Math.ceil(totalCount / limit) || 1}
-            </span>
-            <button onClick={() => page < Math.ceil(totalCount / limit) && onPageChange(page + 1)} disabled={page >= Math.ceil(totalCount / limit)} className="inlineButton" style={{ padding: '0.25rem 0.5rem', opacity: page >= Math.ceil(totalCount / limit) ? 0.5 : 1 }}>›</button>
-            <button onClick={() => page < Math.ceil(totalCount / limit) && onPageChange(Math.ceil(totalCount / limit))} disabled={page >= Math.ceil(totalCount / limit)} className="inlineButton" style={{ padding: '0.25rem 0.5rem', opacity: page >= Math.ceil(totalCount / limit) ? 0.5 : 1 }}>»</button>
-          </div>
-        </div>
-      </div>
+      {paginationStrip(false)}
 
       {/* Single-row delete confirmation */}
       <ConfirmationModal

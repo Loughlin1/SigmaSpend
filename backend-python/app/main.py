@@ -16,7 +16,8 @@ logger = logging.getLogger("sigmaspend")
 from app.core.config import settings
 from app.database.session import SessionLocal, engine, Base
 from app.database.seeder import seed_database_if_empty
-from app.api.endpoints import ingestion, expenses, categories, rules, accounts, banks, logs, budgets, income, bucket_budgets, holidays
+from app.api.endpoints import ingestion, expenses, categories, rules, accounts, banks, logs, budgets, income, bucket_budgets, holidays, backup
+from app.services.backup import run_backup
 # Import models to ensure they're registered with Base.metadata
 from app.models.bank_account import BankAccount
 from app.models.expense import Expense
@@ -35,16 +36,34 @@ async def lifespan(app: FastAPI):
 
     # 1. Enforce physical creation of the .db file and tables if missing
     Base.metadata.create_all(bind=engine)
-    
+
     # 2. Open a transient lifecycle context session block to run the seed checks
     db = SessionLocal()
     try:
         seed_database_if_empty(db)
     finally:
         db.close()
-        
+
+    # 3. Start scheduled database backups (daily at 02:00)
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+    from apscheduler.triggers.cron import CronTrigger
+
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(
+        lambda: run_backup(settings.DATABASE_URL),
+        trigger=CronTrigger(hour=2, minute=0),
+        id="daily_db_backup",
+        name="Daily SQLite backup",
+        replace_existing=True,
+    )
+    scheduler.start()
+    logger.info("[Startup] Backup scheduler started — daily at 02:00.")
+
     yield
-    # Shutdown Sequence (if any) can go here
+
+    # Shutdown Sequence
+    scheduler.shutdown(wait=False)
+    logger.info("[Shutdown] Backup scheduler stopped.")
 
 app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
 
@@ -197,3 +216,4 @@ app.include_router(budgets.router, prefix=f"{settings.API_V1_STR}/budgets", tags
 app.include_router(bucket_budgets.router, prefix=f"{settings.API_V1_STR}/bucket-budgets", tags=["Bucket Budgets"])
 app.include_router(income.router, prefix=f"{settings.API_V1_STR}/income", tags=["Income"])
 app.include_router(holidays.router, prefix=f"{settings.API_V1_STR}/holidays", tags=["Holidays"])
+app.include_router(backup.router, prefix=f"{settings.API_V1_STR}/backup", tags=["Backup"])

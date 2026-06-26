@@ -12,3 +12,4 @@ python-dateutil==2.9.0.post0
 ollama==0.5.4
 alembic>=1.13.0
 pdfplumber
+apscheduler>=3.10,<4

@@ -15,6 +15,7 @@ import CategoryManager from './features/categories/components/CategoryManager';
 import LogsSection from './features/logs-viewer/components/LogsSection';
 import BudgetSection from './features/budget/components/BudgetSection';
 import HolidayList from './features/holidays/components/HolidayList';
+import BackupSection from './features/backup/components/BackupSection';
 import HolidayAnalyticsSection from './features/holidays/components/HolidayAnalyticsSection';
 
 // Master Shared Hooks
@@ -119,6 +120,7 @@ function App() {
             />
 
             <HolidayList />
+            <BackupSection />
           </div>
         )}
       </section>

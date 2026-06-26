@@ -93,6 +93,11 @@ export const holidaysApi = {
     apiClient.get('/expenses/analytics/summary', { params: { holiday_id: holidayId, group_by: 'day' } }).then(res => res.data),
 };
 
+export const backupApi = {
+  list: () => apiClient.get('/backup/list').then(res => res.data),
+  trigger: () => apiClient.post('/backup/trigger').then(res => res.data),
+};
+
 export const logsApi = {
   getLogs: (params) => apiClient.get('/logs', { params }).then(res => res.data),
   getModules: () => apiClient.get('/logs/modules').then(res => res.data),

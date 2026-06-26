@@ -47,7 +47,7 @@ def test_normalize_date_fallback_formats():
 
 def test_normalize_date_invalid_raises():
     """Should raise ValueError when date structure cannot be parsed."""
-    with pytest.raises(ValueError, match="Unsupported string spatial date layout format"):
+    with pytest.raises(ValueError, match="Unsupported date format"):
         PDFStatementParser._normalize_date("INVALID_DATE_TEXT", [2025])
 
 
@@ -134,50 +134,27 @@ def test_parse_and_ingest_successful_flow():
     mock_pdf = MagicMock()
     mock_pdf.pages = [mock_page]
 
-    # Explicit inline patches guarantee perfect object mapping assignment
     with patch("app.services.pdf_parser.StatementParserService") as mock_parser_service, \
-         patch("app.services.pdf_parser.pdfplumber.open") as mock_pdf_open, \
-         patch("app.services.pdf_parser.object_mapper") as mock_object_mapper:
+         patch("app.services.pdf_parser.pdfplumber.open") as mock_pdf_open:
 
-        # Setup Account Mapping Profile Configuration
         mock_parser_service.get_account_bank_config.return_value = {
             "mappings": {
-                # "pdf_regex": r"^(\d{2}\s+[A-Z]+)\s+(.+?)\s+(-?[\d,]+\.\d{2}(?:CR)?)$",
                 "pdf_regex": r"^(\d{2}\s+[A-Z]{3,10})(?:\s+\d{2}\s+[A-Z]{3,10})?\s{2,}(.+?)\s{2,}(-?£?[0-9,]+\.\d{2}\s*(?:CR|DR)?)$",
                 "pdf_header_bypass": "date of transaction,page"
             }
         }
         mock_parser_service._get_category_cache.return_value = ([], {})
         mock_parser_service.generate_transaction_hash.return_value = "unique_mocked_md5_hash_string"
-        mock_parser_service._assign_category.return_value = 10  
-
-        # Setup object_mapper mock columns properties
-        mock_column = MagicMock()
-        mock_column.key = "date"
-        mock_mapper_instance = MagicMock()
-        mock_mapper_instance.columns = [mock_column]
-        mock_object_mapper.return_value = mock_mapper_instance
+        mock_parser_service._assign_category.return_value = 10
 
         mock_pdf_open.return_value.__enter__.return_value = mock_pdf
 
-        # Execute Service Method
         metrics = PDFStatementParser.parse_and_ingest(io.BytesIO(b"dummy"), mock_db, account_id=1, logger=logger)
-    
-    # 🔍 ADD DIAGNOSTIC PRINTS TO INSPECT MOCK CALLS:
-    print("\n--- 📊 DB QUERY MOCK CALL HISTORY ---")
-    for idx, call in enumerate(mock_db.query.call_args_list, start=1):
-        # call[0][0] extracts the first positional argument passed to db.query() (e.g., Expense or CategoryRule)
-        model_queried = call[0][0]
-        print(f"Query #{idx}: Invoked with Model Class -> {model_queried.__name__}")
-    print("-------------------------------------\n")
 
-    # Assert Ingestion Tracking Metric Aggregations
     assert metrics["added"] == 1
     assert metrics["skipped"] == 0
     assert metrics["categorized"] == 1
     assert metrics["uncategorized"] == 0
-
-    # Verify Database Pipeline Assertions
     mock_db.add.assert_called_once()
     mock_db.commit.assert_called_once()
 

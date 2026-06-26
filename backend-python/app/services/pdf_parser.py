@@ -99,7 +99,7 @@ class PDFStatementParser:
                 )
                 pending = None
 
-        # db.commit()
+        db.commit()
 
         return {
             "added":         counters["added"],
@@ -295,7 +295,7 @@ class PDFStatementParser:
             else:
                 counters["uncategorized"] += 1
 
-            # db.add(new_expense)
+            db.add(new_expense)
             counters["added"] += 1
             logger.info(f"✅ [PDF] {date_string} | {description} | £{amount} | income={is_income}")
 

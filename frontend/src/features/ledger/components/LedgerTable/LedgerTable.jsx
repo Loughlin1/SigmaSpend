@@ -15,6 +15,7 @@ export default function LedgerTable({
   expenses = [],
   accountNameMap = {},
   categories = [],
+  holidays: holidaysProp = [],
   onExpenseSaved,
   onDelete,
   onCreateRuleFromTransaction,
@@ -33,11 +34,12 @@ export default function LedgerTable({
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [bulkDeletePending, setBulkDeletePending] = useState(false);
   const [density, setDensity] = useState('compact'); // 'compact' | 'comfortable'
-  const [holidays, setHolidays] = useState([]);
+  const [fetchedHolidays, setFetchedHolidays] = useState([]);
+  const holidays = holidaysProp.length ? holidaysProp : fetchedHolidays;
 
   useEffect(() => {
-    holidaysApi.getAll().then(setHolidays).catch(() => {});
-  }, []);
+    if (!holidaysProp.length) holidaysApi.getAll().then(setFetchedHolidays).catch(() => {});
+  }, [holidaysProp.length]);
 
   // Success Modal States
   const [showBulkSuccess, setShowBulkSuccess] = useState(false);
@@ -327,6 +329,7 @@ export default function LedgerTable({
                 onStartEdit={() => setEditingId(exp.id)}
                 onDelete={setDeleteTargetId}
                 onRowClick={onRowClick}
+                holidays={holidays}
               />
             );
           })}

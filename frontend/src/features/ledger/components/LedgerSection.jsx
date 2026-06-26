@@ -139,6 +139,7 @@ export default function LedgerSection({
               expenses={expenses}
               accountNameMap={accountNameMap}
               categories={categories}
+              holidays={holidays}
               onExpenseSaved={async (payload) => {
                 await updateExpense(payload.id, payload);
                 await handleLocalRefresh();

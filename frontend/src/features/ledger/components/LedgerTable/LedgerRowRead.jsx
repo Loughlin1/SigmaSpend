@@ -2,6 +2,12 @@
 
 import { formatTransactionDate, getGoogleCalendarDayUrl, getGmailReceiptSearchUrl } from '../../../../utils/calendarUtils';
 
+function parseDMY(str) {
+  if (!str) return null;
+  const [d, m, y] = str.split('/');
+  return new Date(`${y}-${m}-${d}`);
+}
+
 export default function LedgerRowRead({
   expense,
   isChecked,
@@ -12,8 +18,20 @@ export default function LedgerRowRead({
   onDelete,
   onRowClick,
   rowPadding = '0.75rem 1rem',
+  holidays = [],
 }) {
   const tdStyle = { fontSize: '0.85rem', padding: rowPadding, cursor: 'pointer' };
+
+  // Find a holiday whose date range covers this expense, only if not already assigned
+  const expDate = parseDMY(expense.date);
+  const suggestedHoliday = !expense.holiday_id && expDate
+    ? holidays.find(h => {
+        if (!h.start_date || !h.end_date) return false;
+        const start = new Date(h.start_date);
+        const end = new Date(h.end_date);
+        return expDate >= start && expDate <= end;
+      })
+    : null;
 
   return (
     <tr style={{ background: isChecked ? '#f7fafc' : 'transparent' }}>
@@ -52,6 +70,15 @@ export default function LedgerRowRead({
         {expense.holiday_name && (
           <span title={expense.holiday_name} style={{ marginLeft: '0.4rem', fontSize: '0.72rem', background: '#ebf8ff', color: '#2b6cb0', borderRadius: '4px', padding: '0.1rem 0.35rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
             ✈️ {expense.holiday_name}
+          </span>
+        )}
+        {suggestedHoliday && (
+          <span
+            title={`Date falls within "${suggestedHoliday.name}" — click to assign`}
+            onClick={() => onRowClick && onRowClick(expense)}
+            style={{ marginLeft: '0.4rem', fontSize: '0.72rem', background: '#fffff0', color: '#b7791f', border: '1px dashed #f6e05e', borderRadius: '4px', padding: '0.1rem 0.35rem', fontWeight: 500, whiteSpace: 'nowrap', cursor: 'pointer' }}
+          >
+            {suggestedHoliday.flag || '✈️'} {suggestedHoliday.name}?
           </span>
         )}
       </td>

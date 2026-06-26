@@ -12,8 +12,11 @@ def parse_uk_date(date_str: Optional[str], logger: logging.Logger) -> Optional[d
     if isinstance(date_str, date):
         return date_str
     try:
-        # Automatically processes YYYY-MM-DD and prioritises DD/MM/YYYY text streams
-        return parser.parse(str(date_str), dayfirst=True).date()
+        s = str(date_str).strip()
+        # ISO format YYYY-MM-DD must be parsed with dayfirst=False to avoid month/day swap
+        import re as _re
+        dayfirst = not bool(_re.match(r'^\d{4}-\d{2}-\d{2}$', s))
+        return parser.parse(s, dayfirst=dayfirst).date()
     except (ParserError, TypeError):
         logger.warning(f"Date parsing failed for input: '{date_str}'")
         raise HTTPException(

@@ -144,7 +144,7 @@ function HolidayCard({ holiday }) {
 export default function HolidayAnalyticsSection() {
   const [holidays, setHolidays] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const load = useCallback(() => {
     setLoading(true);

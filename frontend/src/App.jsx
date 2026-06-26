@@ -62,8 +62,6 @@ function App() {
         className="sectionCard--primary"
       />
 
-      <HolidayAnalyticsSection />
-
       <BudgetSection
         ref={budgetRef}
         categories={categories}
@@ -71,6 +69,8 @@ function App() {
         onCategoryUpdated={fetchCategories}
         className="sectionCard--primary"
       />
+
+      <HolidayAnalyticsSection />
 
       <LedgerSection
         accountNameMap={accountNameMap}

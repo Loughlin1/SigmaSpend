@@ -4,7 +4,11 @@ A modern local personal finance tracker.
 
 ---
 
-## Screenshots
+**SigmaSpend** is built with a decoupled, API-first architecture. The project is split into a **React (Vite)** frontend and a **Python (FastAPI)** backend. The name draws inspiration from the mathematical summation symbol (Σ), representing the precise aggregation of financial data.
+
+---
+
+## Features
 
 | Financial Summaries | Budget Planner |
 |---|---|
@@ -15,12 +19,6 @@ A modern local personal finance tracker.
 | ![Holiday Analytics](docs/screenshots/03-holiday-analytics.png) | ![Transaction Ledger](docs/screenshots/04-ledger.png) |
 
 ![Expense Detail Sidebar](docs/screenshots/05-expense-sidebar.png)
-
-**SigmaSpend** is built with a decoupled, API-first architecture. The project is split into a **React (Vite)** frontend and a **Python (FastAPI)** backend. The name draws inspiration from the mathematical summation symbol (Σ), representing the precise aggregation of financial data.
-
----
-
-## Features
 
 - **Transaction Ledger** — import CSV/PDF bank statements, manually add transactions, bulk categorise, bulk delete, bulk export to CSV
 - **Automation Rules** — keyword-based rules that auto-categorise transactions on import; re-run rules on existing data

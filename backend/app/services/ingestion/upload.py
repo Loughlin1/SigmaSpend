@@ -6,15 +6,15 @@ from fastapi import UploadFile, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.bank_account import BankAccount
-from app.services.parser import StatementParserService
-from app.services.pdf_parser import PDFStatementParser
+from app.services.ingestion.parser import StatementParserService
+from app.services.ingestion.pdf_parser import PDFStatementParser
 
 logger = logging.getLogger("sigmaspend")
 
 SUPPORTED_EXTENSIONS = (".csv", ".pdf")
 
 
-class IngestionService:
+class UploadService:
     @staticmethod
     def validate_extensions(files: List[UploadFile]) -> None:
         for file in files:

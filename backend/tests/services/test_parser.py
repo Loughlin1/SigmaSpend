@@ -4,7 +4,7 @@ Tests for the StatementParserService.
 import pytest
 from unittest.mock import patch, MagicMock
 
-from app.services.parser import StatementParserService
+from app.services.ingestion.parser import StatementParserService
 from app.models.expense import Expense
 from app.models.bank_account import BankAccount
 

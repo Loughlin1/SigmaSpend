@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query, 
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
-from app.services.ingestion import IngestionService
+from app.services.ingestion import UploadService
 
 import logging
 logger = logging.getLogger("sigmaspend")
@@ -11,7 +11,7 @@ logger = logging.getLogger("sigmaspend")
 router = APIRouter()
 
 
-@router.post("/upload/statement", status_code=status.HTTP_201_CREATED)
+@router.post("/statement", status_code=status.HTTP_201_CREATED)
 async def upload_bank_statement(
     files: List[UploadFile] = File(..., description="Statement files to upload (.csv or .pdf)"),
     account_id: int = Query(..., description="Bank account ID to associate with this import"),
@@ -27,11 +27,11 @@ async def upload_bank_statement(
     file_names = [f.filename for f in files if f.filename]
     logger.info(f"Starting bank statement upload for account '{account_id}'. Files: {file_names}")
 
-    IngestionService.validate_extensions(files)
-    IngestionService.get_active_account(db, account_id)
+    UploadService.validate_extensions(files)
+    UploadService.get_active_account(db, account_id)
 
     try:
-        summary = await IngestionService.process_files(files, db, account_id)
+        summary = await UploadService.process_files(files, db, account_id)
     except HTTPException:
         raise
     except Exception as e:

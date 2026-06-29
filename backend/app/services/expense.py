@@ -198,7 +198,7 @@ class ExpenseService:
 
     @staticmethod
     def bulk_reclassify(db: Session, expense_ids: List[int]) -> int:
-        from app.services.parser import StatementParserService
+        from app.services.ingestion.parser import StatementParserService
         expenses = db.query(ExpenseModel).filter(ExpenseModel.id.in_(expense_ids)).all()
         all_rules = db.query(CategoryRuleModel).all()
         _, category_map = StatementParserService._get_category_cache(db)

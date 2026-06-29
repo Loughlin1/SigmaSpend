@@ -10,7 +10,7 @@ from typing import List, Dict, Any, Tuple, Optional
 
 from app.models.expense import Expense
 from app.models.bank_account import BankAccount
-from app.services.classifier import match_rule_based_category, classify_description_with_ai
+from app.services.ingestion.classifier import match_rule_based_category, classify_description_with_ai
 from app.models.category_rules import CategoryRule
 from app.models.category import Category
 

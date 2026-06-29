@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.models.expense import Expense
 from app.models.category_rules import CategoryRule
-from app.services.parser import StatementParserService
+from app.services.ingestion.parser import StatementParserService
 
 import logging
 logger = logging.getLogger("sigmaspend")

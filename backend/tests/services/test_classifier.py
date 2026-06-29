@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from app.models.category_rules import CategoryRule
 from app.models.expense import Expense
-from app.services.classifier import match_rule_based_category, classify_description_with_ai
+from app.services.ingestion.classifier import match_rule_based_category, classify_description_with_ai
 
 logger = logging.getLogger("sigmaspend_test")
 

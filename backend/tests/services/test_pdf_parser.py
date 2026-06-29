@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from datetime import date, datetime
 from fastapi import HTTPException
 
-from app.services.pdf_parser import PDFStatementParser
+from app.services.ingestion.pdf_parser import PDFStatementParser
 from app.models.expense import Expense
 from app.models.category_rules import CategoryRule
 
@@ -55,7 +55,7 @@ def test_normalize_date_invalid_raises():
 # 2. Tests for _extract_statement_years
 # ============================================================================
 
-@patch("app.services.pdf_parser.pdfplumber.open")
+@patch("app.services.ingestion.pdf_parser.pdfplumber.open")
 def test_extract_statement_years_success(mock_pdf_open):
     """Should extract, validate, and deduplicate years from page text block."""
     mock_page = MagicMock()
@@ -69,7 +69,7 @@ def test_extract_statement_years_success(mock_pdf_open):
     assert res == [2022]
 
 
-@patch("app.services.pdf_parser.pdfplumber.open")
+@patch("app.services.ingestion.pdf_parser.pdfplumber.open")
 def test_extract_statement_years_fallback(mock_pdf_open):
     """Should fall back onto the current year if no valid matching text exists."""
     mock_page = MagicMock()
@@ -87,7 +87,7 @@ def test_extract_statement_years_fallback(mock_pdf_open):
 # 3. Tests for parse_and_ingest Main Pipeline
 # ============================================================================
 
-@patch("app.services.pdf_parser.StatementParserService")
+@patch("app.services.ingestion.pdf_parser.StatementParserService")
 def test_parse_and_ingest_missing_regex_raises(mock_parser_service):
     """Guard clause test: Should abort with a 400 error if account lacks custom configuration settings."""
     mock_db = MagicMock()
@@ -134,8 +134,8 @@ def test_parse_and_ingest_successful_flow():
     mock_pdf = MagicMock()
     mock_pdf.pages = [mock_page]
 
-    with patch("app.services.pdf_parser.StatementParserService") as mock_parser_service, \
-         patch("app.services.pdf_parser.pdfplumber.open") as mock_pdf_open:
+    with patch("app.services.ingestion.pdf_parser.StatementParserService") as mock_parser_service, \
+         patch("app.services.ingestion.pdf_parser.pdfplumber.open") as mock_pdf_open:
 
         mock_parser_service.get_account_bank_config.return_value = {
             "mappings": {
@@ -159,8 +159,8 @@ def test_parse_and_ingest_successful_flow():
     mock_db.commit.assert_called_once()
 
 
-@patch("app.services.pdf_parser.pdfplumber.open")
-@patch("app.services.pdf_parser.StatementParserService")
+@patch("app.services.ingestion.pdf_parser.pdfplumber.open")
+@patch("app.services.ingestion.pdf_parser.StatementParserService")
 def test_parse_and_ingest_skips_duplicates(mock_parser_service, mock_pdf_open):
     """Duplicate Check: Should identify record hashes already present in DB and skip addition."""
     mock_db = MagicMock()

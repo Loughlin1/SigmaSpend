@@ -16,7 +16,7 @@ logger = logging.getLogger("sigmaspend")
 from app.core.config import settings
 from app.database.session import SessionLocal, engine, Base
 from app.database.seeder import seed_database_if_empty
-from app.api.endpoints import ingestion, expenses, categories, rules, accounts, banks, logs, budgets, income, bucket_budgets, holidays, backup
+from app.api.endpoints import upload, expenses, categories, rules, accounts, banks, logs, budgets, income, bucket_budgets, holidays, backup
 from app.services.backup import run_backup
 # Import models to ensure they're registered with Base.metadata
 from app.models.bank_account import BankAccount
@@ -205,7 +205,7 @@ def read_root():
     return {"message": "Welcome to the SigmaSpend Backend API. Visit /docs for OpenAPI specs."}
 
 # Bind router endpoints
-app.include_router(ingestion.router, prefix=settings.API_V1_STR, tags=["Ingestion Module"])
+app.include_router(upload.router, prefix=f"{settings.API_V1_STR}/upload", tags=["Upload"])
 app.include_router(accounts.router, prefix=f"{settings.API_V1_STR}/accounts", tags=["Accounts Module"])
 app.include_router(expenses.router, prefix=f"{settings.API_V1_STR}/expenses", tags=["Expenses Module"])
 app.include_router(categories.router, prefix=f"{settings.API_V1_STR}/categories", tags=["categories"])

@@ -5,12 +5,10 @@ from pydantic import BaseModel, condecimal
 from sqlalchemy.orm import Session
 
 from app.api import deps
-from app.models.bucket_budget import BucketBudget as BucketBudgetModel
+from app.services.bucket_budget import BucketBudgetService
 
 logger = logging.getLogger("sigmaspend")
 router = APIRouter()
-
-VALID_KEYS = {"50_needs", "30_wants", "20_savings"}
 
 
 class BucketBudgetUpsert(BaseModel):
@@ -26,30 +24,19 @@ class BucketBudgetResponse(BaseModel):
 
 @router.get("/", response_model=List[BucketBudgetResponse])
 def get_bucket_budgets(db: Session = Depends(deps.get_db)):
-    return db.query(BucketBudgetModel).all()
+    return BucketBudgetService.list_all(db)
 
 
 @router.put("/{bucket_key}", response_model=BucketBudgetResponse)
 def upsert_bucket_budget(bucket_key: str, payload: BucketBudgetUpsert, db: Session = Depends(deps.get_db)):
-    if bucket_key not in VALID_KEYS:
+    if not BucketBudgetService.is_valid_key(bucket_key):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid bucket key: {bucket_key}")
-    existing = db.query(BucketBudgetModel).filter(BucketBudgetModel.bucket_key == bucket_key).first()
-    if existing:
-        existing.amount = payload.amount
-        db.commit()
-        db.refresh(existing)
-        return existing
-    new = BucketBudgetModel(bucket_key=bucket_key, amount=payload.amount)
-    db.add(new)
-    db.commit()
-    db.refresh(new)
-    return new
+    return BucketBudgetService.upsert(db, bucket_key, payload.amount)
 
 
 @router.delete("/{bucket_key}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_bucket_budget(bucket_key: str, db: Session = Depends(deps.get_db)):
-    existing = db.query(BucketBudgetModel).filter(BucketBudgetModel.bucket_key == bucket_key).first()
+    existing = BucketBudgetService.get_by_key(db, bucket_key)
     if not existing:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No budget found for this bucket")
-    db.delete(existing)
-    db.commit()
+    BucketBudgetService.delete(db, existing)

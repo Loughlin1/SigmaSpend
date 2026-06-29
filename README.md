@@ -21,6 +21,7 @@ A modern local personal finance tracker.
 ---
 
 ## Screenshots
+*Data shown in these screenshots is fictional and for illustrative purposes only.*
 
 <p>
   <img src="docs/screenshots/00-import.png" width="49%" alt="Import Bank Statement" />

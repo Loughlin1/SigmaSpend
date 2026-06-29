@@ -58,7 +58,7 @@ A modern local personal finance tracker.
 
 ```
 sigmaspend/
-├── start.sh                          # One-command launcher (opens browser automatically)
+├── start.sh                          # Starts backend and frontend as background daemons
 ├── stop.sh                           # Graceful shutdown script
 │
 ├── frontend/                         # React (Vite) application
@@ -302,23 +302,20 @@ A simple `Date + Amount + Description` key is insufficient — identical transac
 
 ### Quick Start (recommended)
 
-A one-command launcher opens the backend and frontend in separate Terminal tabs and automatically opens the browser when ready:
+Run from a terminal in the repo root. Both processes start in the background and the browser opens automatically when ready:
 
 ```bash
-./start.sh
+sh start.sh
 ```
 
 To stop:
 ```bash
-./stop.sh
+sh stop.sh
 ```
 
-macOS `.app` wrappers (`SigmaSpend.app` / `SigmaSpendStop.app`) in `~/Applications/` make these accessible from Spotlight search.
-
-Shell aliases are also available after reloading your shell:
+Logs are written to `run_logs/backend.log` and `run_logs/frontend.log`. To monitor in real time:
 ```bash
-sigmaspend        # start
-sigmaspend-stop   # stop
+tail -f run_logs/backend.log
 ```
 
 ### Manual Setup

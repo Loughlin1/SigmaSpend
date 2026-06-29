@@ -2,6 +2,20 @@
 
 A modern local personal finance tracker.
 
+---
+
+## Screenshots
+
+| Financial Summaries | Budget Planner |
+|---|---|
+| ![Financial Summaries](docs/screenshots/01-analytics.png) | ![Budget Planner](docs/screenshots/02-budget-planner.png) |
+
+| Holiday Analytics | Transaction Ledger |
+|---|---|
+| ![Holiday Analytics](docs/screenshots/03-holiday-analytics.png) | ![Transaction Ledger](docs/screenshots/04-ledger.png) |
+
+![Expense Detail Sidebar](docs/screenshots/05-expense-sidebar.png)
+
 **SigmaSpend** is built with a decoupled, API-first architecture. The project is split into a **React (Vite)** frontend and a **Python (FastAPI)** backend. The name draws inspiration from the mathematical summation symbol (Σ), representing the precise aggregation of financial data.
 
 ---

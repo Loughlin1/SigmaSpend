@@ -21,3 +21,5 @@ config.yaml
 
 # Pytest
 *.coverage
+# Claude
+.claude/

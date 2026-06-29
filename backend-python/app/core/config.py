@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     PROJECT_NAME: str = "SigmaSpend API"
     API_V1_STR: str = "/api/v1"
+    APP_ENV: str = os.getenv("APP_ENV", "development")
 
     # 🌟 Becomes dynamic. Pydantic checks the environment or matching .env file first.
     DATABASE_URL: str = "sqlite:///./dev_data/sigmaspend_dev.db"

@@ -12,17 +12,39 @@ logger = logging.getLogger("sigmaspend")
 
 def seed_database_if_empty(db: Session):
     """
-    Validates if structural tables are pristine and inserts default configurations 
-    natively out of the core config.yaml specification properties.
+    In development: loads realistic example data via dev_seeder (accounts,
+    categories, rules, budgets, holidays, transactions).
+    In production: seeds structural defaults only (accounts, categories, rules)
+    from config.yaml.
     """
+    from app.core.config import settings
+
+    # ── Development: delegate entirely to the example-data seeder ────────────
+    if settings.APP_ENV == "development":
+        has_accounts = db.query(BankAccount).first() is not None
+        has_categories = db.query(Category).first() is not None
+        if has_accounts and has_categories:
+            logger.debug("[Seeder] Dev database already populated; skipping.")
+            return
+        logger.info("[Seeder] Development environment detected — loading example data...")
+        from app.database.dev_seeder import seed_dev_data
+        seed_dev_data(db)
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            logger.critical(f"[Seeder] Failed to commit dev seed data: {e}")
+        return
+
+    # ── Production: structural defaults from config.yaml ─────────────────────
     # 1. Verify if seeding is even necessary
     has_accounts = db.query(BankAccount).first() is not None
     has_categories = db.query(Category).first() is not None
     has_rules = db.query(CategoryRule).first() is not None
-    
+
     if has_accounts and has_categories and has_rules:
         logger.debug("Database already contains data; skipping seeding routine to prevent integrity conflicts.")
-        return # Database already contains data, skip seeding to avoid integrity clashes
+        return
 
     config_path = Path(__file__).parent.parent / "core" / "config.yaml"
     if not config_path.exists():

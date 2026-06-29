@@ -58,7 +58,7 @@ class TestBanksEndpoints:
     def test_missing_config_file_returns_500(self, client):
         """Test that a missing banks.yaml results in a 500 error."""
         with patch(
-            "app.api.endpoints.banks.BANKS_CONFIG_PATH",
+            "app.services.bank.BANKS_CONFIG_PATH",
             Path("/nonexistent/path/banks.yaml"),
         ):
             response = client.get("/api/v1/banks/")

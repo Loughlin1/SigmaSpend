@@ -1,6 +1,6 @@
 import logging
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, condecimal
 from sqlalchemy.orm import Session
 
@@ -29,14 +29,9 @@ def get_bucket_budgets(db: Session = Depends(deps.get_db)):
 
 @router.put("/{bucket_key}", response_model=BucketBudgetResponse)
 def upsert_bucket_budget(bucket_key: str, payload: BucketBudgetUpsert, db: Session = Depends(deps.get_db)):
-    if not BucketBudgetService.is_valid_key(bucket_key):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid bucket key: {bucket_key}")
     return BucketBudgetService.upsert(db, bucket_key, payload.amount)
 
 
-@router.delete("/{bucket_key}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{bucket_key}", status_code=204)
 def delete_bucket_budget(bucket_key: str, db: Session = Depends(deps.get_db)):
-    existing = BucketBudgetService.get_by_key(db, bucket_key)
-    if not existing:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No budget found for this bucket")
-    BucketBudgetService.delete(db, existing)
+    BucketBudgetService.delete(db, bucket_key)

@@ -10,6 +10,7 @@ from app.models.category import Category as CategoryModel
 from app.models.category_rules import CategoryRule as CategoryRuleModel
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate
 from app.services.utilities import parse_uk_date
+from app.exceptions import ExpenseNotFoundError
 
 logger = logging.getLogger("sigmaspend")
 
@@ -113,10 +114,13 @@ class ExpenseService:
         return items, total_count
 
     @staticmethod
-    def get_by_id(db: Session, expense_id: int) -> Optional[ExpenseModel]:
-        return db.query(ExpenseModel).options(
+    def get_by_id(db: Session, expense_id: int) -> ExpenseModel:
+        expense = db.query(ExpenseModel).options(
             joinedload(ExpenseModel.category_rel).joinedload(CategoryModel.parent)
         ).filter(ExpenseModel.id == expense_id).first()
+        if not expense:
+            raise ExpenseNotFoundError(f"Expense '{expense_id}' not found")
+        return expense
 
     @staticmethod
     def create_manual_expense(db: Session, expense_in: ExpenseCreate) -> ExpenseModel:
@@ -134,7 +138,8 @@ class ExpenseService:
         return db_obj
 
     @staticmethod
-    def update(db: Session, expense: ExpenseModel, expense_in: ExpenseUpdate) -> ExpenseModel:
+    def update(db: Session, expense_id: int, expense_in: ExpenseUpdate) -> ExpenseModel:
+        expense = ExpenseService.get_by_id(db, expense_id)
         update_data = expense_in.dict(exclude_unset=True)
         if "date" in update_data and update_data["date"] is not None:
             update_data["date"] = parse_uk_date(update_data["date"], logger)
@@ -145,12 +150,12 @@ class ExpenseService:
         db.add(expense)
         db.commit()
         db.refresh(expense)
-        logger.info(f"Updated fields {list(update_data.keys())} for expense ID {expense.id}")
-        return ExpenseService.get_by_id(db, expense.id)
+        logger.info(f"Updated fields {list(update_data.keys())} for expense ID {expense_id}")
+        return ExpenseService.get_by_id(db, expense_id)
 
     @staticmethod
-    def delete(db: Session, expense: ExpenseModel) -> None:
-        expense_id = expense.id
+    def delete(db: Session, expense_id: int) -> None:
+        expense = ExpenseService.get_by_id(db, expense_id)
         db.delete(expense)
         db.commit()
         logger.info(f"Permanently deleted expense ID {expense_id}")

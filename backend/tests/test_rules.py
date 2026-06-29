@@ -53,12 +53,12 @@ class TestRulesEndpoints:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_create_duplicate_rule_returns_400(self, client, category):
+    def test_create_duplicate_rule_returns_409(self, client, category):
         """Creating the same keyword+match_field pair twice returns 400."""
         payload = {"keyword": "netflix", "match_field": "description", "category_id": category.id}
         client.post("/api/v1/rules/", json=payload)
         response = client.post("/api/v1/rules/", json=payload)
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_409_CONFLICT
         assert "already exists" in response.json()["detail"].lower()
 
     def test_list_rules_returns_created(self, client, category):

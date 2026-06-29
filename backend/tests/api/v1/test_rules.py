@@ -43,7 +43,7 @@ class TestCategoryRulesEndpoints:
         client.post("/api/v1/rules/", json=payload)
 
         response = client.post("/api/v1/rules/", json=payload)
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_409_CONFLICT
         assert "already exists" in response.json()["detail"].lower()
 
     def test_list_rules_populated(self, client, test_category_id):

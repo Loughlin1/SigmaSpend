@@ -63,7 +63,7 @@ class TestCategoriesEndpoints:
         }
         response = client.post("/api/v1/categories/", json=duplicate_payload)
         
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_409_CONFLICT
         assert "already exists" in response.json()["detail"].lower()
 
     def test_list_categories_returns_created_root_category(self, client):

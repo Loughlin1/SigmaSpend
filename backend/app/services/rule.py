@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.models.category_rules import CategoryRule
 from app.models.category import Category
 from app.schemas.category_rules import CategoryRuleCreate
+from app.exceptions import CategoryNotFoundError, DuplicateRuleError, RuleNotFoundError
 
 logger = logging.getLogger("sigmaspend")
 
@@ -40,20 +41,18 @@ class RuleService:
         return items, total_count
 
     @staticmethod
-    def get_category(db: Session, category_id: int) -> Optional[Category]:
-        return db.query(Category).filter(Category.id == category_id).first()
-
-    @staticmethod
-    def find_duplicate(db: Session, keyword: str, match_field: str) -> Optional[CategoryRule]:
-        return db.query(CategoryRule).filter(
-            CategoryRule.keyword == keyword,
-            CategoryRule.match_field == match_field,
-        ).first()
-
-    @staticmethod
     def create(db: Session, rule_in: CategoryRuleCreate) -> CategoryRule:
         normalized_keyword = rule_in.keyword.strip().lower()
         target_field = rule_in.match_field.strip().lower()
+
+        if not db.query(Category).filter(Category.id == rule_in.category_id).first():
+            raise CategoryNotFoundError(f"Target category ID {rule_in.category_id} does not exist.")
+
+        if db.query(CategoryRule).filter(
+            CategoryRule.keyword == normalized_keyword,
+            CategoryRule.match_field == target_field,
+        ).first():
+            raise DuplicateRuleError("A rule for this keyword already exists.")
 
         rule_data = rule_in.dict()
         rule_data["keyword"] = normalized_keyword
@@ -74,12 +73,15 @@ class RuleService:
         ).filter(CategoryRule.id == db_obj.id).first()
 
     @staticmethod
-    def get_by_id(db: Session, rule_id: int) -> Optional[CategoryRule]:
-        return db.query(CategoryRule).filter(CategoryRule.id == rule_id).first()
+    def get_by_id(db: Session, rule_id: int) -> CategoryRule:
+        rule = db.query(CategoryRule).filter(CategoryRule.id == rule_id).first()
+        if not rule:
+            raise RuleNotFoundError(f"Rule '{rule_id}' not found")
+        return rule
 
     @staticmethod
-    def delete(db: Session, rule: CategoryRule) -> None:
-        rule_id = rule.id
+    def delete(db: Session, rule_id: int) -> None:
+        rule = RuleService.get_by_id(db, rule_id)
         db.delete(rule)
         db.commit()
         logger.info(f"Permanently deleted category rule ID {rule_id}")

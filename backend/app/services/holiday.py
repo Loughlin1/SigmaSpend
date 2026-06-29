@@ -1,11 +1,12 @@
 import logging
-from typing import List, Optional
+from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.models.holiday import Holiday as HolidayModel
 from app.models.expense import Expense as ExpenseModel
 from app.schemas.holiday import HolidayCreate, HolidayUpdate, HolidayResponse
+from app.exceptions import HolidayNotFoundError
 
 logger = logging.getLogger("sigmaspend")
 
@@ -51,11 +52,15 @@ class HolidayService:
         )
 
     @staticmethod
-    def get_by_id(db: Session, holiday_id: int) -> Optional[HolidayModel]:
-        return db.query(HolidayModel).filter(HolidayModel.id == holiday_id).first()
+    def get_by_id(db: Session, holiday_id: int) -> HolidayModel:
+        h = db.query(HolidayModel).filter(HolidayModel.id == holiday_id).first()
+        if not h:
+            raise HolidayNotFoundError(f"Holiday '{holiday_id}' not found")
+        return h
 
     @staticmethod
-    def update(db: Session, h: HolidayModel, holiday_in: HolidayUpdate) -> HolidayResponse:
+    def update(db: Session, holiday_id: int, holiday_in: HolidayUpdate) -> HolidayResponse:
+        h = HolidayService.get_by_id(db, holiday_id)
         for field, value in holiday_in.model_dump(exclude_unset=True).items():
             setattr(h, field, value)
         db.commit()
@@ -64,7 +69,8 @@ class HolidayService:
         return HolidayService._to_response(db, h)
 
     @staticmethod
-    def delete(db: Session, h: HolidayModel) -> None:
+    def delete(db: Session, holiday_id: int) -> None:
+        h = HolidayService.get_by_id(db, holiday_id)
         db.query(ExpenseModel).filter(ExpenseModel.holiday_id == h.id).update({"holiday_id": None})
         db.delete(h)
         db.commit()

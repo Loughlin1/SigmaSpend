@@ -38,7 +38,8 @@ class TestBudgetsEndpoints:
         """PUT with a category that doesn't exist returns 404."""
         response = client.put("/api/v1/budgets/9999", json={"amount": "100.00", "period": "monthly"})
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert "category not found" in response.json()["detail"].lower()
+        detail = response.json()["detail"].lower()
+        assert "category" in detail and "not found" in detail
 
     def test_upsert_invalid_period_returns_422(self, client, test_category):
         """PUT with an unknown period value returns 422."""

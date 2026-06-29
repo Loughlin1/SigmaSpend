@@ -14,7 +14,7 @@ setup_logging()
 logger = logging.getLogger("sigmaspend")
 
 from app.core.config import settings
-from app.exceptions import NotFoundError, BadRequestError
+from app.exceptions import NotFoundError, BadRequestError, ConflictError, InternalError
 from app.database.session import SessionLocal, engine, Base
 from app.database.seeder import seed_database_if_empty
 from app.api.endpoints import upload, expenses, categories, rules, accounts, banks, logs, budgets, income, bucket_budgets, holidays, backup
@@ -179,6 +179,16 @@ async def not_found_handler(request: Request, exc: NotFoundError):
 @app.exception_handler(BadRequestError)
 async def bad_request_handler(request: Request, exc: BadRequestError):
     return JSONResponse(status_code=400, content={"detail": exc.detail})
+
+
+@app.exception_handler(ConflictError)
+async def conflict_handler(request: Request, exc: ConflictError):
+    return JSONResponse(status_code=409, content={"detail": exc.detail})
+
+
+@app.exception_handler(InternalError)
+async def internal_error_handler(request: Request, exc: InternalError):
+    return JSONResponse(status_code=500, content={"detail": exc.detail})
 
 
 @app.exception_handler(RequestValidationError)

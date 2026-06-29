@@ -1,9 +1,10 @@
 import logging
-from typing import List, Optional
+from typing import List
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.models.bucket_budget import BucketBudget as BucketBudgetModel
+from app.exceptions import InvalidBucketKeyError, BucketBudgetNotFoundError
 
 logger = logging.getLogger("sigmaspend")
 
@@ -16,16 +17,10 @@ class BucketBudgetService:
         return db.query(BucketBudgetModel).all()
 
     @staticmethod
-    def is_valid_key(bucket_key: str) -> bool:
-        return bucket_key in VALID_KEYS
-
-    @staticmethod
-    def get_by_key(db: Session, bucket_key: str) -> Optional[BucketBudgetModel]:
-        return db.query(BucketBudgetModel).filter(BucketBudgetModel.bucket_key == bucket_key).first()
-
-    @staticmethod
     def upsert(db: Session, bucket_key: str, amount: Decimal) -> BucketBudgetModel:
-        existing = BucketBudgetService.get_by_key(db, bucket_key)
+        if bucket_key not in VALID_KEYS:
+            raise InvalidBucketKeyError(f"Invalid bucket key: {bucket_key}")
+        existing = db.query(BucketBudgetModel).filter(BucketBudgetModel.bucket_key == bucket_key).first()
         if existing:
             existing.amount = amount
             db.commit()
@@ -38,6 +33,9 @@ class BucketBudgetService:
         return new
 
     @staticmethod
-    def delete(db: Session, budget: BucketBudgetModel) -> None:
-        db.delete(budget)
+    def delete(db: Session, bucket_key: str) -> None:
+        existing = db.query(BucketBudgetModel).filter(BucketBudgetModel.bucket_key == bucket_key).first()
+        if not existing:
+            raise BucketBudgetNotFoundError(f"No budget found for bucket '{bucket_key}'")
+        db.delete(existing)
         db.commit()

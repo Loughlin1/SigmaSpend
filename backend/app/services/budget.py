@@ -1,10 +1,11 @@
 import logging
-from typing import List, Optional
+from typing import List
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.models.budget import Budget as BudgetModel
 from app.models.category import Category as CategoryModel
+from app.exceptions import CategoryNotFoundError, BudgetNotFoundError
 
 logger = logging.getLogger("sigmaspend")
 
@@ -15,17 +16,12 @@ class BudgetService:
         return db.query(BudgetModel).all()
 
     @staticmethod
-    def get_category(db: Session, category_id: int) -> Optional[CategoryModel]:
-        return db.query(CategoryModel).filter(CategoryModel.id == category_id).first()
-
-    @staticmethod
-    def get_by_category(db: Session, category_id: int) -> Optional[BudgetModel]:
-        return db.query(BudgetModel).filter(BudgetModel.category_id == category_id).first()
-
-    @staticmethod
     def upsert(db: Session, category_id: int, amount: Decimal, period: str) -> BudgetModel:
+        if not db.query(CategoryModel).filter(CategoryModel.id == category_id).first():
+            raise CategoryNotFoundError(f"Category '{category_id}' not found")
+
         log_payload = {"category_id": category_id, "amount": float(amount), "period": period}
-        existing = BudgetService.get_by_category(db, category_id)
+        existing = db.query(BudgetModel).filter(BudgetModel.category_id == category_id).first()
         if existing:
             existing.amount = amount
             existing.period = period
@@ -42,7 +38,10 @@ class BudgetService:
         return new_budget
 
     @staticmethod
-    def delete(db: Session, budget: BudgetModel, category_id: int) -> None:
-        db.delete(budget)
+    def delete(db: Session, category_id: int) -> None:
+        existing = db.query(BudgetModel).filter(BudgetModel.category_id == category_id).first()
+        if not existing:
+            raise BudgetNotFoundError(f"No budget found for category '{category_id}'")
+        db.delete(existing)
         db.commit()
         logger.info(f"Deleted budget for category_id={category_id}", extra={"payload": {"category_id": category_id}})

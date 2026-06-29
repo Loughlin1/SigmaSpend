@@ -28,11 +28,11 @@ class TestCategoriesEndpoints:
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json()["name"] == "Fast Food"
 
-    def test_create_duplicate_category_returns_400(self, client):
+    def test_create_duplicate_category_returns_409(self, client):
         """Creating a category with the same name twice returns 400."""
         client.post("/api/v1/categories/", json={"name": "Transport"})
         response = client.post("/api/v1/categories/", json={"name": "transport"})
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_409_CONFLICT
         assert "already exists" in response.json()["detail"].lower()
 
     def test_list_categories_returns_created(self, client):

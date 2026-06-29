@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Optional, List
 
 from app.core.logging_config import get_log_file
+from app.exceptions import InternalError
 
 
 def iter_log_lines(log_file: str) -> List[dict]:
@@ -34,7 +35,10 @@ class LogService:
         since: Optional[datetime] = None,
         limit: int = 200,
     ) -> List[dict]:
-        entries = iter_log_lines(get_log_file())
+        try:
+            entries = iter_log_lines(get_log_file())
+        except OSError as e:
+            raise InternalError(f"Could not read log file: {e}")
 
         if level:
             level_upper = level.upper()
@@ -62,5 +66,8 @@ class LogService:
 
     @staticmethod
     def get_modules() -> List[str]:
-        entries = iter_log_lines(get_log_file())
+        try:
+            entries = iter_log_lines(get_log_file())
+        except OSError as e:
+            raise InternalError(f"Could not read log file: {e}")
         return sorted({e.get("module", "") for e in entries if e.get("module")})

@@ -13,6 +13,20 @@ logger = logging.getLogger("sigmaspend")
 
 MAX_PAYLOAD_BYTES = 8 * 1024
 
+_SENSITIVE_FIELDS = {
+    "description", "amount", "monthly_net_income", "account_number",
+    "sort_code", "balance", "password", "token", "secret",
+}
+
+
+def _scrub(obj: object, depth: int = 0) -> object:
+    if depth > 5 or not isinstance(obj, dict):
+        return obj
+    return {
+        k: "***" if k.lower() in _SENSITIVE_FIELDS else _scrub(v, depth + 1)
+        for k, v in obj.items()
+    }
+
 
 def _truncate(raw: bytes) -> object:
     if len(raw) > MAX_PAYLOAD_BYTES:
@@ -75,7 +89,7 @@ def register_middleware(app: FastAPI) -> None:
 
         logger.info(
             f"📥 Incoming: {method} {path} | Client IP: {client_host}",
-            extra={"payload": request_payload, **http_extra},
+            extra={"payload": _scrub(request_payload), **http_extra},
         )
 
         try:
@@ -96,7 +110,7 @@ def register_middleware(app: FastAPI) -> None:
 
             log_msg = f"📤 Response: {method} {path} -> Status: {status_code} | Latency: {process_time:.2f}ms"
             log_level = logger.warning if status_code >= 400 else logger.info
-            log_level(log_msg, extra={"payload": response_payload, **http_extra})
+            log_level(log_msg, extra={"payload": _scrub(response_payload), **http_extra})
 
             return StarletteResponse(
                 content=response_body,
@@ -109,6 +123,6 @@ def register_middleware(app: FastAPI) -> None:
             process_time = (time.time() - start_time) * 1000
             logger.error(
                 f"💥 Pipeline Crash: {method} {path} failed after {process_time:.2f}ms | Error: {str(e)}",
-                extra={"payload": request_payload, **http_extra},
+                extra={"payload": _scrub(request_payload), **http_extra},
             )
             raise e

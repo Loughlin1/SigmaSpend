@@ -72,13 +72,13 @@ class PDFStatementParser:
                         continue
 
                     if gap_log:
-                        logger.info(f"[PDF GAPS] {reconstructed!r}")
-                        logger.info(f"[PDF GAPS] {' | '.join(gap_log)}")
+                        logger.debug(f"[PDF GAPS] {reconstructed!r}")
+                        logger.debug(f"[PDF GAPS] {' | '.join(gap_log)}")
 
                     if any(kw in reconstructed.lower() for kw in config["bypass_keywords"]):
                         continue
 
-                    logger.info(f"[PDF LINE] {reconstructed!r}")
+                    logger.debug(f"[PDF LINE] {reconstructed!r}")
 
                     match = config["row_pattern"].match(reconstructed)
                     if match:
@@ -91,7 +91,7 @@ class PDFStatementParser:
                         continuation = reconstructed.strip()
                         if continuation:
                             pending["description"] += " " + continuation
-                            logger.info(f"[PDF CONT] appended: {continuation!r}")
+                            logger.debug(f"[PDF CONT] appended: {continuation!r}")
 
                 cls._flush_pending(
                     pending, account_id, db, all_rules, category_map,
@@ -296,7 +296,7 @@ class PDFStatementParser:
 
             db.add(new_expense)
             counters["added"] += 1
-            logger.info(f"✅ [PDF] {date_string} | {description} | £{amount} | income={is_income}")
+            logger.debug(f"✅ [PDF] {date_string} | {description} | £{amount} | income={is_income}")
 
         except Exception as e:
             counters["error"] += 1

@@ -24,8 +24,5 @@ class IncomeService:
         row.monthly_net_income = monthly_net_income
         db.commit()
         db.refresh(row)
-        logger.info(
-            f"Updated monthly net income to £{monthly_net_income}",
-            extra={"payload": {"monthly_net_income": float(monthly_net_income)}},
-        )
+        logger.info("Updated monthly net income")
         return row

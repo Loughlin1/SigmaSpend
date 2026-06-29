@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     API_KEY: str = "dev-insecure-key"
 
     # CORS — comma-separated list of allowed origins
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:5174"]
+    ALLOWED_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:5174", "http://localhost:8101"]
 
     # Logging — LOG_FORMAT controls console output only; file is always JSON
     LOG_FORMAT: str = "json"

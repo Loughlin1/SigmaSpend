@@ -340,7 +340,7 @@ make migrate-prod # run Alembic migrations on prod DB
 make test         # run pytest suite
 ```
 
-Interactive API docs: `http://localhost:8000/docs`
+Interactive API docs: `http://localhost:8100/docs`
 
 **Frontend:**
 ```bash
@@ -349,7 +349,7 @@ npm install
 npm run dev
 ```
 
-App: `http://localhost:5173`
+App: `http://localhost:5173` (dev) / `http://localhost:8101` (preview)
 
 ---
 
@@ -361,7 +361,7 @@ Backups are stored alongside the database file in a `backups/` subdirectory.
 
 A manual backup can be triggered from the **Configuration → Database Backups** panel in the UI, or via:
 ```bash
-curl -X POST http://localhost:8000/api/v1/backup/trigger
+curl -X POST http://localhost:8100/api/v1/backup/trigger
 ```
 
 ---

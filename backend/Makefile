@@ -50,7 +50,7 @@ install: venv
 
 run-dev:
 	@echo "[Runtime] Launching SigmaSpend FastAPI Core Server [DEVELOPMENT]..."
-	APP_ENV=development $(UVICORN) app.main:app --host 127.0.0.1 --port 8000 --reload
+	APP_ENV=development $(UVICORN) app.main:app --host 127.0.0.1 --port 8100 --reload
 
 migrate-dev:
 	@echo "[Migration] Running database upgrades [DEVELOPMENT]..."
@@ -68,7 +68,7 @@ db-reset-dev:
 run-prod:
 	@echo "[Runtime] Launching SigmaSpend FastAPI Core Server [PRODUCTION]..."
 	# Dropped --reload flag for deployment resource optimization
-	APP_ENV=production $(UVICORN) app.main:app --host 127.0.0.1 --port 8000
+	APP_ENV=production $(UVICORN) app.main:app --host 127.0.0.1 --port 8100
 
 migrate-prod:
 	@echo "[Migration] Running secure database upgrades [PRODUCTION]..."

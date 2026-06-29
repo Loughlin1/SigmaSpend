@@ -3,7 +3,7 @@
  * take-screenshots.js
  *
  * Captures README-quality screenshots of the SigmaSpend app.
- * Requires the backend (port 8000) and frontend (port 5173) to already be running.
+ * Requires the backend (port 8100) and frontend (port 5173 dev / 8101 preview) to already be running.
  *
  * Usage (from repo root):
  *   node scripts/take-screenshots.js
@@ -19,7 +19,7 @@ const OUT_DIR = path.join(__dirname, "..", "docs", "screenshots");
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
 const VIEWPORT = { width: 1440, height: 900 };
-const BASE_URL = "http://localhost:5173";
+const BASE_URL = "http://localhost:8101";
 
 async function save(page, name) {
   const file = path.join(OUT_DIR, `${name}.png`);

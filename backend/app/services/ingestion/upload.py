@@ -5,6 +5,7 @@ from typing import List
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.bank_account import BankAccount
 from app.exceptions import AccountNotFoundError, AccountInactiveError, InvalidFileFormatError
 from app.services.ingestion.parser import StatementParserService
@@ -52,12 +53,20 @@ class UploadService:
             filename_lower = file.filename.lower()
 
             if filename_lower.endswith(".csv"):
-                contents = await file.read()
+                contents = await file.read(settings.MAX_UPLOAD_BYTES + 1)
+                if len(contents) > settings.MAX_UPLOAD_BYTES:
+                    raise InvalidFileFormatError(
+                        f"File '{file.filename}' exceeds the maximum allowed size of {settings.MAX_UPLOAD_BYTES // (1024 * 1024)} MB."
+                    )
                 result = StatementParserService.process_csv(
                     contents.decode("utf-8"), db, account_id=account_id
                 )
             elif filename_lower.endswith(".pdf"):
-                file_bytes = await file.read()
+                file_bytes = await file.read(settings.MAX_UPLOAD_BYTES + 1)
+                if len(file_bytes) > settings.MAX_UPLOAD_BYTES:
+                    raise InvalidFileFormatError(
+                        f"File '{file.filename}' exceeds the maximum allowed size of {settings.MAX_UPLOAD_BYTES // (1024 * 1024)} MB."
+                    )
                 result = PDFStatementParser.parse_and_ingest(
                     io.BytesIO(file_bytes), db, account_id=account_id, logger=logger
                 )

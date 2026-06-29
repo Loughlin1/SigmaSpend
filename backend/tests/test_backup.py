@@ -30,7 +30,8 @@ class TestBackupEndpoints:
         data = response.json()
         assert "message" in data
         assert "Backup created" in data["message"]
-        assert "path" in data
+        assert "filename" in data
+        assert "path" not in data
 
     def test_trigger_backup_calls_run_backup_with_db_url(self, client):
         """POST /backup/trigger passes DATABASE_URL to run_backup."""

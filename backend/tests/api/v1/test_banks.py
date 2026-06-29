@@ -63,4 +63,4 @@ class TestBanksEndpoints:
         ):
             response = client.get("/api/v1/banks/")
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert "missing" in response.json()["detail"].lower()
+        assert "internal error" in response.json()["detail"].lower()

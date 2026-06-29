@@ -4,6 +4,7 @@ import time
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from starlette.responses import Response as StarletteResponse
 
 from app.core.config import settings
@@ -23,10 +24,23 @@ def _truncate(raw: bytes) -> object:
         return raw.decode("utf-8", errors="replace")
 
 
+MAX_REQUEST_BYTES = 50 * 1024 * 1024  # 50 MB overall request cap
+
+
 def register_middleware(app: FastAPI) -> None:
+    @app.middleware("http")
+    async def limit_request_size(request: Request, call_next):
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > MAX_REQUEST_BYTES:
+            return JSONResponse(
+                status_code=413,
+                content={"detail": f"Request body too large. Maximum allowed size is {MAX_REQUEST_BYTES // (1024 * 1024)} MB."},
+            )
+        return await call_next(request)
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173", "http://localhost:5174"],
+        allow_origins=settings.ALLOWED_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

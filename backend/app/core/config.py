@@ -1,13 +1,20 @@
 import os
+from typing import List, Literal
 from pydantic_settings import BaseSettings
+
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "SigmaSpend API"
     API_V1_STR: str = "/api/v1"
-    APP_ENV: str = os.getenv("APP_ENV", "development")
+    APP_ENV: Literal["development", "production", "test"] = "development"
 
-    # 🌟 Becomes dynamic. Pydantic checks the environment or matching .env file first.
     DATABASE_URL: str = "sqlite:///./dev_data/sigmaspend_dev.db"
+
+    # API key — set a strong random value in .env.production
+    API_KEY: str = "dev-insecure-key"
+
+    # CORS — comma-separated list of allowed origins
+    ALLOWED_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:5174"]
 
     # Logging — LOG_FORMAT controls console output only; file is always JSON
     LOG_FORMAT: str = "json"
@@ -20,10 +27,12 @@ class Settings(BaseSettings):
     LOG_LEVEL_INGESTION: str = "INFO"
     LOG_LEVEL_ANALYTICS: str = "INFO"
 
+    # File upload — max size per file in bytes (default 20 MB)
+    MAX_UPLOAD_BYTES: int = 20 * 1024 * 1024
+
     class Config:
         case_sensitive = True
-        # 🔄 Tell Pydantic to look for a specific .env file based on APP_ENV flag
-        # Defaults to '.env.development' if APP_ENV is not explicitly set in your terminal
         env_file = f".env.{os.getenv('APP_ENV', 'development')}"
+
 
 settings = Settings()

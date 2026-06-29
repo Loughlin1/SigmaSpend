@@ -16,6 +16,7 @@ from fastapi.testclient import TestClient
 from app.database.session import Base
 from app.main import app
 from app.api.deps import get_db
+from app.core.config import settings
 
 from app.models.bank_account import BankAccount
 from app.models.expense import Expense
@@ -49,7 +50,7 @@ def client(db_session: Session) -> TestClient:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
-    client = TestClient(app)
+    client = TestClient(app, headers={"X-API-Key": settings.API_KEY})
     yield client
     app.dependency_overrides.clear()
 

@@ -1,7 +1,7 @@
 # backend/app/main.py
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, status
+from fastapi import Depends, FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -14,6 +14,7 @@ logger = logging.getLogger("sigmaspend")
 from app.core.config import settings
 from app.exceptions import NotFoundError, BadRequestError, ConflictError, InternalError
 from app.middleware import register_middleware
+from app.api.deps import require_api_key
 from app.database.session import SessionLocal, engine, Base
 from app.database.seeder import seed_database_if_empty
 from app.api.endpoints import upload, expenses, categories, rules, accounts, banks, logs, budgets, income, bucket_budgets, holidays, backup
@@ -65,7 +66,15 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown(wait=False)
     logger.info("[Shutdown] Backup scheduler stopped.")
 
-app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
+_docs_url = None if settings.APP_ENV == "production" else "/docs"
+_redoc_url = None if settings.APP_ENV == "production" else "/redoc"
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    lifespan=lifespan,
+    docs_url=_docs_url,
+    redoc_url=_redoc_url,
+)
 
 register_middleware(app)
 
@@ -87,7 +96,8 @@ async def conflict_handler(request: Request, exc: ConflictError):
 
 @app.exception_handler(InternalError)
 async def internal_error_handler(request: Request, exc: InternalError):
-    return JSONResponse(status_code=500, content={"detail": exc.detail})
+    logger.error(f"Internal error on {request.method} {request.url.path}: {exc.detail}")
+    return JSONResponse(status_code=500, content={"detail": "An internal error occurred. Please try again later."})
 
 
 @app.exception_handler(RequestValidationError)
@@ -124,16 +134,18 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 def read_root():
     return {"message": "Welcome to the SigmaSpend Backend API. Visit /docs for OpenAPI specs."}
 
-# Bind router endpoints
-app.include_router(upload.router, prefix=f"{settings.API_V1_STR}/upload", tags=["Upload"])
-app.include_router(accounts.router, prefix=f"{settings.API_V1_STR}/accounts", tags=["Accounts Module"])
-app.include_router(expenses.router, prefix=f"{settings.API_V1_STR}/expenses", tags=["Expenses Module"])
-app.include_router(categories.router, prefix=f"{settings.API_V1_STR}/categories", tags=["categories"])
-app.include_router(rules.router, prefix=f"{settings.API_V1_STR}/rules", tags=["Rules Engine"])
-app.include_router(banks.router, prefix=f"{settings.API_V1_STR}/banks", tags=["Banks"])
-app.include_router(logs.router, prefix=settings.API_V1_STR, tags=["Logs"])
-app.include_router(budgets.router, prefix=f"{settings.API_V1_STR}/budgets", tags=["Budgets"])
-app.include_router(bucket_budgets.router, prefix=f"{settings.API_V1_STR}/bucket-budgets", tags=["Bucket Budgets"])
-app.include_router(income.router, prefix=f"{settings.API_V1_STR}/income", tags=["Income"])
-app.include_router(holidays.router, prefix=f"{settings.API_V1_STR}/holidays", tags=["Holidays"])
-app.include_router(backup.router, prefix=f"{settings.API_V1_STR}/backup", tags=["Backup"])
+# Bind router endpoints — all routes require a valid X-API-Key header
+_auth = {"dependencies": [Depends(require_api_key)]}
+
+app.include_router(upload.router, prefix=f"{settings.API_V1_STR}/upload", tags=["Upload"], **_auth)
+app.include_router(accounts.router, prefix=f"{settings.API_V1_STR}/accounts", tags=["Accounts Module"], **_auth)
+app.include_router(expenses.router, prefix=f"{settings.API_V1_STR}/expenses", tags=["Expenses Module"], **_auth)
+app.include_router(categories.router, prefix=f"{settings.API_V1_STR}/categories", tags=["categories"], **_auth)
+app.include_router(rules.router, prefix=f"{settings.API_V1_STR}/rules", tags=["Rules Engine"], **_auth)
+app.include_router(banks.router, prefix=f"{settings.API_V1_STR}/banks", tags=["Banks"], **_auth)
+app.include_router(logs.router, prefix=settings.API_V1_STR, tags=["Logs"], **_auth)
+app.include_router(budgets.router, prefix=f"{settings.API_V1_STR}/budgets", tags=["Budgets"], **_auth)
+app.include_router(bucket_budgets.router, prefix=f"{settings.API_V1_STR}/bucket-budgets", tags=["Bucket Budgets"], **_auth)
+app.include_router(income.router, prefix=f"{settings.API_V1_STR}/income", tags=["Income"], **_auth)
+app.include_router(holidays.router, prefix=f"{settings.API_V1_STR}/holidays", tags=["Holidays"], **_auth)
+app.include_router(backup.router, prefix=f"{settings.API_V1_STR}/backup", tags=["Backup"], **_auth)

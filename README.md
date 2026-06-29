@@ -80,19 +80,22 @@ sigmaspend/
 │
 └── backend/                   # FastAPI backend
     ├── app/
-    │   ├── main.py                   # App entrypoint, router registration, scheduler startup
+    │   ├── main.py                   # App entrypoint, exception handlers, router registration, scheduler startup
+    │   ├── middleware.py             # CORS + HTTP request/response logging middleware
+    │   ├── exceptions.py             # Domain exception hierarchy (NotFoundError, ConflictError, etc.)
     │   ├── api/endpoints/
     │   │   ├── accounts.py           # Bank account CRUD
     │   │   ├── backup.py             # Backup trigger and list
+    │   │   ├── banks.py              # Bank profile list (from banks.yaml)
     │   │   ├── budgets.py            # Budget limits per category
     │   │   ├── bucket_budgets.py     # Per-bucket (Needs/Wants/Savings) budget limits
     │   │   ├── categories.py         # Category management
     │   │   ├── expenses.py           # Expense CRUD, bulk actions, analytics
     │   │   ├── holidays.py           # Holiday CRUD
     │   │   ├── income.py             # Monthly net income setting
-    │   │   ├── ingestion.py          # CSV / PDF statement upload
     │   │   ├── logs.py               # Log file browser
-    │   │   └── rules.py              # Automation rule engine
+    │   │   ├── rules.py              # Automation rule engine
+    │   │   └── upload.py             # CSV / PDF statement upload
     │   ├── core/
     │   │   ├── config.py             # Environment config (pydantic-settings)
     │   │   └── logging_config.py     # Structured JSON logging
@@ -102,13 +105,24 @@ sigmaspend/
     │   ├── models/                   # SQLAlchemy ORM models
     │   ├── schemas/                  # Pydantic request/response schemas
     │   └── services/
+    │       ├── account.py            # Bank account business logic
     │       ├── analytics.py          # Multi-tier aggregation queries
     │       ├── backup.py             # SQLite backup (safe live copy + pruning)
-    │       ├── classifier.py         # Rule-based + Ollama AI categorisation
+    │       ├── bank.py               # Bank profile loader (banks.yaml)
+    │       ├── bucket_budget.py      # Bucket budget logic
+    │       ├── budget.py             # Category budget logic
+    │       ├── category.py           # Category management logic
     │       ├── expense.py            # Expense query and creation logic
-    │       ├── parser.py             # CSV statement parser
-    │       ├── pdf_parser.py         # PDF spatial layout parser
-    │       └── utilities.py          # Shared helpers (date parsing etc.)
+    │       ├── holiday.py            # Holiday logic
+    │       ├── income.py             # Income settings logic
+    │       ├── log.py                # Log file reader and filter
+    │       ├── rule.py               # Automation rule logic
+    │       ├── utilities.py          # Shared helpers (date parsing etc.)
+    │       └── ingestion/            # Statement upload pipeline
+    │           ├── upload.py         # UploadService — orchestrates file ingestion
+    │           ├── parser.py         # CSV statement parser
+    │           ├── pdf_parser.py     # PDF spatial layout parser
+    │           └── classifier.py     # Rule-based + Ollama AI categorisation
     ├── alembic/                      # Database migration scripts
     ├── tests/                        # pytest test suite
     └── requirements.txt
@@ -375,7 +389,7 @@ source .venv/bin/activate && pytest --tb=short -q
 | `test_backup_service.py` | `run_backup()`, `list_backups()`, pruning |
 | `test_logs.py` | Log filtering |
 | `test_rules.py` | Rule CRUD |
-| `test_ingestion.py` | CSV/PDF parsing |
+| `test_upload.py` | CSV/PDF statement upload |
 | `test_analytics.py` | Aggregation queries |
 | `test_expense_service.py` | Core business logic |
 | `test_utilities.py` | Date parsing |

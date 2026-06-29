@@ -78,7 +78,7 @@ sigmaspend/
 │       ├── styles/                   # Global CSS
 │       └── utils/                    # Date formatters, category helpers
 │
-└── backend-python/                   # FastAPI backend
+└── backend/                   # FastAPI backend
     ├── app/
     │   ├── main.py                   # App entrypoint, router registration, scheduler startup
     │   ├── api/endpoints/
@@ -311,7 +311,7 @@ sigmaspend-stop   # stop
 
 **Backend:**
 ```bash
-cd backend-python
+cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 make run-prod     # production (no reload)
@@ -357,7 +357,7 @@ curl -X POST http://localhost:8000/api/v1/backup/trigger
 ### Backend (pytest) — 195 tests
 
 ```bash
-cd backend-python
+cd backend
 make test
 # or
 source .venv/bin/activate && pytest --tb=short -q

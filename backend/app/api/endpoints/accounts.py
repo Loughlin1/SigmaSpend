@@ -1,4 +1,4 @@
-# backend-python/app/api/endpoints/accounts.py
+# backend/app/api/endpoints/accounts.py
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session

@@ -124,7 +124,7 @@ pytest --cov=app --cov-report=xml --junitxml=junit.xml -v
 ## Troubleshooting
 
 ### "ModuleNotFoundError: No module named 'app'"
-Ensure you're running pytest from the `backend-python/` directory.
+Ensure you're running pytest from the `backend/` directory.
 
 ### Database locked errors
 This is normal when running tests in parallel. Run sequentially:

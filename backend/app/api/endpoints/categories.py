@@ -1,4 +1,4 @@
-# backend-python/app/api/endpoints/categories.py
+# backend/app/api/endpoints/categories.py
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session

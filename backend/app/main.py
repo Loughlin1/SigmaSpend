@@ -1,4 +1,4 @@
-# backend-python/app/main.py
+# backend/app/main.py
 import logging
 import time
 from contextlib import asynccontextmanager

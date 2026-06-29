@@ -2,7 +2,7 @@
 # SigmaSpend startup script
 
 REPO="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-BACKEND="$REPO/backend-python"
+BACKEND="$REPO/backend"
 FRONTEND="$REPO/frontend"
 BACKEND_PORT=8000
 FRONTEND_PORT=5173

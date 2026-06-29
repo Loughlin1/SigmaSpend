@@ -72,6 +72,12 @@ async function clickButton(page, label) {
   await page.evaluate(() => window.scrollTo(0, 0));
   await settle(page, 1000);
 
+  // ── 0. Import Bank Statement ──────────────────────────────────────────────
+  console.log("\n[0/5] Import Bank Statement");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await settle(page, 600);
+  await save(page, "00-import");
+
   // ── 1. Financial Summaries (analytics charts) ─────────────────────────────
   console.log("\n[1/5] Financial Summaries");
   await scrollToCard(page, "Financial Summaries");

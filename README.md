@@ -2,23 +2,11 @@
 
 A modern local personal finance tracker.
 
----
-
 **SigmaSpend** is built with a decoupled, API-first architecture. The project is split into a **React (Vite)** frontend and a **Python (FastAPI)** backend. The name draws inspiration from the mathematical summation symbol (Σ), representing the precise aggregation of financial data.
 
 ---
 
 ## Features
-
-| Financial Summaries | Budget Planner |
-|---|---|
-| ![Financial Summaries](docs/screenshots/01-analytics.png) | ![Budget Planner](docs/screenshots/02-budget-planner.png) |
-
-| Holiday Analytics | Transaction Ledger |
-|---|---|
-| ![Holiday Analytics](docs/screenshots/03-holiday-analytics.png) | ![Transaction Ledger](docs/screenshots/04-ledger.png) |
-
-![Expense Detail Sidebar](docs/screenshots/05-expense-sidebar.png)
 
 - **Transaction Ledger** — import CSV/PDF bank statements, manually add transactions, bulk categorise, bulk delete, bulk export to CSV
 - **Automation Rules** — keyword-based rules that auto-categorise transactions on import; re-run rules on existing data
@@ -28,6 +16,26 @@ A modern local personal finance tracker.
 - **Expense Detail Sidebar** — click any transaction description to open a detail panel; assign a holiday directly from the sidebar
 - **Database Backups** — automatic daily SQLite backups via APScheduler; manual trigger from the UI; keeps last 30 copies
 - **Logs Viewer** — structured log browser with level and module filters
+
+
+---
+
+## Screenshots
+
+<p>
+  <img src="docs/screenshots/00-import.png" width="49%" alt="Import Bank Statement" />
+  <img src="docs/screenshots/01-analytics.png" width="49%" alt="Financial Summaries" />
+</p>
+
+<p>
+  <img src="docs/screenshots/02-budget-planner.png" width="49%" alt="Budget Planner" />
+  <img src="docs/screenshots/03-holiday-analytics.png" width="49%" alt="Holiday Analytics" />
+</p>
+
+<p>
+  <img src="docs/screenshots/04-ledger.png" width="49%" alt="Transaction Ledger" />
+  <img src="docs/screenshots/05-expense-sidebar.png" width="49%" alt="Expense Detail Sidebar" />
+</p>
 
 ---
 

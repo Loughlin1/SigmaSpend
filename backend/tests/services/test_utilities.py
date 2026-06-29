@@ -4,8 +4,7 @@ Tests for the shared utility functions (parse_uk_date).
 import logging
 import datetime
 import pytest
-from fastapi import HTTPException
-
+from app.exceptions import InvalidDateError
 from app.services.utilities import parse_uk_date
 
 logger = logging.getLogger("sigmaspend_test")
@@ -42,18 +41,17 @@ class TestParseUkDate:
         result = parse_uk_date("01/02/2024", logger)
         assert result == datetime.date(2024, 2, 1)
 
-    def test_raises_http_400_for_garbage_input(self):
-        with pytest.raises(HTTPException) as exc:
+    def test_raises_invalid_date_error_for_garbage_input(self):
+        with pytest.raises(InvalidDateError) as exc:
             parse_uk_date("not-a-date", logger)
-        assert exc.value.status_code == 400
         assert "Invalid date format" in exc.value.detail
 
-    def test_raises_http_400_for_partial_date(self):
-        with pytest.raises(HTTPException):
+    def test_raises_invalid_date_error_for_partial_date(self):
+        with pytest.raises(InvalidDateError):
             parse_uk_date("2024-99-99", logger)
 
     def test_error_detail_includes_original_input(self):
         bad_value = "32/13/2024"
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(InvalidDateError) as exc:
             parse_uk_date(bad_value, logger)
         assert bad_value in exc.value.detail

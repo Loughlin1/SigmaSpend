@@ -4,7 +4,7 @@ import hashlib
 from io import StringIO
 from collections import defaultdict
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
+from app.exceptions import AccountNotFoundError, MissingBankConfigError
 from dateutil import parser as date_parser
 from typing import List, Dict, Any, Tuple, Optional
 
@@ -24,9 +24,8 @@ class StatementParserService:
         account = db.query(BankAccount).filter(BankAccount.id == account_id).first()
         if not account:
             logger.error(f"[parser] Ingestion lookup failed: Account '{account_id}' does not exist.")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Bank account '{account_id}' not found. Create it first via POST /accounts"
+            raise AccountNotFoundError(
+                f"Bank account '{account_id}' not found. Create it first via POST /accounts"
             )
 
         if account.mappings is not None:
@@ -37,9 +36,8 @@ class StatementParserService:
                 "invert_amounts": account.invert_amounts,
             }
 
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Bank configuration for account '{account_id}' is missing."
+        raise MissingBankConfigError(
+            f"Bank configuration for account '{account_id}' is missing."
         )
     
     @staticmethod

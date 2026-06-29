@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
@@ -29,20 +29,10 @@ async def upload_bank_statement(
 
     UploadService.validate_extensions(files)
     UploadService.get_active_account(db, account_id)
-
-    try:
-        summary = await UploadService.process_files(files, db, account_id)
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception(f"Fatal crash inside bank statement parsing for account '{account_id}': {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while handling the files: {str(e)}",
-        )
+    summary = await UploadService.process_files(files, db, account_id)
 
     logger.info(
-        f"Ingestion finished for account '{account_id}'. "
+        f"Upload finished for account '{account_id}'. "
         f"Processed {len(files)} file(s). Summary -> Added: {summary['added']}, Skipped: {summary['skipped']}"
     )
 

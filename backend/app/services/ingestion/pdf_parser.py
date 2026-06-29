@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime, date
 from typing import List, Optional, Tuple
 
-from fastapi import HTTPException, status
+from app.exceptions import MissingParserConfigError
 import pdfplumber
 from sqlalchemy.orm import Session
 
@@ -119,9 +119,8 @@ class PDFStatementParser:
 
         custom_regex_str = mappings.get("pdf_regex")
         if not custom_regex_str:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="PDF parsing rules are missing for this account. Please update configurations.",
+            raise MissingParserConfigError(
+                "PDF parsing rules are missing for this account. Please update configurations."
             )
 
         bypass_keywords = [

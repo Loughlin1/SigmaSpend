@@ -2,10 +2,11 @@ import io
 import logging
 from typing import List
 
-from fastapi import UploadFile, HTTPException, status
+from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from app.models.bank_account import BankAccount
+from app.exceptions import AccountNotFoundError, AccountInactiveError, InvalidFileFormatError
 from app.services.ingestion.parser import StatementParserService
 from app.services.ingestion.pdf_parser import PDFStatementParser
 
@@ -22,26 +23,21 @@ class UploadService:
                 ext = file.filename.lower()
                 if not any(ext.endswith(e) for e in SUPPORTED_EXTENSIONS):
                     logger.warning(f"Rejected file entry due to invalid extension: '{file.filename}'")
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Invalid file format for '{file.filename}'. Only CSV and PDF files are supported.",
+                    raise InvalidFileFormatError(
+                        f"Invalid file format for '{file.filename}'. Only CSV and PDF files are supported."
                     )
 
     @staticmethod
     def get_active_account(db: Session, account_id: int) -> BankAccount:
         account = db.query(BankAccount).filter(BankAccount.id == account_id).first()
         if not account:
-            logger.warning(f"Ingestion rejected: Bank account '{account_id}' does not exist.")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Bank account '{account_id}' not found. Create it first via POST /accounts",
+            logger.warning(f"Upload rejected: Bank account '{account_id}' does not exist.")
+            raise AccountNotFoundError(
+                f"Bank account '{account_id}' not found. Create it first via POST /accounts"
             )
         if account.is_active is False:
-            logger.warning(f"Ingestion rejected: Bank account '{account_id}' is inactive.")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Account '{account_id}' is inactive",
-            )
+            logger.warning(f"Upload rejected: Bank account '{account_id}' is inactive.")
+            raise AccountInactiveError(f"Account '{account_id}' is inactive")
         return account
 
     @staticmethod
@@ -66,13 +62,10 @@ class UploadService:
                     io.BytesIO(file_bytes), db, account_id=account_id, logger=logger
                 )
             else:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Filename extension {file.filename} not supported",
-                )
+                raise InvalidFileFormatError(f"File extension not supported: '{file.filename}'")
 
             logger.info(
-                f"File '{file.filename}' ingestion metrics -> "
+                f"File '{file.filename}' metrics -> "
                 f"Added: {result.get('added', 0)}, Skipped: {result.get('skipped', 0)}, "
                 f"Errors: {result.get('errors', 0)}"
             )

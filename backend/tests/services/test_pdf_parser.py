@@ -4,7 +4,7 @@ import pytest
 import logging
 from unittest.mock import MagicMock, patch
 from datetime import date, datetime
-from fastapi import HTTPException
+from app.exceptions import MissingParserConfigError
 
 from app.services.ingestion.pdf_parser import PDFStatementParser
 from app.models.expense import Expense
@@ -95,10 +95,9 @@ def test_parse_and_ingest_missing_regex_raises(mock_parser_service):
         "mappings": {}  
     }
 
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(MissingParserConfigError) as exc_info:
         PDFStatementParser.parse_and_ingest(io.BytesIO(b"dummy"), mock_db, account_id=1, logger=logger)
 
-    assert exc_info.value.status_code == 400
     assert "PDF parsing rules are missing for this account" in exc_info.value.detail
 
 

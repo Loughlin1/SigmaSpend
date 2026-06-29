@@ -32,7 +32,7 @@ class TestLogsEndpoints:
         """GET /logs returns entries from the log file."""
         log_file = _make_log_file(SAMPLE_ENTRIES)
         try:
-            with patch("app.api.endpoints.logs.get_log_file", return_value=log_file):
+            with patch("app.services.log.get_log_file", return_value=log_file):
                 response = client.get("/api/v1/logs")
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
@@ -46,7 +46,7 @@ class TestLogsEndpoints:
         """GET /logs?level=ERROR returns only ERROR-level entries."""
         log_file = _make_log_file(SAMPLE_ENTRIES)
         try:
-            with patch("app.api.endpoints.logs.get_log_file", return_value=log_file):
+            with patch("app.services.log.get_log_file", return_value=log_file):
                 response = client.get("/api/v1/logs?level=ERROR")
             data = response.json()
             assert data["total"] == 1
@@ -58,7 +58,7 @@ class TestLogsEndpoints:
         """GET /logs?module=db returns only entries whose module contains 'db'."""
         log_file = _make_log_file(SAMPLE_ENTRIES)
         try:
-            with patch("app.api.endpoints.logs.get_log_file", return_value=log_file):
+            with patch("app.services.log.get_log_file", return_value=log_file):
                 response = client.get("/api/v1/logs?module=db")
             data = response.json()
             assert data["total"] == 1
@@ -70,7 +70,7 @@ class TestLogsEndpoints:
         """GET /logs?limit=1 returns at most one entry."""
         log_file = _make_log_file(SAMPLE_ENTRIES)
         try:
-            with patch("app.api.endpoints.logs.get_log_file", return_value=log_file):
+            with patch("app.services.log.get_log_file", return_value=log_file):
                 response = client.get("/api/v1/logs?limit=1")
             data = response.json()
             assert len(data["entries"]) == 1
@@ -79,7 +79,7 @@ class TestLogsEndpoints:
 
     def test_get_logs_returns_empty_when_file_missing(self, client):
         """GET /logs with a non-existent log file returns 0 entries."""
-        with patch("app.api.endpoints.logs.get_log_file", return_value="/nonexistent/path/app.log"):
+        with patch("app.services.log.get_log_file", return_value="/nonexistent/path/app.log"):
             response = client.get("/api/v1/logs")
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["total"] == 0
@@ -88,7 +88,7 @@ class TestLogsEndpoints:
         """GET /logs response includes the applied filters."""
         log_file = _make_log_file(SAMPLE_ENTRIES)
         try:
-            with patch("app.api.endpoints.logs.get_log_file", return_value=log_file):
+            with patch("app.services.log.get_log_file", return_value=log_file):
                 response = client.get("/api/v1/logs?level=INFO&limit=10")
             data = response.json()
             assert data["filters"]["level"] == "INFO"
@@ -111,7 +111,7 @@ class TestLogsEndpoints:
         """GET /logs/modules returns distinct modules from the log file."""
         log_file = _make_log_file(SAMPLE_ENTRIES)
         try:
-            with patch("app.api.endpoints.logs.get_log_file", return_value=log_file):
+            with patch("app.services.log.get_log_file", return_value=log_file):
                 response = client.get("/api/v1/logs/modules")
             assert response.status_code == status.HTTP_200_OK
             modules = response.json()["modules"]
@@ -122,7 +122,7 @@ class TestLogsEndpoints:
 
     def test_get_log_modules_empty_when_no_log_file(self, client):
         """GET /logs/modules returns empty list when log file is missing."""
-        with patch("app.api.endpoints.logs.get_log_file", return_value="/nonexistent/path/app.log"):
+        with patch("app.services.log.get_log_file", return_value="/nonexistent/path/app.log"):
             response = client.get("/api/v1/logs/modules")
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["modules"] == []

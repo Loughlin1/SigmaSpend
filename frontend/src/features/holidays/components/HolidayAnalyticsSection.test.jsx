@@ -84,6 +84,29 @@ describe('HolidayAnalyticsSection', () => {
     await waitFor(() => expect(screen.getAllByText('£300.00').length).toBeGreaterThan(0));
   });
 
+  it('nets a reimbursement against its expense even when they fall on different days (grouped by day)', async () => {
+    // The flight was paid for on one day and the reimbursement landed on a later day, so the
+    // analytics endpoint (grouped by day) returns them as two separate rows for the same category.
+    holidaysApi.getSummary.mockResolvedValueOnce([
+      { period: '2024-07-01', type: 'category', category_name: 'Flights', parent_name: null, total_income: 0, total_expenses: 400, net: -400 },
+      { period: '2024-07-10', type: 'category', category_name: 'Flights', parent_name: null, total_income: 400, total_expenses: 0, net: 400 },
+    ]);
+    render(<HolidayAnalyticsSection holidays={HOLIDAYS_WITH_EXPENSES} />);
+    fireEvent.click(screen.getByText('Holiday Summaries'));
+    await waitFor(() => expect(screen.getByText(/No expenses linked/i)).toBeInTheDocument());
+    expect(screen.queryByText(/Flights/)).not.toBeInTheDocument();
+  });
+
+  it('nets a partial reimbursement across different days for the same category', async () => {
+    holidaysApi.getSummary.mockResolvedValueOnce([
+      { period: '2024-07-01', type: 'category', category_name: 'Flights', parent_name: null, total_income: 0, total_expenses: 400, net: -400 },
+      { period: '2024-07-10', type: 'category', category_name: 'Flights', parent_name: null, total_income: 150, total_expenses: 0, net: 150 },
+    ]);
+    render(<HolidayAnalyticsSection holidays={HOLIDAYS_WITH_EXPENSES} />);
+    fireEvent.click(screen.getByText('Holiday Summaries'));
+    await waitFor(() => expect(screen.getAllByText('£250.00').length).toBeGreaterThan(0));
+  });
+
   it('hides a category whose income fully offsets its expenses', async () => {
     holidaysApi.getSummary.mockResolvedValueOnce([
       { period: '2024-07', type: 'category', category_name: 'Accommodation', parent_name: null, total_income: 500, total_expenses: 500, net: 0 },

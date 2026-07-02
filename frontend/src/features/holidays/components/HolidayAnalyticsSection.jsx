@@ -74,22 +74,27 @@ function HolidayCard({ holiday, onViewTransactions }) {
   // Net spend per row: expenses minus any income (e.g. reimbursements) logged against the same category.
   const netSpend = (r) => -parseFloat(r.net || 0);
 
-  // Process summary rows
-  const subRows = (summary || []).filter(r => r.type === 'subcategory' && netSpend(r) > 0);
-  const parentRows = (summary || []).filter(r => r.type === 'category' && r.category_name !== 'Uncategorized' && netSpend(r) > 0);
+  // The summary is grouped by day, so a reimbursement received on a different date than its
+  // expense lands in its own row. Aggregate net spend across ALL date rows per category first —
+  // only then decide whether the category nets out to a positive spend. Filtering row-by-row
+  // before aggregating would silently drop reimbursements that fall in a different period.
+  const allSubRows = (summary || []).filter(r => r.type === 'subcategory');
+  const allParentRows = (summary || []).filter(r => r.type === 'category' && r.category_name !== 'Uncategorized');
 
-  // Aggregate subcategories across all periods
-  const subMap = {};
-  subRows.forEach(r => {
+  const subTotals = {};
+  allSubRows.forEach(r => {
     const label = r.parent_name && r.parent_name !== r.category_name ? `${r.parent_name} › ${r.category_name}` : r.category_name;
-    subMap[label] = (subMap[label] || 0) + netSpend(r);
+    subTotals[label] = (subTotals[label] || 0) + netSpend(r);
   });
 
-  // Compute direct (parent − its subcategory sum) to catch expenses assigned to parent category itself
-  const parentTotals = {};
-  parentRows.forEach(r => { parentTotals[r.category_name] = (parentTotals[r.category_name] || 0) + netSpend(r); });
+  const parentTotalsRaw = {};
+  allParentRows.forEach(r => { parentTotalsRaw[r.category_name] = (parentTotalsRaw[r.category_name] || 0) + netSpend(r); });
   const subByParent = {};
-  subRows.forEach(r => { if (r.parent_name) subByParent[r.parent_name] = (subByParent[r.parent_name] || 0) + netSpend(r); });
+  allSubRows.forEach(r => { if (r.parent_name) subByParent[r.parent_name] = (subByParent[r.parent_name] || 0) + netSpend(r); });
+
+  // Only show categories/subcategories that are still a net spend once every period is combined
+  const subMap = Object.fromEntries(Object.entries(subTotals).filter(([, v]) => v > 0.01));
+  const parentTotals = Object.fromEntries(Object.entries(parentTotalsRaw).filter(([, v]) => v > 0.01));
 
   const directEntries = Object.entries(parentTotals)
     .map(([name, total]) => { const direct = total - (subByParent[name] || 0); return direct > 0.01 ? [`${name} (Direct)`, direct] : null; })

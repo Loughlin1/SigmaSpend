@@ -32,6 +32,7 @@ export default function LedgerRowRead({
         return expDate >= start && expDate <= end;
       })
     : null;
+  const assignedHoliday = expense.holiday_id ? holidays.find(h => h.id === expense.holiday_id) : null;
 
   return (
     <tr style={{ background: isChecked ? '#f7fafc' : 'transparent' }}>
@@ -69,7 +70,7 @@ export default function LedgerRowRead({
         {expense.description}
         {expense.holiday_name && (
           <span title={expense.holiday_name} style={{ marginLeft: '0.4rem', fontSize: '0.72rem', background: '#ebf8ff', color: '#2b6cb0', borderRadius: '4px', padding: '0.1rem 0.35rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
-            ✈️ {expense.holiday_name}
+            {assignedHoliday?.flag || '✈️'} {expense.holiday_name}
           </span>
         )}
         {suggestedHoliday && (

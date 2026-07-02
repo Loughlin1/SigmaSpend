@@ -50,7 +50,8 @@ class ExpenseService:
         holiday_id: Optional[int] = None,
     ) -> Tuple[List[ExpenseModel], int]:
         query = db.query(ExpenseModel).options(
-            joinedload(ExpenseModel.category_rel).joinedload(CategoryModel.parent)
+            joinedload(ExpenseModel.category_rel).joinedload(CategoryModel.parent),
+            joinedload(ExpenseModel.holiday_rel),
         )
 
         if category:
@@ -116,7 +117,8 @@ class ExpenseService:
     @staticmethod
     def get_by_id(db: Session, expense_id: int) -> ExpenseModel:
         expense = db.query(ExpenseModel).options(
-            joinedload(ExpenseModel.category_rel).joinedload(CategoryModel.parent)
+            joinedload(ExpenseModel.category_rel).joinedload(CategoryModel.parent),
+            joinedload(ExpenseModel.holiday_rel),
         ).filter(ExpenseModel.id == expense_id).first()
         if not expense:
             raise ExpenseNotFoundError(f"Expense '{expense_id}' not found")

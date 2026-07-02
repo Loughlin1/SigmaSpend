@@ -124,7 +124,7 @@ export default function BulkActionsPanel({
               <option value="">— None (unlink) —</option>
               {holidays.map(h => (
                 <option key={h.id} value={h.id}>
-                  ✈️ {h.name}{h.destination ? ` · ${h.destination}` : ''}
+                  {h.flag} {h.name}{h.destination ? ` · ${h.destination}` : ''}
                 </option>
               ))}
             </select>

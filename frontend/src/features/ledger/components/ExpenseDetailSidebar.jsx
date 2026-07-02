@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { expenseApi } from '../../../api/client';
 import { formatTransactionDate } from '../../../utils/calendarUtils';
+import { formatHolidaySpend } from '../../../utils/formatters';
 
 export default function ExpenseDetailSidebar({ expense, accountNameMap, holidays = [], onClose, onUpdated }) {
   const [selectedHolidayId, setSelectedHolidayId] = useState('');
@@ -50,6 +51,7 @@ export default function ExpenseDetailSidebar({ expense, accountNameMap, holidays
   };
 
   const selectedHoliday = holidays.find(h => String(h.id) === selectedHolidayId);
+  const holidaySpend = selectedHoliday ? formatHolidaySpend(selectedHoliday.total_spend) : null;
 
   return (
     <>
@@ -127,7 +129,8 @@ export default function ExpenseDetailSidebar({ expense, accountNameMap, holidays
                 )}
                 {selectedHoliday.expense_count > 0 && (
                   <div style={{ marginTop: '0.2rem', color: '#4a5568' }}>
-                    {selectedHoliday.expense_count} expense{selectedHoliday.expense_count !== 1 ? 's' : ''} · £{Number(selectedHoliday.total_spend).toFixed(2)} total
+                    {selectedHoliday.expense_count} expense{selectedHoliday.expense_count !== 1 ? 's' : ''} ·{' '}
+                    <span style={holidaySpend.isReimbursed ? { color: '#22543d', fontWeight: 600 } : undefined}>{holidaySpend.text}</span>
                   </div>
                 )}
               </div>

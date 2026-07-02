@@ -121,6 +121,15 @@ describe('HolidayList', () => {
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
   });
 
+  it('shows "reimbursed" instead of a negative total when income exceeds expenses', async () => {
+    const reimbursed = [
+      { id: 3, name: 'Shared Trip', destination: null, flag: null, start_date: null, end_date: null, expense_count: 2, total_spend: -150, notes: null },
+    ];
+    renderList({ holidays: reimbursed });
+    fireEvent.click(screen.getByText('Holidays & Trips'));
+    await waitFor(() => expect(screen.getByText(/£150\.00 reimbursed/)).toBeInTheDocument());
+  });
+
   it('calls onDeleteHoliday when Confirm is clicked', async () => {
     const onDeleteHoliday = vi.fn().mockResolvedValueOnce(undefined);
     renderList({ holidays: MOCK_HOLIDAYS, onDeleteHoliday });

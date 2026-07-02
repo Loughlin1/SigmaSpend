@@ -38,3 +38,19 @@ export const getCategoryDisplay = (categoryId, categories = []) => {
   
   return { icon: '❓', name: 'Uncategorized' };
 };
+
+
+/**
+ * Formats a holiday's net spend (expenses minus any linked income/reimbursements).
+ * A negative net means reimbursements exceeded expenses — phrased as "reimbursed" rather
+ * than a negative total, since "£-300.00 total" reads like an error.
+ * @param {number} totalSpend
+ * @returns {{ text: string, isReimbursed: boolean }}
+ */
+export const formatHolidaySpend = (totalSpend) => {
+  const amount = Number(totalSpend) || 0;
+  if (amount < 0) {
+    return { text: `£${Math.abs(amount).toFixed(2)} reimbursed`, isReimbursed: true };
+  }
+  return { text: `£${amount.toFixed(2)} total`, isReimbursed: false };
+};

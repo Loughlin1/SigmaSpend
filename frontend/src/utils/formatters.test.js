@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getAccountAbbreviation, getCategoryDisplay } from './formatters';
+import { getAccountAbbreviation, getCategoryDisplay, formatHolidaySpend } from './formatters';
 
 // ============================================================================
 // getAccountAbbreviation
@@ -90,5 +90,28 @@ describe('getCategoryDisplay', () => {
   it('falls back to the folder emoji when a category has no icon set', () => {
     const cats = [{ id: 5, name: 'Misc', icon: null, subcategories: [] }];
     expect(getCategoryDisplay(5, cats)).toEqual({ icon: '📁', name: 'Misc' });
+  });
+});
+
+// ============================================================================
+// formatHolidaySpend
+// ============================================================================
+
+describe('formatHolidaySpend', () => {
+  it('formats a positive spend as a normal total', () => {
+    expect(formatHolidaySpend(300)).toEqual({ text: '£300.00 total', isReimbursed: false });
+  });
+
+  it('formats zero as a normal total', () => {
+    expect(formatHolidaySpend(0)).toEqual({ text: '£0.00 total', isReimbursed: false });
+  });
+
+  it('formats a negative net (income exceeds expenses) as reimbursed, using the absolute value', () => {
+    expect(formatHolidaySpend(-300)).toEqual({ text: '£300.00 reimbursed', isReimbursed: true });
+  });
+
+  it('treats null/undefined as zero', () => {
+    expect(formatHolidaySpend(null)).toEqual({ text: '£0.00 total', isReimbursed: false });
+    expect(formatHolidaySpend(undefined)).toEqual({ text: '£0.00 total', isReimbursed: false });
   });
 });

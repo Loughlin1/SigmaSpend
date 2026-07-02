@@ -76,27 +76,36 @@ class TestHolidaysEndpoints:
         assert linked["expense_count"] == 1
         assert linked["total_spend"] == 50.0
 
-    def test_list_holidays_excludes_income_from_total(self, client, db_session, test_bank_account):
-        """Income entries linked to a holiday are not counted."""
-        holiday_resp = client.post("/api/v1/holidays/", json={"name": "Income excluded"})
+    def test_list_holidays_nets_income_against_expenses(self, client, db_session, test_bank_account):
+        """Income (e.g. a reimbursement) linked to a holiday offsets total_spend but doesn't count as an expense."""
+        holiday_resp = client.post("/api/v1/holidays/", json={"name": "Reimbursed trip"})
         holiday_id = holiday_resp.json()["id"]
 
-        income = ExpenseModel(
-            amount=1000.0,
+        expense = ExpenseModel(
+            amount=500.0,
+            is_income=False,
+            description="Hotel",
+            date=datetime.date(2024, 8, 1),
+            account_id=test_bank_account["id"],
+            holiday_id=holiday_id,
+            transaction_hash="abc123holiday2",
+        )
+        refund = ExpenseModel(
+            amount=200.0,
             is_income=True,
             description="Refund",
-            date=datetime.date(2024, 8, 1),
+            date=datetime.date(2024, 8, 2),
             account_id=test_bank_account["id"],
             holiday_id=holiday_id,
             transaction_hash="abc123income1",
         )
-        db_session.add(income)
+        db_session.add_all([expense, refund])
         db_session.flush()
 
         response = client.get("/api/v1/holidays/")
         linked = next(h for h in response.json() if h["id"] == holiday_id)
-        assert linked["expense_count"] == 0
-        assert linked["total_spend"] == 0.0
+        assert linked["expense_count"] == 1
+        assert linked["total_spend"] == 300.0
 
     def test_update_holiday_success(self, client):
         """Updating an existing holiday returns updated fields."""

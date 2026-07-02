@@ -74,4 +74,22 @@ describe('HolidayAnalyticsSection', () => {
     fireEvent.click(screen.getByText('Holiday Summaries'));
     await waitFor(() => expect(holidaysApi.getSummary).toHaveBeenCalledWith(1));
   });
+
+  it('nets income against expenses within a category (e.g. a reimbursement)', async () => {
+    holidaysApi.getSummary.mockResolvedValueOnce([
+      { period: '2024-07', type: 'category', category_name: 'Accommodation', parent_name: null, total_income: 200, total_expenses: 500, net: -300 },
+    ]);
+    render(<HolidayAnalyticsSection holidays={HOLIDAYS_WITH_EXPENSES} />);
+    fireEvent.click(screen.getByText('Holiday Summaries'));
+    await waitFor(() => expect(screen.getAllByText('£300.00').length).toBeGreaterThan(0));
+  });
+
+  it('hides a category whose income fully offsets its expenses', async () => {
+    holidaysApi.getSummary.mockResolvedValueOnce([
+      { period: '2024-07', type: 'category', category_name: 'Accommodation', parent_name: null, total_income: 500, total_expenses: 500, net: 0 },
+    ]);
+    render(<HolidayAnalyticsSection holidays={HOLIDAYS_WITH_EXPENSES} />);
+    fireEvent.click(screen.getByText('Holiday Summaries'));
+    await waitFor(() => expect(screen.getByText(/No expenses linked/i)).toBeInTheDocument());
+  });
 });

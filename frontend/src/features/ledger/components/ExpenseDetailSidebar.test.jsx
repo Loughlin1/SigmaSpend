@@ -133,6 +133,24 @@ describe('ExpenseDetailSidebar', () => {
     expect(screen.getByRole('button', { name: 'Discard' })).toBeInTheDocument();
   });
 
+  it('shows "reimbursed" instead of a negative total when a holiday\'s income exceeds its expenses', async () => {
+    const reimbursedHolidays = [
+      { id: 1, name: 'Paris Trip', destination: 'France', flag: '🇫🇷', start_date: '2024-07-01', end_date: '2024-07-14', expense_count: 2, total_spend: -150 },
+    ];
+    const holidayExpense = {
+      ...MOCK_EXPENSE,
+      category_metadata: { name: 'Accommodation', is_subcategory: true, parent_name: 'Holidays' },
+    };
+    render(
+      <ExpenseDetailSidebar expense={holidayExpense} accountNameMap={ACCOUNT_MAP} holidays={reimbursedHolidays} onClose={vi.fn()} onUpdated={vi.fn()} />
+    );
+    await waitFor(() => expect(screen.getByRole('combobox')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '1' } });
+
+    expect(screen.getByText(/£150\.00 reimbursed/)).toBeInTheDocument();
+  });
+
   it('calls expenseApi.update when Save is clicked', async () => {
     expenseApi.update.mockResolvedValueOnce({});
     const onUpdated = vi.fn();

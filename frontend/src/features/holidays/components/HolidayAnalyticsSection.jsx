@@ -71,22 +71,25 @@ function HolidayCard({ holiday }) {
   const n = nights(holiday.start_date, holiday.end_date);
   const icon = holiday.flag || '✈️';
 
+  // Net spend per row: expenses minus any income (e.g. reimbursements) logged against the same category.
+  const netSpend = (r) => -parseFloat(r.net || 0);
+
   // Process summary rows
-  const subRows = (summary || []).filter(r => r.type === 'subcategory' && parseFloat(r.total_expenses) > 0);
-  const parentRows = (summary || []).filter(r => r.type === 'category' && r.category_name !== 'Uncategorized' && parseFloat(r.total_expenses) > 0);
+  const subRows = (summary || []).filter(r => r.type === 'subcategory' && netSpend(r) > 0);
+  const parentRows = (summary || []).filter(r => r.type === 'category' && r.category_name !== 'Uncategorized' && netSpend(r) > 0);
 
   // Aggregate subcategories across all periods
   const subMap = {};
   subRows.forEach(r => {
     const label = r.parent_name && r.parent_name !== r.category_name ? `${r.parent_name} › ${r.category_name}` : r.category_name;
-    subMap[label] = (subMap[label] || 0) + parseFloat(r.total_expenses);
+    subMap[label] = (subMap[label] || 0) + netSpend(r);
   });
 
   // Compute direct (parent − its subcategory sum) to catch expenses assigned to parent category itself
   const parentTotals = {};
-  parentRows.forEach(r => { parentTotals[r.category_name] = (parentTotals[r.category_name] || 0) + parseFloat(r.total_expenses); });
+  parentRows.forEach(r => { parentTotals[r.category_name] = (parentTotals[r.category_name] || 0) + netSpend(r); });
   const subByParent = {};
-  subRows.forEach(r => { if (r.parent_name) subByParent[r.parent_name] = (subByParent[r.parent_name] || 0) + parseFloat(r.total_expenses); });
+  subRows.forEach(r => { if (r.parent_name) subByParent[r.parent_name] = (subByParent[r.parent_name] || 0) + netSpend(r); });
 
   const directEntries = Object.entries(parentTotals)
     .map(([name, total]) => { const direct = total - (subByParent[name] || 0); return direct > 0.01 ? [`${name} (Direct)`, direct] : null; })

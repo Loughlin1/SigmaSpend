@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatHolidaySpend } from '../../../utils/formatters';
 
 const FLAGS = [
   '🇬🇧','🇺🇸','🇫🇷','🇪🇸','🇮🇹','🇩🇪','🇵🇹','🇬🇷','🇳🇱','🇧🇪',
@@ -158,6 +159,7 @@ function HolidayRow({ holiday, onEdit, onDelete }) {
     : null;
 
   const icon = holiday.flag || '✈️';
+  const holidaySpend = formatHolidaySpend(holiday.total_spend);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.5rem', alignItems: 'start', padding: '0.75rem 0', borderBottom: '1px solid #e2e8f0' }}>
@@ -173,7 +175,10 @@ function HolidayRow({ holiday, onEdit, onDelete }) {
             <span>{fmt(holiday.start_date)} → {fmt(holiday.end_date)}{nights !== null ? ` (${nights}n)` : ''}</span>
           )}
           {holiday.expense_count > 0 && (
-            <span>{holiday.expense_count} expense{holiday.expense_count !== 1 ? 's' : ''} · <strong>£{Number(holiday.total_spend).toFixed(2)}</strong></span>
+            <span>
+              {holiday.expense_count} expense{holiday.expense_count !== 1 ? 's' : ''} ·{' '}
+              <strong style={holidaySpend.isReimbursed ? { color: '#22543d' } : undefined}>{holidaySpend.text}</strong>
+            </span>
           )}
           {holiday.notes && <span style={{ fontStyle: 'italic' }}>{holiday.notes}</span>}
         </div>

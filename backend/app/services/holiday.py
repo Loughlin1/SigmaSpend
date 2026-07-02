@@ -1,7 +1,7 @@
 import logging
 from typing import List
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, case
 
 from app.models.holiday import Holiday as HolidayModel
 from app.models.expense import Expense as ExpenseModel
@@ -14,15 +14,15 @@ logger = logging.getLogger("sigmaspend")
 class HolidayService:
     @staticmethod
     def _get_aggregates(db: Session, holiday_id: int) -> tuple[int, float]:
-        expense_count = db.query(func.count(ExpenseModel.id)).filter(
+        expense_count = func.sum(case((ExpenseModel.is_income == False, 1), else_=0))
+        expense_sum = func.sum(case((ExpenseModel.is_income == False, ExpenseModel.amount), else_=0.0))
+        income_sum = func.sum(case((ExpenseModel.is_income == True, ExpenseModel.amount), else_=0.0))
+        count, expenses, income = db.query(expense_count, expense_sum, income_sum).filter(
             ExpenseModel.holiday_id == holiday_id,
-            ExpenseModel.is_income == False,
-        ).scalar() or 0
-        total_spend = db.query(func.sum(ExpenseModel.amount)).filter(
-            ExpenseModel.holiday_id == holiday_id,
-            ExpenseModel.is_income == False,
-        ).scalar() or 0.0
-        return expense_count, round(float(total_spend), 2)
+        ).one()
+        # Net spend: expenses minus any income (e.g. reimbursements) logged against the holiday.
+        total_spend = round(float(expenses or 0.0) - float(income or 0.0), 2)
+        return int(count or 0), total_spend
 
     @staticmethod
     def _to_response(db: Session, h: HolidayModel) -> HolidayResponse:

@@ -36,6 +36,7 @@ function App() {
   const budgetRef = useRef(null);
 
   const [configCollapsed, setConfigCollapsed] = useState(false);
+  const [ledgerFocusRequest, setLedgerFocusRequest] = useState(null);
 
   // App Mount Prefetch
   useEffect(() => {
@@ -47,6 +48,11 @@ function App() {
     if (analyticsRef.current) {
       analyticsRef.current.refreshAnalytics();
     }
+  };
+
+  // ts forces the effect in LedgerSection to re-fire even when the same holiday is clicked twice in a row
+  const viewHolidayTransactions = (holidayId) => {
+    setLedgerFocusRequest({ holidayId, ts: Date.now() });
   };
 
   return (
@@ -73,7 +79,7 @@ function App() {
         className="sectionCard--primary"
       />
 
-      <HolidayAnalyticsSection holidays={holidays} loading={holidaysLoading} />
+      <HolidayAnalyticsSection holidays={holidays} loading={holidaysLoading} onViewTransactions={viewHolidayTransactions} />
 
       <LedgerSection
         accountNameMap={accountNameMap}
@@ -81,6 +87,7 @@ function App() {
         categoriesLoading={categoriesLoading}
         categoriesError={categoriesError}
         holidays={holidays}
+        focusRequest={ledgerFocusRequest}
         triggerGlobalRefresh={triggerGlobalRefresh}
         createRuleFromTransaction={async (ruleData) => {
           if (automationRef.current) await automationRef.current.createRuleFromTransaction(ruleData);

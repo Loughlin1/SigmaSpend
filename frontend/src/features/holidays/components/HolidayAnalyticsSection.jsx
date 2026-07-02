@@ -55,7 +55,7 @@ function PieChart({ slices }) {
 }
 
 
-function HolidayCard({ holiday }) {
+function HolidayCard({ holiday, onViewTransactions }) {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -112,6 +112,16 @@ function HolidayCard({ holiday }) {
               {fmt(holiday.start_date)} → {fmt(holiday.end_date)}{n !== null ? ` · ${n} nights` : ''}
             </div>
           )}
+          {onViewTransactions && (
+            <button
+              type="button"
+              onClick={() => onViewTransactions(holiday.id)}
+              className="inlineButton"
+              style={{ fontSize: '0.75rem', marginTop: '0.4rem', padding: '0.15rem 0.5rem' }}
+            >
+              View transactions →
+            </button>
+          )}
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#2d3748' }}>£{totalSpend.toFixed(2)}</div>
@@ -144,7 +154,7 @@ function HolidayCard({ holiday }) {
   );
 }
 
-export default function HolidayAnalyticsSection({ holidays = [], loading = false }) {
+export default function HolidayAnalyticsSection({ holidays = [], loading = false, onViewTransactions }) {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   const withExpenses = holidays.filter(h => h.expense_count > 0);
@@ -164,7 +174,7 @@ export default function HolidayAnalyticsSection({ holidays = [], loading = false
           )}
           {!loading && withExpenses.length > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(480px, 1fr))', gap: '1rem' }}>
-              {withExpenses.map(h => <HolidayCard key={h.id} holiday={h} />)}
+              {withExpenses.map(h => <HolidayCard key={h.id} holiday={h} onViewTransactions={onViewTransactions} />)}
             </div>
           )}
         </div>

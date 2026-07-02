@@ -92,4 +92,23 @@ describe('HolidayAnalyticsSection', () => {
     fireEvent.click(screen.getByText('Holiday Summaries'));
     await waitFor(() => expect(screen.getByText(/No expenses linked/i)).toBeInTheDocument());
   });
+
+  it('does not render a "View transactions" link when onViewTransactions is not provided', async () => {
+    holidaysApi.getSummary.mockResolvedValueOnce([]);
+    render(<HolidayAnalyticsSection holidays={HOLIDAYS_WITH_EXPENSES} />);
+    fireEvent.click(screen.getByText('Holiday Summaries'));
+    await waitFor(() => screen.getByText('🇫🇷 Paris'));
+    expect(screen.queryByText(/View transactions/i)).not.toBeInTheDocument();
+  });
+
+  it('calls onViewTransactions with the holiday id when the link is clicked', async () => {
+    holidaysApi.getSummary.mockResolvedValueOnce([]);
+    const onViewTransactions = vi.fn();
+    render(<HolidayAnalyticsSection holidays={HOLIDAYS_WITH_EXPENSES} onViewTransactions={onViewTransactions} />);
+    fireEvent.click(screen.getByText('Holiday Summaries'));
+    await waitFor(() => screen.getByText(/View transactions/i));
+
+    fireEvent.click(screen.getByText(/View transactions/i));
+    expect(onViewTransactions).toHaveBeenCalledWith(1);
+  });
 });

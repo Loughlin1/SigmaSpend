@@ -1,5 +1,5 @@
 // src/features/ledger/components/LedgerSection.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import LedgerFilters from './LedgerFilters';
 import ExpenseForm from './ExpenseForm';
 import LedgerTable from './LedgerTable/LedgerTable';
@@ -16,10 +16,12 @@ export default function LedgerSection({
   holidays = [],
   triggerGlobalRefresh,
   createRuleFromTransaction,
+  focusRequest,
   className = '',
 }) {
-  
+
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const sectionRef = useRef(null);
 
   // 1. Fully isolated features states
   const { 
@@ -55,6 +57,16 @@ export default function LedgerSection({
     fetchExpenses(cleanParams, page, limit);
   }, [fetchExpenses, filters, page, limit]);
 
+  // 4. Jump here and filter to a specific holiday when requested by a sibling section (e.g. Holiday Summaries)
+  useEffect(() => {
+    if (!focusRequest) return;
+    handleFilterChange('holiday_id', String(focusRequest.holidayId));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsCollapsed(false);
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusRequest]);
+
   const handleLocalRefresh = async () => {
     const cleanParams = Object.fromEntries(
       Object.entries(filters).filter(([, val]) => val !== '' && val !== null)
@@ -64,7 +76,7 @@ export default function LedgerSection({
   };
 
   return (
-    <section className={`sectionCard ${className}`}>
+    <section ref={sectionRef} className={`sectionCard ${className}`}>
       <div className="account-list__header" onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: 'pointer' }}>
         <h3 style={{ margin: 0 }}>Transaction Ledger</h3>
         <button className="collapse-button">{isCollapsed ? '▸' : '▾'}</button>

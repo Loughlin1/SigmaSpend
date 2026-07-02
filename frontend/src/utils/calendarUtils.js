@@ -159,3 +159,31 @@ export const getCurrentMonthBounds = () => {
     end: formatISO(endDay)
   };
 };
+
+/**
+ * Helper to compute the ISO-standard start and end bounds of last month.
+ * Automatically accommodates varying day counts (e.g., leap years) and year rollovers.
+ * @returns {Object} { start, end } in YYYY-MM-DD format
+ */
+export const getLastMonthBounds = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0-indexed (Jan=0, Jun=5)
+
+  // First day of last month: passing month - 1 lets Date handle the year rollover for January
+  const startDay = new Date(year, month - 1, 1);
+  // Day 0 of this month cleanly lands on the last day of last month
+  const endDay = new Date(year, month, 0);
+
+  const formatISO = (dateObj) => {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  return {
+    start: formatISO(startDay),
+    end: formatISO(endDay)
+  };
+};

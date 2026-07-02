@@ -3,13 +3,13 @@ import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import AnalyticsFilters from './AnalyticsFilters';
 import ExpenseChart from './ExpenseChart';
 import useExpenseAnalytics from '../hooks/useExpenseAnalytics';
-import { getCurrentMonthBounds } from '../../../utils/calendarUtils'
+import { getLastMonthBounds } from '../../../utils/calendarUtils'
 
 const AnalyticsSection = forwardRef(({ accounts, className = '' }, ref) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { summaryData, loading: analyticsLoading, error: analyticsError, fetchSummary } = useExpenseAnalytics();
-  
-  const { start: defaultStart, end: defaultEnd } = getCurrentMonthBounds();
+
+  const { start: defaultStart, end: defaultEnd } = getLastMonthBounds();
 
   // Isolate chart-specific filters to this feature context
   const [chartFilters, setChartFilters] = useState({

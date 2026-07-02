@@ -4,6 +4,7 @@ import {
   getGoogleCalendarDayUrl,
   getGmailReceiptSearchUrl,
   getCurrentMonthBounds,
+  getLastMonthBounds,
 } from './calendarUtils';
 
 // ============================================================================
@@ -165,5 +166,43 @@ describe('getCurrentMonthBounds', () => {
     const { start, end } = getCurrentMonthBounds();
     expect(start).toBe('2024-12-01');
     expect(end).toBe('2024-12-31');
+  });
+});
+
+// ============================================================================
+// getLastMonthBounds
+// ============================================================================
+
+describe('getLastMonthBounds', () => {
+  beforeEach(() => {
+    // Fix time to 15 June 2024
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2024-06-15'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('returns the first day of last month as start', () => {
+    expect(getLastMonthBounds().start).toBe('2024-05-01');
+  });
+
+  it('returns the last day of last month as end', () => {
+    expect(getLastMonthBounds().end).toBe('2024-05-31');
+  });
+
+  it('rolls back over a year boundary in January', () => {
+    vi.setSystemTime(new Date('2024-01-10'));
+    const { start, end } = getLastMonthBounds();
+    expect(start).toBe('2023-12-01');
+    expect(end).toBe('2023-12-31');
+  });
+
+  it('handles a leap-year February as last month', () => {
+    vi.setSystemTime(new Date('2024-03-05'));
+    const { start, end } = getLastMonthBounds();
+    expect(start).toBe('2024-02-01');
+    expect(end).toBe('2024-02-29');
   });
 });

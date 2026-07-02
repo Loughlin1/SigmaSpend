@@ -6,7 +6,7 @@ import BudgetYearTable from './BudgetYearTable';
 import BudgetMonthsTable from './BudgetMonthsTable';
 import BudgetPieChart from './BudgetPieChart';
 import RulesSummary from './RulesSummary';
-import { getCurrentMonthBounds } from '../../../utils/calendarUtils';
+import { getLastMonthBounds } from '../../../utils/calendarUtils';
 
 const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, className = '' }, ref) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -21,7 +21,7 @@ const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, classNam
     fetchRangeActuals,
   } = useBudget();
 
-  const { start, end } = getCurrentMonthBounds();
+  const { start, end } = getLastMonthBounds();
   const currentMonth = start.slice(0, 7); // "YYYY-MM"
   const currentYear = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);

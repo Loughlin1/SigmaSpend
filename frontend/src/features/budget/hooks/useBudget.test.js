@@ -12,7 +12,7 @@ vi.mock('../../../api/client', () => ({
 }));
 
 vi.mock('../../../utils/calendarUtils', () => ({
-  getCurrentMonthBounds: () => ({ start: '2024-01-01', end: '2024-01-31' }),
+  getLastMonthBounds: () => ({ start: '2024-01-01', end: '2024-01-31' }),
 }));
 
 describe('useBudget', () => {

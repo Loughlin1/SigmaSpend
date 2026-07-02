@@ -1,7 +1,7 @@
 // src/features/budget/hooks/useBudget.js
 import { useState, useCallback, useEffect } from 'react';
 import { expenseApi, budgetApi, bucketBudgetApi, incomeApi, categoryApi } from '../../../api/client';
-import { getCurrentMonthBounds } from '../../../utils/calendarUtils';
+import { getLastMonthBounds } from '../../../utils/calendarUtils';
 
 export default function useBudget() {
   const [budgets, setBudgets] = useState({});
@@ -123,7 +123,7 @@ export default function useBudget() {
     setLoading(true);
     setError(null);
     try {
-      const { start, end } = getCurrentMonthBounds();
+      const { start, end } = getLastMonthBounds();
       const params = {
         group_by: 'month',
         start_date: filters.start_date || start,

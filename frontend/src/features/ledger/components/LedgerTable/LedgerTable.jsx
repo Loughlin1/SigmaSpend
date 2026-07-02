@@ -1,6 +1,6 @@
 // src/features/ledger/components/LedgerTable/LedgerTable.jsx
-import { useState, useEffect } from 'react';
-import { expenseApi, holidaysApi } from '../../../../api/client';
+import { useState } from 'react';
+import { expenseApi } from '../../../../api/client';
 import BulkActionsPanel from './BulkActionsPanel';
 import LedgerRowEdit from './LedgerRowEdit';
 import LedgerRowRead from './LedgerRowRead';
@@ -15,7 +15,7 @@ export default function LedgerTable({
   expenses = [],
   accountNameMap = {},
   categories = [],
-  holidays: holidaysProp = [],
+  holidays = [],
   onExpenseSaved,
   onDelete,
   onCreateRuleFromTransaction,
@@ -34,12 +34,6 @@ export default function LedgerTable({
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [bulkDeletePending, setBulkDeletePending] = useState(false);
   const [density, setDensity] = useState('compact'); // 'compact' | 'comfortable'
-  const [fetchedHolidays, setFetchedHolidays] = useState([]);
-  const holidays = holidaysProp.length ? holidaysProp : fetchedHolidays;
-
-  useEffect(() => {
-    if (!holidaysProp.length) holidaysApi.getAll().then(setFetchedHolidays).catch(() => {});
-  }, [holidaysProp.length]);
 
   // Success Modal States
   const [showBulkSuccess, setShowBulkSuccess] = useState(false);

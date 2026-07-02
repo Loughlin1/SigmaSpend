@@ -1,11 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ExpenseDetailSidebar from './ExpenseDetailSidebar';
-import { expenseApi, holidaysApi } from '../../../api/client';
+import { expenseApi } from '../../../api/client';
 
 vi.mock('../../../api/client', () => ({
   expenseApi: { update: vi.fn() },
-  holidaysApi: { getAll: vi.fn() },
 }));
 
 vi.mock('../../../utils/calendarUtils', () => ({
@@ -35,19 +34,18 @@ const ACCOUNT_MAP = { 10: 'Barclays Current' };
 describe('ExpenseDetailSidebar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    holidaysApi.getAll.mockResolvedValue(MOCK_HOLIDAYS);
   });
 
   it('returns null when no expense is provided', () => {
     const { container } = render(
-      <ExpenseDetailSidebar expense={null} accountNameMap={ACCOUNT_MAP} onClose={vi.fn()} onUpdated={vi.fn()} />
+      <ExpenseDetailSidebar expense={null} accountNameMap={ACCOUNT_MAP} holidays={MOCK_HOLIDAYS} onClose={vi.fn()} onUpdated={vi.fn()} />
     );
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders transaction details when expense is provided', async () => {
     render(
-      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={ACCOUNT_MAP} onClose={vi.fn()} onUpdated={vi.fn()} />
+      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={ACCOUNT_MAP} holidays={MOCK_HOLIDAYS} onClose={vi.fn()} onUpdated={vi.fn()} />
     );
 
     expect(screen.getByText('Transaction Details')).toBeInTheDocument();
@@ -57,7 +55,7 @@ describe('ExpenseDetailSidebar', () => {
 
   it('shows Expense badge for non-income transactions', async () => {
     render(
-      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={ACCOUNT_MAP} onClose={vi.fn()} onUpdated={vi.fn()} />
+      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={ACCOUNT_MAP} holidays={MOCK_HOLIDAYS} onClose={vi.fn()} onUpdated={vi.fn()} />
     );
     expect(screen.getByText('Expense')).toBeInTheDocument();
   });
@@ -65,28 +63,28 @@ describe('ExpenseDetailSidebar', () => {
   it('shows Income badge for income transactions', async () => {
     const income = { ...MOCK_EXPENSE, is_income: true };
     render(
-      <ExpenseDetailSidebar expense={income} accountNameMap={ACCOUNT_MAP} onClose={vi.fn()} onUpdated={vi.fn()} />
+      <ExpenseDetailSidebar expense={income} accountNameMap={ACCOUNT_MAP} holidays={MOCK_HOLIDAYS} onClose={vi.fn()} onUpdated={vi.fn()} />
     );
     expect(screen.getByText('Income')).toBeInTheDocument();
   });
 
   it('shows account name from accountNameMap', async () => {
     render(
-      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={ACCOUNT_MAP} onClose={vi.fn()} onUpdated={vi.fn()} />
+      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={ACCOUNT_MAP} holidays={MOCK_HOLIDAYS} onClose={vi.fn()} onUpdated={vi.fn()} />
     );
     expect(screen.getByText('Barclays Current')).toBeInTheDocument();
   });
 
   it('falls back to "Account N" when account not in map', async () => {
     render(
-      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={{}} onClose={vi.fn()} onUpdated={vi.fn()} />
+      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={{}} holidays={MOCK_HOLIDAYS} onClose={vi.fn()} onUpdated={vi.fn()} />
     );
     expect(screen.getByText('Account 10')).toBeInTheDocument();
   });
 
   it('shows notes field when notes exist', async () => {
     render(
-      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={ACCOUNT_MAP} onClose={vi.fn()} onUpdated={vi.fn()} />
+      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={ACCOUNT_MAP} holidays={MOCK_HOLIDAYS} onClose={vi.fn()} onUpdated={vi.fn()} />
     );
     expect(screen.getByText('Morning coffee')).toBeInTheDocument();
   });
@@ -94,7 +92,7 @@ describe('ExpenseDetailSidebar', () => {
   it('calls onClose when backdrop is clicked', async () => {
     const onClose = vi.fn();
     render(
-      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={ACCOUNT_MAP} onClose={onClose} onUpdated={vi.fn()} />
+      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={ACCOUNT_MAP} holidays={MOCK_HOLIDAYS} onClose={onClose} onUpdated={vi.fn()} />
     );
     // The close button
     fireEvent.click(screen.getByRole('button', { name: '✕' }));
@@ -103,9 +101,8 @@ describe('ExpenseDetailSidebar', () => {
 
   it('does not show holiday picker for non-holiday categories', async () => {
     render(
-      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={ACCOUNT_MAP} onClose={vi.fn()} onUpdated={vi.fn()} />
+      <ExpenseDetailSidebar expense={MOCK_EXPENSE} accountNameMap={ACCOUNT_MAP} holidays={MOCK_HOLIDAYS} onClose={vi.fn()} onUpdated={vi.fn()} />
     );
-    await waitFor(() => expect(holidaysApi.getAll).toHaveBeenCalled());
     expect(screen.queryByText('Holiday / Trip')).not.toBeInTheDocument();
   });
 
@@ -115,7 +112,7 @@ describe('ExpenseDetailSidebar', () => {
       category_metadata: { name: 'Accommodation', is_subcategory: true, parent_name: 'Holidays' },
     };
     render(
-      <ExpenseDetailSidebar expense={holidayExpense} accountNameMap={ACCOUNT_MAP} onClose={vi.fn()} onUpdated={vi.fn()} />
+      <ExpenseDetailSidebar expense={holidayExpense} accountNameMap={ACCOUNT_MAP} holidays={MOCK_HOLIDAYS} onClose={vi.fn()} onUpdated={vi.fn()} />
     );
     await waitFor(() => expect(screen.getByText('Holiday / Trip')).toBeInTheDocument());
   });
@@ -126,7 +123,7 @@ describe('ExpenseDetailSidebar', () => {
       category_metadata: { name: 'Accommodation', is_subcategory: true, parent_name: 'Holidays' },
     };
     render(
-      <ExpenseDetailSidebar expense={holidayExpense} accountNameMap={ACCOUNT_MAP} onClose={vi.fn()} onUpdated={vi.fn()} />
+      <ExpenseDetailSidebar expense={holidayExpense} accountNameMap={ACCOUNT_MAP} holidays={MOCK_HOLIDAYS} onClose={vi.fn()} onUpdated={vi.fn()} />
     );
     await waitFor(() => expect(screen.getByRole('combobox')).toBeInTheDocument());
 
@@ -144,7 +141,7 @@ describe('ExpenseDetailSidebar', () => {
       category_metadata: { name: 'Accommodation', is_subcategory: true, parent_name: 'Holidays' },
     };
     render(
-      <ExpenseDetailSidebar expense={holidayExpense} accountNameMap={ACCOUNT_MAP} onClose={vi.fn()} onUpdated={onUpdated} />
+      <ExpenseDetailSidebar expense={holidayExpense} accountNameMap={ACCOUNT_MAP} holidays={MOCK_HOLIDAYS} onClose={vi.fn()} onUpdated={onUpdated} />
     );
     await waitFor(() => expect(screen.getByRole('combobox')).toBeInTheDocument());
 

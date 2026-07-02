@@ -21,12 +21,14 @@ import HolidayAnalyticsSection from './features/holidays/components/HolidayAnaly
 // Master Shared Hooks
 import useAccounts from './features/bank-accounts/hooks/useAccounts';
 import useCategories from './features/categories/hooks/useCategories';
+import useHolidays from './features/holidays/hooks/useHolidays';
 
 
 function App() {
   // Global Shared Ecosystem Hooks
   const { accounts, loading: accountsLoading, error: accountsError, fetchAccounts, accountNameMap } = useAccounts();
   const { categories, loading: categoriesLoading, error: categoriesError, fetchCategories, createCategory } = useCategories();
+  const { holidays, loading: holidaysLoading, error: holidaysError, createHoliday, updateHoliday, deleteHoliday } = useHolidays();
 
   // Feature component communication boundaries
   const automationRef = useRef(null);
@@ -71,13 +73,14 @@ function App() {
         className="sectionCard--primary"
       />
 
-      <HolidayAnalyticsSection />
+      <HolidayAnalyticsSection holidays={holidays} loading={holidaysLoading} />
 
       <LedgerSection
         accountNameMap={accountNameMap}
         categories={categories}
         categoriesLoading={categoriesLoading}
         categoriesError={categoriesError}
+        holidays={holidays}
         triggerGlobalRefresh={triggerGlobalRefresh}
         createRuleFromTransaction={async (ruleData) => {
           if (automationRef.current) await automationRef.current.createRuleFromTransaction(ruleData);
@@ -119,7 +122,14 @@ function App() {
               triggerGlobalRefresh={triggerGlobalRefresh}
             />
 
-            <HolidayList />
+            <HolidayList
+              holidays={holidays}
+              loading={holidaysLoading}
+              error={holidaysError}
+              onCreateHoliday={createHoliday}
+              onUpdateHoliday={updateHoliday}
+              onDeleteHoliday={deleteHoliday}
+            />
             <BackupSection />
           </div>
         )}

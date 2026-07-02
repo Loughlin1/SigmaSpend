@@ -5,7 +5,6 @@ import { holidaysApi } from '../../../api/client';
 
 vi.mock('../../../api/client', () => ({
   holidaysApi: {
-    getAll: vi.fn(),
     getSummary: vi.fn(),
   },
 }));
@@ -22,44 +21,38 @@ describe('HolidayAnalyticsSection', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('renders the section heading', async () => {
-    holidaysApi.getAll.mockResolvedValueOnce([]);
-    render(<HolidayAnalyticsSection />);
+    render(<HolidayAnalyticsSection holidays={[]} />);
     expect(screen.getByText('Holiday Summaries')).toBeInTheDocument();
   });
 
   it('is collapsed by default', async () => {
-    holidaysApi.getAll.mockResolvedValueOnce(HOLIDAYS_WITH_EXPENSES);
-    render(<HolidayAnalyticsSection />);
+    render(<HolidayAnalyticsSection holidays={HOLIDAYS_WITH_EXPENSES} />);
     expect(screen.queryByText('Paris')).not.toBeInTheDocument();
   });
 
   it('expands when header is clicked', async () => {
-    holidaysApi.getAll.mockResolvedValueOnce([]);
-    render(<HolidayAnalyticsSection />);
+    render(<HolidayAnalyticsSection holidays={[]} />);
     fireEvent.click(screen.getByText('Holiday Summaries'));
     await waitFor(() => expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument());
     expect(screen.getByText(/No holidays with linked expenses/i)).toBeInTheDocument();
   });
 
   it('shows "no holidays" message when no holidays have expenses', async () => {
-    holidaysApi.getAll.mockResolvedValueOnce(HOLIDAYS_NONE);
-    render(<HolidayAnalyticsSection />);
+    render(<HolidayAnalyticsSection holidays={HOLIDAYS_NONE} />);
     fireEvent.click(screen.getByText('Holiday Summaries'));
     await waitFor(() => expect(screen.getByText(/No holidays with linked expenses/i)).toBeInTheDocument());
   });
 
   it('renders holiday cards for holidays that have expenses', async () => {
-    holidaysApi.getAll.mockResolvedValueOnce(HOLIDAYS_WITH_EXPENSES);
     holidaysApi.getSummary.mockResolvedValueOnce([]);
-    render(<HolidayAnalyticsSection />);
+    render(<HolidayAnalyticsSection holidays={HOLIDAYS_WITH_EXPENSES} />);
     fireEvent.click(screen.getByText('Holiday Summaries'));
     await waitFor(() => expect(screen.getByText('🇫🇷 Paris')).toBeInTheDocument());
   });
 
   it('renders total spend on a holiday card', async () => {
-    holidaysApi.getAll.mockResolvedValueOnce(HOLIDAYS_WITH_EXPENSES);
     holidaysApi.getSummary.mockResolvedValueOnce([]);
-    render(<HolidayAnalyticsSection />);
+    render(<HolidayAnalyticsSection holidays={HOLIDAYS_WITH_EXPENSES} />);
     fireEvent.click(screen.getByText('Holiday Summaries'));
     await waitFor(() => screen.getByText('🇫🇷 Paris'));
     // Total spend shown (even if summary is empty, HolidayCard shows totalSpend from computed rows)
@@ -68,18 +61,16 @@ describe('HolidayAnalyticsSection', () => {
   });
 
   it('renders destination when present', async () => {
-    holidaysApi.getAll.mockResolvedValueOnce(HOLIDAYS_WITH_EXPENSES);
     holidaysApi.getSummary.mockResolvedValueOnce([]);
-    render(<HolidayAnalyticsSection />);
+    render(<HolidayAnalyticsSection holidays={HOLIDAYS_WITH_EXPENSES} />);
     fireEvent.click(screen.getByText('Holiday Summaries'));
     await waitFor(() => screen.getByText('🇫🇷 Paris'));
     expect(screen.getByText(/France/)).toBeInTheDocument();
   });
 
   it('calls holidaysApi.getSummary for each holiday with expenses', async () => {
-    holidaysApi.getAll.mockResolvedValueOnce(HOLIDAYS_WITH_EXPENSES);
     holidaysApi.getSummary.mockResolvedValueOnce([]);
-    render(<HolidayAnalyticsSection />);
+    render(<HolidayAnalyticsSection holidays={HOLIDAYS_WITH_EXPENSES} />);
     fireEvent.click(screen.getByText('Holiday Summaries'));
     await waitFor(() => expect(holidaysApi.getSummary).toHaveBeenCalledWith(1));
   });

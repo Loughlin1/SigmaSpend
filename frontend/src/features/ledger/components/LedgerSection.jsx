@@ -1,6 +1,5 @@
 // src/features/ledger/components/LedgerSection.jsx
-import { useEffect, useState, useCallback } from 'react';
-import { holidaysApi } from '../../../api/client';
+import { useEffect, useState } from 'react';
 import LedgerFilters from './LedgerFilters';
 import ExpenseForm from './ExpenseForm';
 import LedgerTable from './LedgerTable/LedgerTable';
@@ -14,6 +13,7 @@ import useExpenseForm from '../hooks/useExpenseForm';
 export default function LedgerSection({
   accountNameMap,
   categories,
+  holidays = [],
   triggerGlobalRefresh,
   createRuleFromTransaction,
   className = '',
@@ -39,14 +39,7 @@ export default function LedgerSection({
 
   const { filters, handleFilterChange } = useExpenseFilters();
   const [sidebarExpense, setSidebarExpense] = useState(null);
-  const [holidays, setHolidays] = useState([]);
 
-  const loadHolidays = useCallback(() => {
-    holidaysApi.getAll().then(setHolidays).catch(() => {});
-  }, []);
-
-  useEffect(() => { loadHolidays(); }, [loadHolidays]);
-  
   // 2. Consume form lifecycle here instead of pulling from App.jsx
   const {
     showExpenseForm,
@@ -163,6 +156,7 @@ export default function LedgerSection({
             <ExpenseDetailSidebar
               expense={sidebarExpense}
               accountNameMap={accountNameMap}
+              holidays={holidays}
               onClose={() => setSidebarExpense(null)}
               onUpdated={() => {
                 handleLocalRefresh();

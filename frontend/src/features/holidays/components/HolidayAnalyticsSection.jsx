@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { holidaysApi } from '../../../api/client';
 
 function fmt(d) {
@@ -141,21 +141,8 @@ function HolidayCard({ holiday }) {
   );
 }
 
-export default function HolidayAnalyticsSection() {
-  const [holidays, setHolidays] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function HolidayAnalyticsSection({ holidays = [], loading = false }) {
   const [isCollapsed, setIsCollapsed] = useState(true);
-
-  const load = useCallback(() => {
-    setLoading(true);
-    holidaysApi.getAll()
-      .then(setHolidays)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { load(); }, [load]);
 
   const withExpenses = holidays.filter(h => h.expense_count > 0);
 

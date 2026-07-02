@@ -1,25 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { expenseApi } from '../../../api/client';
-import { holidaysApi } from '../../../api/client';
 import { formatTransactionDate } from '../../../utils/calendarUtils';
 
-export default function ExpenseDetailSidebar({ expense, accountNameMap, onClose, onUpdated }) {
-  const [holidays, setHolidays] = useState([]);
+export default function ExpenseDetailSidebar({ expense, accountNameMap, holidays = [], onClose, onUpdated }) {
   const [selectedHolidayId, setSelectedHolidayId] = useState('');
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
-
-  const loadHolidays = useCallback(async () => {
-    try {
-      const data = await holidaysApi.getAll();
-      setHolidays(data);
-    } catch {
-      // non-fatal
-    }
-  }, []);
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { loadHolidays(); }, [loadHolidays]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import useHolidays from '../hooks/useHolidays';
 
 const FLAGS = [
   '🇬🇧','🇺🇸','🇫🇷','🇪🇸','🇮🇹','🇩🇪','🇵🇹','🇬🇷','🇳🇱','🇧🇪',
@@ -194,19 +193,18 @@ function HolidayRow({ holiday, onEdit, onDelete }) {
   );
 }
 
-export default function HolidayList() {
-  const { holidays, loading, error, createHoliday, updateHoliday, deleteHoliday } = useHolidays();
+export default function HolidayList({ holidays, loading, error, onCreateHoliday, onUpdateHoliday, onDeleteHoliday }) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingHoliday, setEditingHoliday] = useState(null);
 
   const handleCreate = async (data) => {
-    await createHoliday(data);
+    await onCreateHoliday(data);
     setShowForm(false);
   };
 
   const handleUpdate = async (data) => {
-    await updateHoliday(editingHoliday.id, data);
+    await onUpdateHoliday(editingHoliday.id, data);
     setEditingHoliday(null);
   };
 
@@ -250,7 +248,7 @@ export default function HolidayList() {
                   key={h.id}
                   holiday={h}
                   onEdit={handleEdit}
-                  onDelete={deleteHoliday}
+                  onDelete={onDeleteHoliday}
                 />
               )
             ))

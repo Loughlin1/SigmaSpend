@@ -1,5 +1,6 @@
 // src/features/ledger/components/LedgerTable/BulkActionsPanel.jsx
 import { useState } from 'react';
+import CategorySearchSelect from '../CategorySearchSelect';
 
 const ACTION_CATEGORIZE = 'categorize';
 const ACTION_DELETE     = 'delete';
@@ -37,23 +38,13 @@ export default function BulkActionsPanel({
       case ACTION_CATEGORIZE:
         return (
           <>
-            <select
+            <CategorySearchSelect
               value={bulkCategory}
-              onChange={e => setBulkCategory(e.target.value)}
-              className="form-inline-input"
-              style={{ margin: 0, padding: '0.35rem', width: '200px', fontSize: '0.85rem' }}
+              onChange={setBulkCategory}
+              categories={categories}
               disabled={bulkUpdating}
-            >
-              <option value="">❓ Move to Uncategorized</option>
-              {categories.map(cat => (
-                <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
-                  <option value={cat.id}>{cat.name} (All)</option>
-                  {cat.subcategories?.map(sub => (
-                    <option key={sub.id} value={sub.id}>🔹 {sub.name}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+              style={{ width: '200px' }}
+            />
             <button
               onClick={onBulkCategorize}
               className="inlineButton"

@@ -1,5 +1,6 @@
 // src/features/ledger/components/LedgerTable/LedgerRowEdit.jsx
 import { useState } from 'react';
+import CategorySearchSelect from '../CategorySearchSelect';
 
 export default function LedgerRowEdit({ 
   expense, 
@@ -80,18 +81,11 @@ export default function LedgerRowEdit({
         </select>
       </td>
       <td style={{ verticalAlign: 'top' }}>
-        <select value={editFormData.category_id} className="form-inline-input" style={{ padding: '0.35rem', fontSize: '0.85rem', margin: 0 }}
-          onChange={e => setEditFormData({ ...editFormData, category_id: e.target.value })} >
-          <option value="">❓ Uncategorized</option>
-          {categories.map(cat => (
-            <optgroup key={cat.id} label={`${cat.icon || '📁'} ${cat.name}`}>
-              <option value={cat.id}>{cat.icon || '📁'} {cat.name} (All)</option>
-              {cat.subcategories?.map(sub => (
-                <option key={sub.id} value={sub.id}>🔹 {sub.name}</option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+        <CategorySearchSelect
+          value={editFormData.category_id}
+          onChange={val => setEditFormData({ ...editFormData, category_id: val })}
+          categories={categories}
+        />
       </td>
       <td style={{ verticalAlign: 'top' }}>
         <div className="ledger-inline-edit-container">

@@ -124,11 +124,51 @@ describe('BulkActionsPanel', () => {
     expect(screen.getByRole('button', { name: 'Clear' })).toBeDisabled();
   });
 
-  it('renders category subcategories inside optgroups', () => {
+  it('shows a searchable category combobox with subcategories listed', () => {
     render(<BulkActionsPanel {...baseProps} />);
     fireEvent.change(screen.getByDisplayValue('Actions ▾'), { target: { value: 'categorize' } });
-    const groceryOption = screen.getByRole('option', { name: /Groceries/ });
-    expect(groceryOption).toBeInTheDocument();
-    expect(groceryOption.closest('optgroup')).toHaveAttribute('label', expect.stringContaining('Food'));
+    const combobox = screen.getByRole('combobox', { name: 'Category' });
+    fireEvent.focus(combobox);
+    expect(screen.getByRole('option', { name: /Groceries/ })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Food/ })).toBeInTheDocument();
+  });
+
+  it('filters category options as the user types', () => {
+    render(<BulkActionsPanel {...baseProps} />);
+    fireEvent.change(screen.getByDisplayValue('Actions ▾'), { target: { value: 'categorize' } });
+    const combobox = screen.getByRole('combobox', { name: 'Category' });
+    fireEvent.focus(combobox);
+    fireEvent.change(combobox, { target: { value: 'Grocer' } });
+    expect(screen.getByRole('option', { name: /Groceries/ })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /Transport/ })).not.toBeInTheDocument();
+  });
+
+  it('calls setBulkCategory when a category option is picked', () => {
+    render(<BulkActionsPanel {...baseProps} />);
+    fireEvent.change(screen.getByDisplayValue('Actions ▾'), { target: { value: 'categorize' } });
+    const combobox = screen.getByRole('combobox', { name: 'Category' });
+    fireEvent.focus(combobox);
+    fireEvent.mouseDown(screen.getByRole('option', { name: /Groceries/ }));
+    expect(baseProps.setBulkCategory).toHaveBeenCalledWith('11');
+  });
+
+  it('selects the sole remaining category option on Enter', () => {
+    render(<BulkActionsPanel {...baseProps} />);
+    fireEvent.change(screen.getByDisplayValue('Actions ▾'), { target: { value: 'categorize' } });
+    const combobox = screen.getByRole('combobox', { name: 'Category' });
+    fireEvent.focus(combobox);
+    fireEvent.change(combobox, { target: { value: 'Grocer' } });
+    fireEvent.keyDown(combobox, { key: 'Enter' });
+    expect(baseProps.setBulkCategory).toHaveBeenCalledWith('11');
+  });
+
+  it('does not select on Enter when more than one option still matches', () => {
+    render(<BulkActionsPanel {...baseProps} />);
+    fireEvent.change(screen.getByDisplayValue('Actions ▾'), { target: { value: 'categorize' } });
+    const combobox = screen.getByRole('combobox', { name: 'Category' });
+    fireEvent.focus(combobox);
+    fireEvent.change(combobox, { target: { value: 'o' } });
+    fireEvent.keyDown(combobox, { key: 'Enter' });
+    expect(baseProps.setBulkCategory).not.toHaveBeenCalled();
   });
 });

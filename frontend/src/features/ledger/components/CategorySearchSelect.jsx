@@ -47,6 +47,13 @@ export default function CategorySearchSelect({ value, onChange, categories, disa
     setOpen(false);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && open && filtered.length === 1) {
+      e.preventDefault();
+      select(filtered[0].value);
+    }
+  };
+
   return (
     <div ref={ref} style={{ position: 'relative', ...style }}>
       <input
@@ -58,6 +65,7 @@ export default function CategorySearchSelect({ value, onChange, categories, disa
         disabled={disabled}
         onFocus={() => { setOpen(true); setInputVal(''); }}
         onChange={e => { setInputVal(e.target.value); setOpen(true); }}
+        onKeyDown={handleKeyDown}
         className="form-inline-input"
         style={{ margin: 0, padding: '0.35rem', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' }}
       />

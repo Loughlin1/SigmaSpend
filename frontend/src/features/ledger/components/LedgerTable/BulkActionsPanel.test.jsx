@@ -151,4 +151,24 @@ describe('BulkActionsPanel', () => {
     fireEvent.mouseDown(screen.getByRole('option', { name: /Groceries/ }));
     expect(baseProps.setBulkCategory).toHaveBeenCalledWith('11');
   });
+
+  it('selects the sole remaining category option on Enter', () => {
+    render(<BulkActionsPanel {...baseProps} />);
+    fireEvent.change(screen.getByDisplayValue('Actions ▾'), { target: { value: 'categorize' } });
+    const combobox = screen.getByRole('combobox', { name: 'Category' });
+    fireEvent.focus(combobox);
+    fireEvent.change(combobox, { target: { value: 'Grocer' } });
+    fireEvent.keyDown(combobox, { key: 'Enter' });
+    expect(baseProps.setBulkCategory).toHaveBeenCalledWith('11');
+  });
+
+  it('does not select on Enter when more than one option still matches', () => {
+    render(<BulkActionsPanel {...baseProps} />);
+    fireEvent.change(screen.getByDisplayValue('Actions ▾'), { target: { value: 'categorize' } });
+    const combobox = screen.getByRole('combobox', { name: 'Category' });
+    fireEvent.focus(combobox);
+    fireEvent.change(combobox, { target: { value: 'o' } });
+    fireEvent.keyDown(combobox, { key: 'Enter' });
+    expect(baseProps.setBulkCategory).not.toHaveBeenCalled();
+  });
 });

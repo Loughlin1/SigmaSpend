@@ -10,7 +10,7 @@ function buildOptions(categories) {
       const icon = cat.icon || '📁';
       return [
         { label: `${icon} ${cat.name} (All)`, value: String(cat.id), isParent: true },
-        ...(cat.subcategories?.map(sub => ({ label: `🔹 ${sub.name}`, value: String(sub.id) })) || []),
+        ...(cat.subcategories?.map(sub => ({ label: `${sub.icon || icon} ${sub.name}`, value: String(sub.id) })) || []),
       ];
     }),
   ];

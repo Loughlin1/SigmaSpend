@@ -8,7 +8,7 @@ import BudgetPieChart from './BudgetPieChart';
 import RulesSummary from './RulesSummary';
 import { getLastMonthBounds } from '../../../utils/calendarUtils';
 
-const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, className = '' }, ref) => {
+const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, onDrillDown, className = '' }, ref) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const {
     budgets, updateBudget,
@@ -172,6 +172,7 @@ const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, classNam
               bucketBudgets={bucketBudgets}
               year={selectedYear}
               fetchYearActuals={fetchYearActuals}
+              onDrillDown={onDrillDown}
             />
           ) : viewMode === 'months' ? (
             <BudgetMonthsTable
@@ -181,6 +182,7 @@ const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, classNam
               startMonth={rangeStart}
               endMonth={rangeEnd}
               fetchRangeActuals={fetchRangeActuals}
+              onDrillDown={onDrillDown}
             />
           ) : loading ? (
             <p style={{ color: '#4a5568' }}>Loading actuals…</p>
@@ -196,6 +198,9 @@ const BudgetSection = forwardRef(({ categories = [], onCategoryUpdated, classNam
                 onBudgetChange={updateBudget}
                 onBucketBudgetChange={updateBucketBudget}
                 onBucketChange={handleBucketChange}
+                startDate={filters.start_date}
+                endDate={filters.end_date}
+                onDrillDown={onDrillDown}
               />
               <BudgetPieChart
                 categories={parentCategories}

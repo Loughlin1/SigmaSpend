@@ -50,9 +50,13 @@ function App() {
     }
   };
 
-  // ts forces the effect in LedgerSection to re-fire even when the same holiday is clicked twice in a row
+  // ts forces the effect in LedgerSection to re-fire even when the same drill-down target is clicked twice in a row
+  const focusLedgerWithFilters = (filters) => {
+    setLedgerFocusRequest({ filters, ts: Date.now() });
+  };
+
   const viewHolidayTransactions = (holidayId) => {
-    setLedgerFocusRequest({ holidayId, ts: Date.now() });
+    focusLedgerWithFilters({ holiday_id: String(holidayId) });
   };
 
   return (
@@ -68,6 +72,7 @@ function App() {
       <AnalyticsSection
         ref={analyticsRef}
         accounts={accounts}
+        onDrillDown={focusLedgerWithFilters}
         className="sectionCard--primary"
       />
 
@@ -76,6 +81,7 @@ function App() {
         categories={categories}
         accounts={accounts}
         onCategoryUpdated={fetchCategories}
+        onDrillDown={focusLedgerWithFilters}
         className="sectionCard--primary"
       />
 

@@ -13,7 +13,11 @@ const CURRENT_MONTH = NOW.getMonth(); // 0-indexed
 
 const UNTAGGED = { key: '', label: '— Untagged', colour: '#4a5568', bg: '#f7fafc', border: '#e2e8f0', rowBg: '#fafafa' };
 
-export default function BudgetYearTable({ categories, budgets = {}, bucketBudgets = {}, year, fetchYearActuals }) {
+function lastDayOf(year, monthIdx) {
+  return new Date(year, monthIdx + 1, 0).getDate();
+}
+
+export default function BudgetYearTable({ categories, budgets = {}, bucketBudgets = {}, year, fetchYearActuals, onDrillDown }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [collapsed, setCollapsed] = useState({});
@@ -53,6 +57,7 @@ export default function BudgetYearTable({ categories, budgets = {}, bucketBudget
           bucket: sub.bucket || '',
           monthData: subMap[sub.name] || {},
           allocated: budgets[sub.id]?.amount ?? null,
+          categoryFilter: sub.name,
         });
       }
     } else {
@@ -64,6 +69,7 @@ export default function BudgetYearTable({ categories, budgets = {}, bucketBudget
         bucket: cat.bucket || '',
         monthData: catMap[cat.name] || {},
         allocated: budgets[cat.id]?.amount ?? null,
+        categoryFilter: cat.name,
       });
     }
   }
@@ -156,13 +162,45 @@ export default function BudgetYearTable({ categories, budgets = {}, bucketBudget
                     {MONTHS.map((_, mi) => {
                       const v = row.monthData[monthKey(year, mi)] || 0;
                       const overAlloc = row.allocated != null && v > row.allocated;
+                      const clickable = onDrillDown && v > 0;
                       return (
-                        <td key={mi} className="budgetActualCell" style={{ color: overAlloc ? '#e53e3e' : undefined }}>
+                        <td
+                          key={mi}
+                          className="budgetActualCell"
+                          style={{
+                            color: overAlloc ? '#e53e3e' : undefined,
+                            cursor: clickable ? 'pointer' : undefined,
+                            textDecoration: clickable ? 'underline' : undefined,
+                            textDecorationStyle: clickable ? 'dotted' : undefined,
+                          }}
+                          onClick={clickable ? () => onDrillDown({
+                            category: row.categoryFilter,
+                            start_date: `${monthKey(year, mi)}-01`,
+                            end_date: `${monthKey(year, mi)}-${String(lastDayOf(year, mi)).padStart(2, '0')}`,
+                          }) : undefined}
+                          title={clickable ? 'View transactions' : undefined}
+                        >
                           {fmt(v)}
                         </td>
                       );
                     })}
-                    <td className="budgetActualCell" style={{ fontWeight: 600 }}>{fmt(total)}</td>
+                    <td
+                      className="budgetActualCell"
+                      style={{
+                        fontWeight: 600,
+                        cursor: onDrillDown && total > 0 ? 'pointer' : undefined,
+                        textDecoration: onDrillDown && total > 0 ? 'underline' : undefined,
+                        textDecorationStyle: onDrillDown && total > 0 ? 'dotted' : undefined,
+                      }}
+                      onClick={onDrillDown && total > 0 ? () => onDrillDown({
+                        category: row.categoryFilter,
+                        start_date: `${year}-01-01`,
+                        end_date: `${year}-12-31`,
+                      }) : undefined}
+                      title={onDrillDown && total > 0 ? 'View transactions' : undefined}
+                    >
+                      {fmt(total)}
+                    </td>
                     <td className="budgetActualCell" style={{ color: '#718096' }}>{fmtAvg(total)}</td>
                   </tr>
                 );

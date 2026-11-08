@@ -5,7 +5,7 @@ import ExpenseChart from './ExpenseChart';
 import useExpenseAnalytics from '../hooks/useExpenseAnalytics';
 import { getLastMonthBounds } from '../../../utils/calendarUtils'
 
-const AnalyticsSection = forwardRef(({ accounts, className = '' }, ref) => {
+const AnalyticsSection = forwardRef(({ accounts, onDrillDown, className = '' }, ref) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { summaryData, loading: analyticsLoading, error: analyticsError, fetchSummary } = useExpenseAnalytics();
 
@@ -54,6 +54,9 @@ const AnalyticsSection = forwardRef(({ accounts, className = '' }, ref) => {
             expenses={summaryData}
             accounts={accounts}
             loading={analyticsLoading}
+            dateGroupBy={chartFilters.group_by}
+            accountId={chartFilters.account_id}
+            onDrillDown={onDrillDown}
           />
         </>
       )}

@@ -92,7 +92,7 @@ function ProgressBar({ actual, budget }) {
   );
 }
 
-export default function BudgetTable({ categories, budgets = {}, bucketBudgets = {}, actuals, subActuals = {}, parentActuals = {}, onBudgetChange, onBucketBudgetChange, onBucketChange }) {
+export default function BudgetTable({ categories, budgets = {}, bucketBudgets = {}, actuals, subActuals = {}, parentActuals = {}, onBudgetChange, onBucketBudgetChange, onBucketChange, startDate, endDate, onDrillDown }) {
   const allKeys = [...BUCKETS.map(b => b.key), 'untagged'];
   const [collapsed, setCollapsed] = useState(Object.fromEntries(allKeys.map(k => [k, true])));
   const toggleSection = (key) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
@@ -108,6 +108,7 @@ export default function BudgetTable({ categories, budgets = {}, bucketBudgets = 
           name: sub.name,
           displayName: sub.name,
           parentName: cat.name,
+          categoryFilter: sub.name,
           icon: cat.icon || '📁',
           bucket: sub.bucket || '',
           actual: subActuals[sub.name] || 0,
@@ -123,6 +124,7 @@ export default function BudgetTable({ categories, budgets = {}, bucketBudgets = 
           name: cat.name,
           displayName: `${cat.name} (direct)`,
           parentName: cat.name,
+          categoryFilter: `${cat.name}::direct`,
           icon: cat.icon || '📁',
           bucket: cat.bucket || '',
           actual: parentDirect,
@@ -135,6 +137,7 @@ export default function BudgetTable({ categories, budgets = {}, bucketBudgets = 
         name: cat.name,
         displayName: cat.name,
         parentName: null,
+        categoryFilter: cat.name,
         icon: cat.icon || '📁',
         bucket: cat.bucket || '',
         actual: actuals[cat.name] || 0,
@@ -287,7 +290,14 @@ export default function BudgetTable({ categories, budgets = {}, bucketBudgets = 
                       style={{ width: '90px' }}
                     />
                   </td>
-                  <td className="budgetActualCell">£{item.actual.toFixed(2)}</td>
+                  <td
+                    className="budgetActualCell"
+                    onClick={onDrillDown && item.actual > 0 ? () => onDrillDown({ category: item.categoryFilter, start_date: startDate, end_date: endDate }) : undefined}
+                    style={onDrillDown && item.actual > 0 ? { cursor: 'pointer', textDecoration: 'underline', textDecorationStyle: 'dotted' } : undefined}
+                    title={onDrillDown && item.actual > 0 ? 'View transactions' : undefined}
+                  >
+                    £{item.actual.toFixed(2)}
+                  </td>
                   <td style={{ fontSize: '0.82rem', fontWeight: sharePct !== null ? 600 : 400,
                     color: sharePct === null || parseFloat(sharePct) === 0 ? '#718096'
                       : parseFloat(sharePct) >= 80 ? '#e53e3e'

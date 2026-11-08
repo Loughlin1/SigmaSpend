@@ -57,10 +57,13 @@ export default function LedgerSection({
     fetchExpenses(cleanParams, page, limit);
   }, [fetchExpenses, filters, page, limit]);
 
-  // 4. Jump here and filter to a specific holiday when requested by a sibling section (e.g. Holiday Summaries)
+  // 4. Jump here and apply filters when requested by a sibling section (e.g. Holiday Summaries,
+  // Financial Summaries, Budget Planner "drill down" into the underlying transactions)
   useEffect(() => {
     if (!focusRequest) return;
-    handleFilterChange('holiday_id', String(focusRequest.holidayId));
+    Object.entries(focusRequest.filters || {}).forEach(([key, value]) => {
+      handleFilterChange(key, value);
+    });
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsCollapsed(false);
     sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });

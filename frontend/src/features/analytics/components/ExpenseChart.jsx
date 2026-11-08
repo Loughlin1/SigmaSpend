@@ -14,7 +14,27 @@ function getValue(item, transactionType) {
   return parseFloat((raw || 0).toFixed(2));
 }
 
-export default function ExpenseChart({ expenses = [], loading }) {
+// Converts a chart period ("2024", "2024-03" or "2024-03-15", depending on dateGroupBy)
+// into a start/end date pair usable as ledger filters.
+function periodToDateRange(period, dateGroupBy) {
+  if (!period) return { start_date: undefined, end_date: undefined };
+  if (dateGroupBy === 'day') return { start_date: period, end_date: period };
+  if (dateGroupBy === 'year') return { start_date: `${period}-01-01`, end_date: `${period}-12-31` };
+  const [year, month] = period.split('-').map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  return { start_date: `${period}-01`, end_date: `${period}-${String(lastDay).padStart(2, '0')}` };
+}
+
+// Builds the category filter value the ledger's combobox understands: a subcategory's own
+// name, a parent category's name (which the backend expands to include its subcategories), or
+// nothing at all for the "Overall Grand Totals" breakdown.
+function categoryFilterFor(item) {
+  if (!item || item.type === 'total') return '';
+  if (!item.categoryName || item.categoryName === 'Uncategorized') return 'Uncategorized';
+  return item.categoryName;
+}
+
+export default function ExpenseChart({ expenses = [], loading, dateGroupBy = 'month', accountId = '', onDrillDown }) {
   const [groupBy, setGroupBy] = useState('parent-category');
   const [transactionType, setTransactionType] = useState('net');
   const [sortBy, setSortBy] = useState('amount');
@@ -38,6 +58,8 @@ export default function ExpenseChart({ expenses = [], loading }) {
           pureName: baseName,
           value: getValue(item, transactionType),
           period: item.period || '',
+          categoryName: item.category_name,
+          type: targetType,
         };
       })
       .filter(n => isNetView ? n.value !== 0 : n.value > 0)
@@ -71,6 +93,20 @@ export default function ExpenseChart({ expenses = [], loading }) {
   }, [expenses, targetType, transactionType, sortBy, isNetView]);
 
   const dynamicHeight = Math.max(chartData.length * 45, 300);
+
+  // Jumps to the Transaction Ledger, pre-filtered to the category/period behind a clicked bar.
+  const handleDrillDown = (categoryName, type, period) => {
+    if (!onDrillDown) return;
+    const { start_date, end_date } = periodToDateRange(period, dateGroupBy);
+    const filters = {
+      category: categoryFilterFor({ categoryName, type }),
+      start_date,
+      end_date,
+      is_income: transactionType === 'income' ? true : transactionType === 'expenses' ? false : '',
+    };
+    if (accountId) filters.account_id = accountId;
+    onDrillDown(filters);
+  };
 
   if (loading) {
     return (
@@ -156,7 +192,12 @@ export default function ExpenseChart({ expenses = [], loading }) {
                   contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px' }}
                 />
                 {isNetView && <ReferenceLine x={0} stroke="#cbd5e0" strokeWidth={1.5} />}
-                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                <Bar
+                  dataKey="value"
+                  radius={[0, 4, 4, 0]}
+                  cursor={onDrillDown ? 'pointer' : 'default'}
+                  onClick={onDrillDown ? (bar) => handleDrillDown(bar.payload.categoryName, bar.payload.type, bar.payload.period) : undefined}
+                >
                   {chartData.map((entry) => (
                     <Cell key={entry.name} fill={isNetView ? (entry.value >= 0 ? '#38a169' : '#e53e3e') : BAR_COLOUR[transactionType] || '#2b6cb0'} />
                   ))}
@@ -203,7 +244,12 @@ export default function ExpenseChart({ expenses = [], loading }) {
                           contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '12px' }}
                         />
                         {isNetView && <ReferenceLine y={0} stroke="#cbd5e0" strokeWidth={1} />}
-                        <Bar dataKey="value" radius={[3, 3, 0, 0]}>
+                        <Bar
+                          dataKey="value"
+                          radius={[3, 3, 0, 0]}
+                          cursor={onDrillDown ? 'pointer' : 'default'}
+                          onClick={onDrillDown ? (bar) => handleDrillDown(cat.name, targetType, bar.payload.period) : undefined}
+                        >
                           {cat.periods.map((entry) => (
                             <Cell key={entry.period} fill={isNetView ? (entry.value >= 0 ? '#38a169' : '#e53e3e') : barColour} />
                           ))}

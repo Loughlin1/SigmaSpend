@@ -48,7 +48,7 @@ describe('LedgerSection', () => {
     const { rerender } = render(<LedgerSection {...baseProps()} />);
     await waitFor(() => expect(expenseApi.getAll).toHaveBeenCalled());
 
-    rerender(<LedgerSection {...baseProps({ focusRequest: { holidayId: 1, ts: Date.now() } })} />);
+    rerender(<LedgerSection {...baseProps({ focusRequest: { filters: { holiday_id: '1' }, ts: Date.now() } })} />);
 
     await waitFor(() => {
       const lastCallParams = expenseApi.getAll.mock.calls.at(-1)[0];
@@ -64,7 +64,7 @@ describe('LedgerSection', () => {
     fireEvent.click(screen.getByText('Transaction Ledger'));
     expect(screen.queryByTitle('Refresh transactions')).not.toBeInTheDocument();
 
-    rerender(<LedgerSection {...baseProps({ focusRequest: { holidayId: 1, ts: Date.now() } })} />);
+    rerender(<LedgerSection {...baseProps({ focusRequest: { filters: { holiday_id: '1' }, ts: Date.now() } })} />);
 
     await waitFor(() => expect(screen.getByTitle('Refresh transactions')).toBeInTheDocument());
   });
